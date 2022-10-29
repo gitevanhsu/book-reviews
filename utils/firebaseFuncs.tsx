@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { doc, setDoc } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
@@ -62,3 +61,5 @@ export const addBooksData = async (bookIsbn: string) => {
     );
   }
 };
+
+export const loadBooks = () => {};
