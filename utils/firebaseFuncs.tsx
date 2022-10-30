@@ -4,6 +4,7 @@ import {
   getFirestore,
   collection,
   getDocs,
+  getDoc,
   limit,
   query,
   startAfter,
@@ -97,5 +98,12 @@ export const loadBooks = async (setBookDatas: Function, page: number) => {
       booksData.push(doc.data());
     });
     setBookDatas(booksData);
+  }
+};
+
+export const getBookInfo = async (bookISBN: string, setBookData: Function) => {
+  if (bookISBN) {
+    const docSnap = await getDoc(doc(db, "books", bookISBN));
+    setBookData(docSnap.data());
   }
 };

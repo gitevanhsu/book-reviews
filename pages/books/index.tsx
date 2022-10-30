@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styled from "styled-components";
 import { loadBooks, addBooksData, BookInfo } from "../../utils/firebaseFuncs";
 
@@ -21,25 +22,29 @@ const Categories = styled.p``;
 const ButtonBox = styled.div`
   display: flex;
   align-items: center;
+  margin: 0 auto;
+  justify-content: center;
 `;
 const PageButton = styled.button`
   border: solid 1px;
   padding: 10px 20px;
+  cursor: pointer;
 `;
 const PageNumber = styled.p`
   margin: 0 10px;
 `;
 
 function BookComponent({ data }: { data: BookInfo }) {
-  console.log(data);
   return (
     <>
-      <Image
-        src={data.smallThumbnail ? data.smallThumbnail : ""}
-        alt={`${data.title}`}
-        width={128}
-        height={193}
-      />
+      <Link href={`/book/id:${data.isbn}`}>
+        <Image
+          src={data.smallThumbnail ? data.smallThumbnail : ""}
+          alt={`${data.title}`}
+          width={128}
+          height={193}
+        />
+      </Link>
       <BookTitle>書名：{data.title}</BookTitle>
       {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
       {data.authors?.map((author) => (
@@ -59,7 +64,6 @@ function BookComponent({ data }: { data: BookInfo }) {
 export default function BooksComponent() {
   const [bookDatas, setBookDatas] = useState<BookInfo[]>([]);
   const [page, setPage] = useState<number>(1);
-  // console.log(bookDatas);
   useEffect(() => {
     loadBooks(setBookDatas, page);
   }, [page]);
