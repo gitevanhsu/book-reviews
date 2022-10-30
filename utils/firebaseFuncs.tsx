@@ -9,6 +9,11 @@ import {
   query,
   startAfter,
 } from "firebase/firestore";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -22,6 +27,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth();
 export interface BookInfo {
   isbn?: string;
   title?: string;
@@ -105,5 +111,48 @@ export const getBookInfo = async (bookISBN: string, setBookData: Function) => {
   if (bookISBN) {
     const docSnap = await getDoc(doc(db, "books", bookISBN));
     setBookData(docSnap.data());
+  }
+};
+
+export const emailSignUp = async (
+  name: string,
+  email: string,
+  password: string
+) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const user = userCredential.user;
+    const userData = {
+      uid: user.uid,
+      name,
+      email,
+      password,
+    };
+    await setDoc(doc(db, "users", user.uid), userData);
+  } catch (error) {
+    if (error) {
+      const errorMessage = (error as Error).message;
+      if (errorMessage == "Firebase: Error (auth/email-already-in-use).") {
+        alert("以有帳號，請直接登入。");
+      }
+    }
+  }
+};
+export const emailSignIn = async (email: string, password: string) => {
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
+  try {
+    const user = userCredential.user;
+    console.log(user);
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    console.log(errorMessage);
   }
 };
