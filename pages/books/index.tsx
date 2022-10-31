@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
-import { loadBooks, addBooksData, BookInfo } from "../../utils/firebaseFuncs";
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { loadBooks, BookInfo } from "../../utils/firebaseFuncs";
 
 const Books = styled.div`
   display: flex;
@@ -63,29 +64,40 @@ function BookComponent({ data }: { data: BookInfo }) {
 
 export default function BooksComponent() {
   const [bookDatas, setBookDatas] = useState<BookInfo[]>([]);
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(0);
+  const pageRef = useRef<QueryDocumentSnapshot<DocumentData>>();
+  console.log(pageRef.current);
   useEffect(() => {
-    loadBooks(setBookDatas, page);
-  }, [page]);
+    if (page + 1 > bookDatas.length / 10) {
+      loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
+        setBookDatas([...bookDatas, ...booksData]);
+        pageRef.current = lastVisible;
+      });
+    }
+  });
 
   return (
     <>
       <Books>
-        {bookDatas.map((book) => (
-          <BookData key={book.isbn}>
-            <BookComponent data={book} />
-          </BookData>
-        ))}
+        {bookDatas.map((book, index) => {
+          if (index >= page * 10 && index < page * 10 + 10) {
+            return (
+              <BookData key={book.isbn}>
+                <BookComponent data={book} />
+              </BookData>
+            );
+          }
+        })}
       </Books>
       <ButtonBox>
         <PageButton
           onClick={() => {
-            setPage((prev) => (prev <= 1 ? 1 : prev - 1));
+            setPage((prev) => (prev <= 0 ? 0 : prev - 1));
           }}
         >
           -
         </PageButton>
-        <PageNumber>{page}</PageNumber>
+        <PageNumber>{page + 1}</PageNumber>
         <PageButton
           onClick={() => {
             setPage((prev) => prev + 1);
