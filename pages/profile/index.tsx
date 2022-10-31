@@ -1,12 +1,14 @@
 import { useRef } from "react";
 import styled from "styled-components";
-import { emailSignUp, emailSignIn } from "../../utils/firebaseFuncs";
-
+import { emailSignUp, emailSignIn, signout } from "../../utils/firebaseFuncs";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import { useDispatch } from "react-redux";
+import { userSignOut } from "../../slices/userInfoSlice";
 const InputArea = styled.div``;
 const Inputbox = styled.div``;
 const InputTitle = styled.p``;
 const InputContent = styled.input``;
-
 const SubmitButton = styled.button`
   padding: 10px 20px;
   border: solid 1px;
@@ -17,16 +19,26 @@ function SignupComponent() {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const introRef = useRef<HTMLInputElement>(null);
 
   const signup = () => {
-    const name = nameRef.current && nameRef.current.value;
-    const email = emailRef.current && emailRef.current.value;
-    const password = passwordRef.current && passwordRef.current.value;
+    if (
+      nameRef.current &&
+      emailRef.current &&
+      passwordRef.current &&
+      introRef.current
+    ) {
+      const name = nameRef.current.value;
+      const email = emailRef.current.value;
+      const password = passwordRef.current.value;
+      const intro = introRef.current.value;
 
-    console.log("name:", name);
-    console.log("email:", email);
-    console.log("password:", password);
-    name && email && password && emailSignUp(name, email, password);
+      name && email && password && emailSignUp(name, email, password, intro);
+      nameRef.current.value = "";
+      emailRef.current.value = "";
+      passwordRef.current.value = "";
+      introRef.current.value = "";
+    }
   };
 
   return (
@@ -56,6 +68,14 @@ function SignupComponent() {
             type="password"
           ></InputContent>
         </Inputbox>
+        <Inputbox>
+          <InputTitle>自我介紹: </InputTitle>
+          <InputContent
+            key="signUpIntro"
+            ref={introRef}
+            type="text"
+          ></InputContent>
+        </Inputbox>
         <SubmitButton onClick={signup}>註冊</SubmitButton>
       </InputArea>
     </>
@@ -66,12 +86,14 @@ function SigninComponent() {
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const signin = () => {
-    const email = emailRef.current && emailRef.current.value;
-    const password = passwordRef.current && passwordRef.current.value;
+    if (emailRef.current && passwordRef.current) {
+      const email = emailRef.current.value;
+      const password = passwordRef.current.value;
 
-    console.log("email:", email);
-    console.log("password:", password);
-    email && password && emailSignIn(email, password);
+      email && password && emailSignIn(email, password);
+      emailRef.current.value = "";
+      passwordRef.current.value = "";
+    }
   };
   return (
     <>
@@ -99,8 +121,28 @@ function SigninComponent() {
 }
 
 export default function Profile() {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const dispatch = useDispatch();
   return (
     <>
+      {userInfo.isSignIn && (
+        <>
+          <p>{userInfo.uid}</p>
+          <p>{userInfo.name}</p>
+          <p>{userInfo.email}</p>
+          <p>{userInfo.intro ? userInfo.intro : "這個人沒有填寫自我介紹 :("}</p>
+          <SubmitButton
+            onClick={() => {
+              signout();
+              dispatch(
+                userSignOut({ uid: "", name: "", email: "", intro: "" })
+              );
+            }}
+          >
+            登出
+          </SubmitButton>
+        </>
+      )}
       <SignupComponent />
       <SigninComponent />
     </>

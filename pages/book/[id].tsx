@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import noimg from "/public/img/noImg.png";
+import { DocumentData } from "firebase/firestore";
 
 const BookBox = styled.div`
   display: flex;
@@ -19,8 +20,8 @@ const BookDescription = styled.p``;
 const BookAuthor = styled.h4``;
 const Categories = styled.p``;
 function BookComponent({ data }: { data: BookInfo }) {
-  return (
-    <>
+  return data ? (
+    <BookBox>
       <Image
         src={data.smallThumbnail ? data.smallThumbnail : noimg}
         alt={`${data.title}`}
@@ -30,10 +31,10 @@ function BookComponent({ data }: { data: BookInfo }) {
       <BookDetail>
         <BookTitle>書名：{data.title}</BookTitle>
         {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
-        {data.authors?.map((author) => (
+        {data.authors?.map((author: string) => (
           <BookAuthor key={author}>作者:{author}</BookAuthor>
         ))}
-        {data.categories?.map((category) => (
+        {data.categories?.map((category: string) => (
           <Categories key={category}>分類：{category}</Categories>
         ))}
         <BookPublisher>出版社：{data.publisher}</BookPublisher>
@@ -41,7 +42,11 @@ function BookComponent({ data }: { data: BookInfo }) {
         <BookIsbn>ISBN：{data.isbn}</BookIsbn>
         <BookDescription>簡介：{data.description}</BookDescription>
       </BookDetail>
-    </>
+    </BookBox>
+  ) : (
+    <BookBox>
+      <BookTitle>查無書籍資料</BookTitle>
+    </BookBox>
   );
 }
 
@@ -52,13 +57,11 @@ export default function Post() {
 
   useEffect(() => {
     if (typeof id === "string") {
-      getBookInfo(id.replace("id:", ""), setBookData);
+      getBookInfo(id.replace("id:", "")).then(
+        (data: BookInfo | undefined) => data && setBookData(data)
+      );
     }
   }, [id]);
 
-  return (
-    <BookBox>
-      <BookComponent data={bookData} />
-    </BookBox>
-  );
+  return <BookComponent data={bookData} />;
 }

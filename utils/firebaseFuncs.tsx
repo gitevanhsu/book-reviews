@@ -1,5 +1,10 @@
 import { initializeApp } from "firebase/app";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  DocumentData,
+  QueryDocumentSnapshot,
+  setDoc,
+} from "firebase/firestore";
 import {
   getFirestore,
   collection,
@@ -13,7 +18,9 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
+import { UserState } from "../slices/userInfoSlice";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -80,44 +87,44 @@ export const addBooksData = async (bookIsbn: string) => {
   }
 };
 
-export const loadBooks = async (setBookDatas: Function, page: number) => {
+export const loadBooks = async (
+  page: number,
+  pageRef: QueryDocumentSnapshot<DocumentData> | undefined
+) => {
   const booksData: BookInfo[] = [];
-  if (page <= 1) {
+  if (page === 0) {
     const first = query(collection(db, "books"), limit(10));
     const documentSnapshots = await getDocs(first);
     documentSnapshots.forEach((doc) => {
       booksData.push(doc.data());
     });
-    setBookDatas(booksData);
-  } else {
-    const first = query(collection(db, "books"), limit(10 * page));
-    const documentSnapshots = await getDocs(first);
     const lastVisible =
       documentSnapshots.docs[documentSnapshots.docs.length - 1];
-    const next = query(
-      collection(db, "books"),
-      startAfter(lastVisible),
-      limit(10)
-    );
-    const newDoc = await getDocs(next);
-    newDoc.forEach((doc) => {
+
+    return { lastVisible, booksData };
+  } else {
+    const next = query(collection(db, "books"), startAfter(pageRef), limit(10));
+    const newDocs = await getDocs(next);
+    newDocs.forEach((doc) => {
       booksData.push(doc.data());
     });
-    setBookDatas(booksData);
+    const lastVisible = newDocs.docs[newDocs.docs.length - 1];
+    return { lastVisible, booksData };
   }
 };
 
-export const getBookInfo = async (bookISBN: string, setBookData: Function) => {
-  if (bookISBN) {
-    const docSnap = await getDoc(doc(db, "books", bookISBN));
-    setBookData(docSnap.data());
-  }
+export const getBookInfo = async (
+  bookISBN: string
+): Promise<BookInfo | undefined> => {
+  const docSnap = await getDoc(doc(db, "books", bookISBN));
+  return docSnap.data();
 };
 
 export const emailSignUp = async (
   name: string,
   email: string,
-  password: string
+  password: string,
+  intro: string
 ) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -130,29 +137,52 @@ export const emailSignUp = async (
       uid: user.uid,
       name,
       email,
-      password,
+      intro,
     };
-    await setDoc(doc(db, "users", user.uid), userData);
+    await setDoc(doc(db, "members", user.uid), userData);
+    return userData;
   } catch (error) {
     if (error) {
       const errorMessage = (error as Error).message;
-      if (errorMessage == "Firebase: Error (auth/email-already-in-use).") {
-        alert("以有帳號，請直接登入。");
-      }
+      errorMessage == "Firebase: Error (auth/email-already-in-use)." &&
+        alert("已有帳號，請直接登入。");
+      console.log(errorMessage);
     }
   }
 };
 export const emailSignIn = async (email: string, password: string) => {
-  const userCredential = await signInWithEmailAndPassword(
-    auth,
-    email,
-    password
-  );
   try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
     const user = userCredential.user;
-    console.log(user);
   } catch (error) {
     const errorMessage = (error as Error).message;
     console.log(errorMessage);
+    if (errorMessage === "Firebase: Error (auth/wrong-password).") {
+      alert("密碼錯誤請重新輸入。");
+    }
+    if (errorMessage === "Firebase: Error (auth/user-not-found).") {
+      alert("尚未有帳號，歡迎註冊喔！");
+    }
   }
+};
+
+export const signout = () => {
+  signOut(auth)
+    .then(() => {
+      console.log("Sign-out successful.");
+    })
+    .catch((error) => {});
+};
+
+export const getMemberData = async (
+  uid: string
+): Promise<UserState | undefined> => {
+  const docRef = doc(db, "members", uid);
+  const docData = await getDoc(docRef);
+  return docData.data();
 };
