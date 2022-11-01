@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import {
+  deleteDoc,
   doc,
   DocumentData,
   QueryDocumentSnapshot,
@@ -292,7 +293,30 @@ export const bookRating = async (
       disliked: [],
       subReviewsNumber: 0,
     };
-    console.log(reviewData);
     await setDoc(doc(db, "book_reviews", newBookRef.id), reviewData);
+  }
+};
+export const removeBookRating = async (
+  uid: string,
+  isbn: string,
+  rating: number,
+  review: BookReview
+) => {
+  const docData = await getDoc(doc(db, "books", isbn));
+  const memberReviewDoc = await getDoc(
+    doc(db, "book_reviews", review.reviewId!)
+  );
+  const memberReviewData = memberReviewDoc.data();
+  const bookData = docData.data();
+  if (bookData && memberReviewData && review.reviewId) {
+    bookData.ratingCount -= memberReviewData.rating;
+    const ratingMember = bookData.ratingMember.filter(
+      (member: string) => member !== uid
+    );
+    await setDoc(doc(db, "books", bookData.isbn), {
+      ...bookData,
+      ratingMember,
+    });
+    await deleteDoc(doc(db, "book_reviews", review.reviewId));
   }
 };

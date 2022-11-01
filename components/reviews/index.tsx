@@ -5,6 +5,7 @@ import {
   getBookReviews,
   BookReview,
   bookRating,
+  removeBookRating,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
@@ -78,10 +79,6 @@ export function LeaveRatingComponent({
             onClick={() => setRating(index)}
             onMouseEnter={() => setHover(index)}
             onMouseLeave={() => setHover(rating)}
-            onDoubleClick={() => {
-              setRating(0);
-              setHover(0);
-            }}
           >
             <LeaveRatingStart>&#9733;</LeaveRatingStart>
           </LeaveRatingButton>
@@ -94,6 +91,17 @@ export function LeaveRatingComponent({
         }}
       >
         送出評價
+      </SentRatingButton>
+      <SentRatingButton
+        onClick={() => {
+          if (userInfo.uid) {
+            removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
+            setRating(0);
+            setHover(0);
+          }
+        }}
+      >
+        移除評價
       </SentRatingButton>
     </LeaveRatingBox>
   ) : (
