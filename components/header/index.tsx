@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getMemberData } from "../../utils/firebaseFuncs";
 import { useDispatch } from "react-redux";
-import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
+import { userSignIn } from "../../slices/userInfoSlice";
 
 const Ul = styled.ul`
   display: flex;

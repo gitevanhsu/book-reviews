@@ -4,6 +4,7 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   getFirestore,
@@ -13,6 +14,7 @@ import {
   limit,
   query,
   startAfter,
+  where,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -48,7 +50,33 @@ export interface BookInfo {
   publisher?: string;
   publishedDate?: string;
   infoLink?: string;
+  ratingMember?: string[];
+  ratingCount?: number;
+  raviewCount?: number;
 }
+
+interface SubReview {
+  reviewId?: string;
+  commentUser?: string;
+  like?: string[];
+  time?: Timestamp;
+  content?: string;
+}
+export interface BookReview {
+  reviewId?: string;
+  booksIsbn?: string;
+  memberId?: string;
+  memberData?: { name?: string; img?: string };
+  rating?: string;
+  title?: string;
+  content?: string;
+  time?: Timestamp;
+  liked?: string[];
+  disliked?: string[];
+  subReviewsNumber?: number;
+  subReviews?: SubReview[];
+}
+export interface UserInformation {}
 
 export const addBooksData = async (bookIsbn: string) => {
   if (bookIsbn.length !== 13) {
@@ -185,4 +213,31 @@ export const getMemberData = async (
   const docRef = doc(db, "members", uid);
   const docData = await getDoc(docRef);
   return docData.data();
+};
+
+export const getBookReviews = async (isbn: string) => {
+  const reviewsArr: BookReview[] = [];
+  const userIds: string[] = [];
+  const reviews = await getDocs(
+    query(collection(db, "book_reviews"), where("booksIsbn", "==", isbn))
+  );
+  reviews.forEach((review) => {
+    reviewsArr.push(review.data());
+    userIds.push(review.data().memberId);
+  });
+
+  const requests = userIds.map(async (userId) => {
+    const docData = await getDoc(doc(db, "members", userId));
+    return docData.data();
+  });
+  const allMemberInfo = await Promise.all(requests);
+
+  const newReviewsArr = reviewsArr.map((review) => {
+    const userData = allMemberInfo.find(
+      (member) => member?.uid === review.memberId
+    );
+    return { ...review, memberData: userData };
+  });
+
+  return newReviewsArr;
 };

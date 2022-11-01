@@ -5,6 +5,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import noimg from "/public/img/noImg.png";
 import { DocumentData } from "firebase/firestore";
+import {
+  ReviewsComponent,
+  LeaveCommentComponent,
+  LeaveRatingComponent,
+} from "../../components/reviews";
 
 const BookBox = styled.div`
   display: flex;
@@ -27,6 +32,7 @@ function BookComponent({ data }: { data: BookInfo }) {
         alt={`${data.title}`}
         width={128}
         height={193}
+        priority
       />
       <BookDetail>
         <BookTitle>書名：{data.title}</BookTitle>
@@ -63,5 +69,18 @@ export default function Post() {
     }
   }, [id]);
 
-  return <BookComponent data={bookData} />;
+  return (
+    <>
+      <BookComponent data={bookData} />
+      <LeaveRatingComponent
+        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+      />
+      <LeaveCommentComponent
+        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+      />
+      <ReviewsComponent
+        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+      />
+    </>
+  );
 }
