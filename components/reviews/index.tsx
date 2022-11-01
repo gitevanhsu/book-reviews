@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import styled from "styled-components";
 import {
   getBookReviews,
   BookReview,
-  getMemberData,
+  bookRating,
 } from "../../utils/firebaseFuncs";
-import { UserState } from "../../slices/userInfoSlice";
+import { RootState } from "../../store";
+
+import male from "/public/img/reading-male.png";
+import { useSelector } from "react-redux";
 
 const BookReviewsBox = styled.div``;
 const BookReviewBox = styled.div``;
@@ -44,10 +48,23 @@ const SentRatingButton = styled(SentReviewButton)``;
 const ReviewMemberBox = styled.div``;
 const ReviewMemberName = styled.h3``;
 
-export function LeaveRatingComponent({ bookIsbn }: { bookIsbn: string }) {
+const SignMessage = styled.h2``;
+
+export function LeaveRatingComponent({
+  bookIsbn,
+  memberReview,
+}: {
+  bookIsbn: string;
+  memberReview: BookReview;
+}) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
-  return (
+
+  useEffect(() => {
+    memberReview?.rating && setRating(+memberReview.rating);
+  }, [memberReview]);
+  return userInfo.isSignIn ? (
     <LeaveRatingBox>
       {[...Array(5)].map((_, index) => {
         index += 1;
@@ -70,14 +87,32 @@ export function LeaveRatingComponent({ bookIsbn }: { bookIsbn: string }) {
           </LeaveRatingButton>
         );
       })}
-      <SentRatingButton>送出評價</SentRatingButton>
-      <SentRatingButton>編輯評價</SentRatingButton>
+      <SentRatingButton
+        onClick={() => {
+          userInfo.uid &&
+            bookRating(userInfo.uid, bookIsbn, rating, memberReview);
+        }}
+      >
+        送出評價
+      </SentRatingButton>
+    </LeaveRatingBox>
+  ) : (
+    <LeaveRatingBox>
+      <SignMessage>登入才能留下評價喔！</SignMessage>
     </LeaveRatingBox>
   );
 }
 
-export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
-  return (
+export function LeaveCommentComponent({
+  bookIsbn,
+  memberReview,
+}: {
+  bookIsbn: string;
+  memberReview: BookReview;
+}) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+
+  return userInfo.isSignIn ? (
     <LeaveReviewBox>
       <LeaveInputBox>
         <LeaveReviewTitle>評論標題</LeaveReviewTitle>
@@ -90,6 +125,10 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
       <SentReviewButton>送出評論</SentReviewButton>
       <SentReviewButton>編輯評論</SentReviewButton>
     </LeaveReviewBox>
+  ) : (
+    <LeaveReviewBox>
+      <SignMessage>登入才能留下評論喔！</SignMessage>
+    </LeaveReviewBox>
   );
 }
 
@@ -99,7 +138,6 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
   useEffect(() => {
     const getReviewsData = async () => {
       const reviews = await getBookReviews(bookIsbn);
-      console.log(reviews);
       setReviews(reviews);
     };
     getReviewsData();
@@ -113,10 +151,24 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
         const year = ReviewDate.getFullYear();
         const month = ReviewDate.getMonth() + 1;
         const date = ReviewDate.getDate();
-
+        if (review.title?.length === 0) return;
         return (
           <BookReviewBox key={review.reviewId}>
             <ReviewMemberBox>
+              <Image
+                src={
+                  review.memberData && review.memberData.url
+                    ? review.memberData.url
+                    : male
+                }
+                alt={
+                  review.memberData && review.memberData.name
+                    ? review.memberData.name
+                    : "user Img"
+                }
+                width={50}
+                height={50}
+              ></Image>
               <ReviewMemberName>
                 用戶名：{review.memberData && review.memberData.name}
               </ReviewMemberName>

@@ -66,8 +66,8 @@ export interface BookReview {
   reviewId?: string;
   booksIsbn?: string;
   memberId?: string;
-  memberData?: { name?: string; img?: string };
-  rating?: string;
+  memberData?: { name?: string; img?: string; url?: string };
+  rating?: number;
   title?: string;
   content?: string;
   time?: Timestamp;
@@ -76,7 +76,6 @@ export interface BookReview {
   subReviewsNumber?: number;
   subReviews?: SubReview[];
 }
-export interface UserInformation {}
 
 export const addBooksData = async (bookIsbn: string) => {
   if (bookIsbn.length !== 13) {
@@ -240,4 +239,60 @@ export const getBookReviews = async (isbn: string) => {
   });
 
   return newReviewsArr;
+};
+
+export const getMemberReviews = async (uid: string, isbn: string) => {
+  const reviewQuery = query(
+    collection(db, "book_reviews"),
+    where("booksIsbn", "==", isbn),
+    where("memberId", "==", uid)
+  );
+  const reviews = await getDocs(reviewQuery);
+  let returnReview: DocumentData[] = [];
+  reviews.forEach((review) => returnReview.push(review.data()));
+  return returnReview[0];
+};
+export const bookRating = async (
+  uid: string,
+  isbn: string,
+  rating: number,
+  review: BookReview
+) => {
+  const docData = await getDoc(doc(db, "books", isbn));
+  const bookData = docData.data();
+  if (
+    bookData &&
+    review &&
+    review.rating &&
+    bookData.ratingMember.includes(uid)
+  ) {
+    const oldReviewDoc = await getDoc(
+      doc(db, "book_reviews", review.reviewId!)
+    );
+    const oldReview = oldReviewDoc.data();
+    const newReview = { ...review, rating };
+    const ratingDiff = rating - oldReview?.rating;
+    bookData.ratingCount += ratingDiff;
+    await setDoc(doc(db, "books", bookData.isbn), bookData);
+    await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
+  } else if (bookData) {
+    bookData.ratingMember.push(uid);
+    bookData.ratingCount += rating;
+    await setDoc(doc(db, "books", bookData.isbn), bookData);
+    const newBookRef = doc(collection(db, "book_reviews"));
+    const reviewData = {
+      reviewId: newBookRef.id,
+      booksIsbn: isbn,
+      memberId: uid,
+      rating,
+      title: "",
+      content: "",
+      time: new Date(),
+      liked: [],
+      disliked: [],
+      subReviewsNumber: 0,
+    };
+    console.log(reviewData);
+    await setDoc(doc(db, "book_reviews", newBookRef.id), reviewData);
+  }
 };

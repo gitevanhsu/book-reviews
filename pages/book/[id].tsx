@@ -1,15 +1,22 @@
 import styled from "styled-components";
-import { getBookInfo, BookInfo } from "../../utils/firebaseFuncs";
+import {
+  getBookInfo,
+  BookInfo,
+  getMemberReviews,
+  BookReview,
+} from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import noimg from "/public/img/noImg.png";
-import { DocumentData } from "firebase/firestore";
+
 import {
   ReviewsComponent,
   LeaveCommentComponent,
   LeaveRatingComponent,
 } from "../../components/reviews";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
 
 const BookBox = styled.div`
   display: flex;
@@ -57,7 +64,9 @@ function BookComponent({ data }: { data: BookInfo }) {
 }
 
 export default function Post() {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
   const [bookData, setBookData] = useState<BookInfo>({});
+  const [memberReviews, setMemberReviews] = useState<BookReview>({});
   const router = useRouter();
   const { id } = router.query;
 
@@ -67,15 +76,22 @@ export default function Post() {
         (data: BookInfo | undefined) => data && setBookData(data)
       );
     }
-  }, [id]);
+    if (userInfo.isSignIn && userInfo.uid && typeof id === "string") {
+      getMemberReviews(userInfo.uid, id.replace("id:", "")).then((res) =>
+        setMemberReviews(res)
+      );
+    }
+  }, [id, userInfo.isSignIn, userInfo.uid]);
 
   return (
     <>
       <BookComponent data={bookData} />
       <LeaveRatingComponent
+        memberReview={memberReviews}
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
       />
       <LeaveCommentComponent
+        memberReview={memberReviews}
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
       />
       <ReviewsComponent
