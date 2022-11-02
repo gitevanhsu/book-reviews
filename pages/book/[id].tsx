@@ -1,9 +1,11 @@
 import styled from "styled-components";
+import { doc, onSnapshot } from "firebase/firestore";
 import {
   getBookInfo,
   BookInfo,
   getMemberReviews,
   BookReview,
+  db,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -76,10 +78,11 @@ export default function Post() {
         (data: BookInfo | undefined) => data && setBookData(data)
       );
     }
+
     if (userInfo.isSignIn && userInfo.uid && typeof id === "string") {
-      getMemberReviews(userInfo.uid, id.replace("id:", "")).then((res) =>
-        setMemberReviews(res)
-      );
+      getMemberReviews(userInfo.uid, id.replace("id:", "")).then((res) => {
+        setMemberReviews(res);
+      });
     }
   }, [id, userInfo.isSignIn, userInfo.uid]);
 
@@ -90,10 +93,7 @@ export default function Post() {
         memberReview={memberReviews}
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
       />
-      <LeaveCommentComponent
-        memberReview={memberReviews}
-        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
-      />
+
       <ReviewsComponent
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
       />
