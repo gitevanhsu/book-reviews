@@ -262,6 +262,10 @@ export const getMemberReviews = async (uid: string, isbn: string) => {
 };
 
 export const bookRating = async (uid: string, isbn: string, rating: number) => {
+  if (rating === 0) {
+    alert("您尚未評價喔！");
+    return;
+  }
   const docData = await getDoc(doc(db, "books", isbn));
   const bookData = docData.data();
   const review = (await getMemberReviews(uid, isbn)) as BookReview;
