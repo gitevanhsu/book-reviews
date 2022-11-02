@@ -3,6 +3,7 @@ import {
   deleteDoc,
   doc,
   DocumentData,
+  increment,
   QueryDocumentSnapshot,
   setDoc,
   Timestamp,
@@ -16,6 +17,7 @@ import {
   query,
   startAfter,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -60,12 +62,13 @@ export interface BookInfo {
   reviewCount?: number;
 }
 
-interface SubReview {
+export interface SubReview {
   reviewId?: string;
   commentUser?: string;
   like?: string[];
   time?: Timestamp;
   content?: string;
+  memberData?: { uid?: string; name?: string; img?: string; url?: string };
 }
 export interface BookReview {
   reviewId?: string;
@@ -381,4 +384,94 @@ export const editReview = async (
 ) => {
   const newReview = { ...review, title, content };
   await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
+};
+
+export const showSubReview = async (review: BookReview) => {
+  const reviewId = review.reviewId;
+  const subreviewsArr: SubReview[] = [];
+  const userIds: string[] = [];
+  const subreviewDocs = await getDocs(
+    query(collection(db, `book_reviews/${reviewId}/subreviews`))
+  );
+  subreviewDocs.forEach((doc) => {
+    subreviewsArr.push(doc.data());
+    userIds.push(doc.data().commentUser);
+  });
+  const requests = userIds.map(async (userId) => {
+    const docData = await getDoc(doc(db, "members", userId));
+    return docData.data();
+  });
+  const allMemberInfo = (await Promise.all(requests)) as {
+    uid?: string;
+    name?: string;
+    img?: string;
+    url?: string;
+  }[];
+  const newSubreviews = subreviewsArr.map((subreview) => {
+    const userData = allMemberInfo.find(
+      (member) => member.uid === subreview.commentUser
+    );
+    return { ...subreview, memberData: userData };
+  });
+  return newSubreviews;
+};
+
+export const sentSubReview = async (
+  review: BookReview,
+  input: string,
+  uid: string
+) => {
+  if (input.trim().length === 0) {
+    alert("請輸入內容");
+    return;
+  }
+  const newSubReviewRef = doc(
+    collection(db, `book_reviews/${review.reviewId}/subreviews`)
+  );
+
+  const subReviewData = {
+    reviewId: newSubReviewRef.id,
+    commentUser: uid,
+    like: [],
+    time: new Date(),
+    content: input,
+  };
+
+  await setDoc(
+    doc(db, `book_reviews/${review.reviewId}/subreviews`, newSubReviewRef.id),
+    subReviewData
+  );
+
+  review.reviewId &&
+    (await updateDoc(doc(db, "book_reviews", review.reviewId), {
+      subReviewsNumber: increment(1),
+    }));
+};
+
+export const likeSubReview = async (
+  review: BookReview,
+  subreview: SubReview,
+  uid: string
+) => {
+  if (subreview.reviewId) {
+    const docData = await getDoc(
+      doc(db, `book_reviews/${review.reviewId}/subreviews`, subreview.reviewId)
+    );
+    const subreviewData = docData.data();
+    if (subreviewData && subreviewData.like.includes(uid)) return;
+    if (subreviewData) {
+      subreviewData.like.push(uid);
+      console.log(subreviewData);
+      if (review.reviewId && subreview.reviewId) {
+        await setDoc(
+          doc(
+            db,
+            `book_reviews/${review.reviewId}/subreviews`,
+            subreview.reviewId
+          ),
+          subreviewData
+        );
+      }
+    }
+  }
 };
