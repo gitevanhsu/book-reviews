@@ -3,6 +3,7 @@ import {
   deleteDoc,
   doc,
   DocumentData,
+  increment,
   QueryDocumentSnapshot,
   setDoc,
   Timestamp,
@@ -16,6 +17,7 @@ import {
   query,
   startAfter,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -60,12 +62,14 @@ export interface BookInfo {
   reviewCount?: number;
 }
 
-interface SubReview {
+export interface SubReview {
   reviewId?: string;
   commentUser?: string;
   like?: string[];
+  likeCount?: number;
   time?: Timestamp;
   content?: string;
+  memberData?: { uid?: string; name?: string; img?: string; url?: string };
 }
 export interface BookReview {
   reviewId?: string;
@@ -78,6 +82,7 @@ export interface BookReview {
   time?: Timestamp;
   liked?: string[];
   disliked?: string[];
+  reviewRating?: number;
   subReviewsNumber?: number;
   subReviews?: SubReview[];
 }
@@ -290,7 +295,7 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     await setDoc(doc(db, "books", bookData.isbn), bookData);
     const newBookRef = doc(reviewsRef);
     const reviewData = {
-      reviewId: newBookRef.id,
+      reviewId: `${+new Date()}`,
       booksIsbn: isbn,
       memberId: uid,
       rating,
@@ -380,5 +385,146 @@ export const editReview = async (
   content: string
 ) => {
   const newReview = { ...review, title, content };
+  delete newReview.memberData;
   await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
+};
+
+export const showSubReview = async (review: BookReview) => {
+  const reviewId = review.reviewId;
+  const subreviewsArr: SubReview[] = [];
+  const userIds: string[] = [];
+  const subreviewDocs = await getDocs(
+    query(collection(db, `book_reviews/${reviewId}/subreviews`))
+  );
+  subreviewDocs.forEach((doc) => {
+    subreviewsArr.push(doc.data());
+    userIds.push(doc.data().commentUser);
+  });
+  const requests = userIds.map(async (userId) => {
+    const docData = await getDoc(doc(db, "members", userId));
+    return docData.data();
+  });
+  const allMemberInfo = (await Promise.all(requests)) as {
+    uid?: string;
+    name?: string;
+    img?: string;
+    url?: string;
+  }[];
+  const newSubreviews = subreviewsArr.map((subreview) => {
+    const userData = allMemberInfo.find(
+      (member) => member.uid === subreview.commentUser
+    );
+    return { ...subreview, memberData: userData };
+  });
+  return newSubreviews;
+};
+
+export const sentSubReview = async (
+  review: BookReview,
+  input: string,
+  uid: string
+) => {
+  if (input.trim().length === 0) {
+    alert("請輸入內容");
+    return;
+  }
+  const newSubReviewRef = doc(
+    collection(db, `book_reviews/${review.reviewId}/subreviews`)
+  );
+
+  const subReviewData = {
+    reviewId: `${+new Date()}`,
+    commentUser: uid,
+    like: [],
+    likeCount: 0,
+    time: new Date(),
+    content: input,
+  };
+
+  await setDoc(
+    doc(
+      db,
+      `book_reviews/${review.reviewId}/subreviews`,
+      `${+subReviewData.time}`
+    ),
+    subReviewData
+  );
+
+  review.reviewId &&
+    (await updateDoc(doc(db, "book_reviews", review.reviewId), {
+      subReviewsNumber: increment(1),
+    }));
+};
+
+export const likeSubReview = async (
+  review: BookReview,
+  subreview: SubReview,
+  uid: string
+) => {
+  if (subreview.reviewId) {
+    const docData = await getDoc(
+      doc(db, `book_reviews/${review.reviewId}/subreviews`, subreview.reviewId)
+    );
+    const subreviewData = docData.data();
+    if (subreviewData && subreviewData.like.includes(uid)) return;
+    if (subreviewData) {
+      subreviewData.like.push(uid);
+      subreviewData.likeCount += 1;
+
+      if (review.reviewId && subreview.reviewId) {
+        await setDoc(
+          doc(
+            db,
+            `book_reviews/${review.reviewId}/subreviews`,
+            subreview.reviewId
+          ),
+          subreviewData
+        );
+      }
+    }
+  }
+};
+
+export const upperReview = async (uid: string, review: BookReview) => {
+  console.log("UPPER!");
+  const reviewId = review.reviewId;
+  const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
+  const reviewData = reviewDoc.data() as BookReview;
+  const liked = reviewData.liked?.filter((id) => id !== uid) || [];
+  const disliked = reviewData.disliked?.filter((id) => id !== uid) || [];
+  liked?.push(uid);
+  const reviewRating = liked.length - disliked.length;
+  const newReviewData = {
+    ...reviewData,
+    disliked,
+    liked,
+    reviewRating,
+  };
+  newReviewData.reviewId &&
+    (await setDoc(
+      doc(db, "book_reviews", newReviewData.reviewId),
+      newReviewData
+    ));
+};
+export const lowerReview = async (uid: string, review: BookReview) => {
+  console.log("LOWER!");
+  const reviewId = review.reviewId;
+  const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
+  const reviewData = reviewDoc.data() as BookReview;
+
+  const liked = reviewData.liked?.filter((id) => id !== uid) || [];
+  const disliked = reviewData.disliked?.filter((id) => id !== uid) || [];
+  disliked?.push(uid);
+  const reviewRating = liked.length - disliked.length;
+  const newReviewData = {
+    ...reviewData,
+    disliked,
+    liked,
+    reviewRating,
+  };
+  newReviewData.reviewId &&
+    (await setDoc(
+      doc(db, "book_reviews", newReviewData.reviewId),
+      newReviewData
+    ));
 };

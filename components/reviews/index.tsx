@@ -10,6 +10,12 @@ import {
   reviewsRef,
   db,
   editReview,
+  showSubReview,
+  SubReview,
+  sentSubReview,
+  likeSubReview,
+  upperReview,
+  lowerReview,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
@@ -22,10 +28,15 @@ import {
   where,
   doc,
   DocumentData,
+  collection,
+  orderBy,
 } from "firebase/firestore";
 
 const BookReviewsBox = styled.div``;
-const BookReviewBox = styled.div``;
+const BookReviewBox = styled.div`
+  padding-left: 50px;
+  position: relative;
+`;
 const ReviewTitle = styled.h2``;
 const ReviewContent = styled.h2``;
 const ReviewRating = styled.p``;
@@ -67,9 +78,51 @@ const SignMessage = styled.h2``;
 
 const MemberReview = styled.div`
   border: solid 1px;
-  display: inline-block;
 `;
 const EditReviewButton = styled(SentReviewButton)``;
+
+const SubReviewsCount = styled.p``;
+const ShowSubReviewButton = styled(SentReviewButton)``;
+
+const SubReviewsBox = styled.div`
+  max-height: 200px;
+  overflow: auto;
+`;
+const SubReviewBox = styled.div``;
+
+const SubReviewLikes = styled.p``;
+const SubReviewContent = styled.p``;
+const SubReviewTime = styled.p``;
+const SubReviewInput = styled.input``;
+const SubReviewSubmit = styled(SentReviewButton)``;
+const SubReviewLikeButton = styled(SentReviewButton)``;
+
+const RatingReviewBox = styled.div`
+  display: inline-block;
+  text-align: center;
+  border: solid 1px;
+  position: absolute;
+  top: 0;
+  left: 0;
+`;
+const RatingCount = styled.p`
+  border: solid 1px;
+`;
+const RatingReviewButtonUp = styled.div`
+  cursor: pointer;
+  display: inline-block;
+  height: 40px;
+  width: 40px;
+  border: solid 1px;
+  background-color: #f00;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  &:hover {
+    opacity: 0.5;
+  }
+`;
+const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+`;
 
 export function LeaveRatingComponent({
   bookIsbn,
@@ -87,6 +140,7 @@ export function LeaveRatingComponent({
   }, [memberReview]);
   return userInfo.isSignIn ? (
     <LeaveRatingBox>
+      <ReviewMemberName>您的評價</ReviewMemberName>
       {[...Array(5)].map((_, index) => {
         index += 1;
         return (
@@ -170,6 +224,140 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
     <LeaveReviewBox>
       <SignMessage>登入才能留下評論喔！</SignMessage>
     </LeaveReviewBox>
+  );
+}
+
+function SentSubReviewComponent({ review }: { review: BookReview }) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <SubReviewInput ref={inputRef} />
+      <SubReviewSubmit
+        onClick={() => {
+          inputRef &&
+            inputRef.current &&
+            userInfo.uid &&
+            sentSubReview(review, inputRef.current.value, userInfo.uid);
+        }}
+      >
+        送出
+      </SubReviewSubmit>
+    </>
+  );
+}
+
+function SubReviewComponent({ review }: { review: BookReview }) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
+  const [subReviews, setSubReviews] = useState<SubReview[]>();
+
+  useEffect(() => {
+    let unsubscribe: Function;
+    const getSubReviewsData = async () => {
+      const reviewId = review.reviewId;
+      const reviewQuery = query(
+        collection(db, `book_reviews/${reviewId}/subreviews`),
+        orderBy("likeCount", "desc")
+      );
+      unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
+        // setSubReviews(undefined);
+        const subreviewsArr: SubReview[] = [];
+        const userIds: string[] = [];
+
+        querySnapshot.forEach((doc) => {
+          subreviewsArr.push(doc.data());
+          userIds.push(doc.data().commentUser);
+        });
+        const requests = userIds.map(async (userId) => {
+          const docData = await getDoc(doc(db, "members", userId));
+          return docData.data();
+        });
+        const allMemberInfo = (await Promise.all(requests)) as {
+          uid?: string;
+          name?: string;
+          img?: string;
+          url?: string;
+        }[];
+        const newSubreviews = subreviewsArr.map((subreview) => {
+          const userData = allMemberInfo.find(
+            (member) => member.uid === subreview.commentUser
+          );
+          return { ...subreview, memberData: userData };
+        });
+        setSubReviews(newSubreviews);
+      });
+    };
+    getSubReviewsData();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [review.reviewId]);
+  return showSubReviews ? (
+    <>
+      <SubReviewsBox>
+        <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
+        {subReviews &&
+          subReviews.map((subreview) => {
+            const ReviewDate = new Date(
+              subreview.time ? subreview.time.seconds * 1000 : ""
+            );
+            const year = ReviewDate.getFullYear();
+            const month = ReviewDate.getMonth() + 1;
+            const date = ReviewDate.getDate();
+            return (
+              <SubReviewBox key={subreview.reviewId}>
+                <Image
+                  src={
+                    subreview.memberData && subreview.memberData.url
+                      ? subreview.memberData.url
+                      : male
+                  }
+                  alt={
+                    subreview.memberData && subreview.memberData.name
+                      ? subreview.memberData.name
+                      : "user Img"
+                  }
+                  width={25}
+                  height={25}
+                ></Image>
+                <ReviewMemberName>
+                  {subreview.memberData?.name}
+                </ReviewMemberName>
+                <SubReviewContent>{subreview.content}</SubReviewContent>
+                <SubReviewTime>
+                  評價時間：{`${year}-${month}-${date}`}
+                </SubReviewTime>
+                <SubReviewLikes>
+                  {subreview.like?.length} Likes
+                  <SubReviewLikeButton
+                    onClick={() => {
+                      userInfo.uid &&
+                        likeSubReview(review, subreview, userInfo.uid);
+                    }}
+                  >
+                    喜歡
+                  </SubReviewLikeButton>
+                </SubReviewLikes>
+              </SubReviewBox>
+            );
+          })}
+      </SubReviewsBox>
+      <SentSubReviewComponent review={review} />
+    </>
+  ) : (
+    <>
+      <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
+      <ShowSubReviewButton
+        onClick={() => {
+          setShowSubReviews(true);
+        }}
+      >
+        顯示回應
+      </ShowSubReviewButton>
+    </>
   );
 }
 
@@ -265,19 +453,23 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [reviews, setReviews] = useState<BookReview[]>([]);
   const [memberReview, setMemberReview] = useState<BookReview>();
-  const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
-
   useEffect(() => {
     let unsubscribe: Function;
     const getReviewsData = async () => {
-      const reviewQuery = query(reviewsRef, where("booksIsbn", "==", bookIsbn));
+      const reviewQuery = query(
+        reviewsRef,
+        // where("booksIsbn", "==", bookIsbn)
+        where("reviewRating", ">", -999999),
+        orderBy("reviewRating", "desc")
+      );
       unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
         setMemberReview(undefined);
         const reviewsArr: BookReview[] = [];
         const userIds: string[] = [];
 
         querySnapshot.forEach((review) => {
-          reviewsArr.push(review.data());
+          review.data().booksIsbn === bookIsbn &&
+            reviewsArr.push(review.data());
           userIds.push(review.data().memberId);
         });
         const requests = userIds.map(async (userId) => {
@@ -324,34 +516,53 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
           const date = ReviewDate.getDate();
           if (review.title?.length === 0) return;
           return (
-            <BookReviewBox key={review.reviewId}>
-              <ReviewMemberBox>
-                <Image
-                  src={
-                    review.memberData && review.memberData.url
-                      ? review.memberData.url
-                      : male
-                  }
-                  alt={
-                    review.memberData && review.memberData.name
-                      ? review.memberData.name
-                      : "user Img"
-                  }
-                  width={50}
-                  height={50}
-                ></Image>
-                <ReviewMemberName>
-                  用戶名：{review.memberData && review.memberData.name}
-                </ReviewMemberName>
-              </ReviewMemberBox>
-              <ReviewTitle>評價標題：{review.title}</ReviewTitle>
-              <ReviewContent>評價內容：{review.content}</ReviewContent>
-              <ReviewRating>評價星星：{review.rating}</ReviewRating>
-              <ReviewRating>
-                評價時間：{`${year}-${month}-${date}`}
-              </ReviewRating>
-              {review.subReviewsNumber}
-            </BookReviewBox>
+            <>
+              <BookReviewBox key={review.reviewId}>
+                <ReviewMemberBox>
+                  <Image
+                    src={
+                      review.memberData && review.memberData.url
+                        ? review.memberData.url
+                        : male
+                    }
+                    alt={
+                      review.memberData && review.memberData.name
+                        ? review.memberData.name
+                        : "user Img"
+                    }
+                    width={50}
+                    height={50}
+                  ></Image>
+                  <ReviewMemberName>
+                    用戶名：{review.memberData && review.memberData.name}
+                  </ReviewMemberName>
+                </ReviewMemberBox>
+                <ReviewTitle>評價標題：{review.title}</ReviewTitle>
+                <ReviewContent>評價內容：{review.content}</ReviewContent>
+                <ReviewRating>評價星星：{review.rating}</ReviewRating>
+                <ReviewRating>
+                  評價時間：{`${year}-${month}-${date}`}
+                </ReviewRating>
+                <RatingReviewBox>
+                  <RatingReviewButtonUp
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        upperReview(userInfo.uid, review);
+                      }
+                    }}
+                  ></RatingReviewButtonUp>
+                  <RatingCount>{review.reviewRating}</RatingCount>
+                  <RatingReviewButtonDown
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        lowerReview(userInfo.uid, review);
+                      }
+                    }}
+                  ></RatingReviewButtonDown>
+                </RatingReviewBox>
+                <SubReviewComponent review={review} />
+              </BookReviewBox>
+            </>
           );
         })
       ) : (
