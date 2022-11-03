@@ -66,6 +66,7 @@ export interface SubReview {
   reviewId?: string;
   commentUser?: string;
   like?: string[];
+  likeCount?: number;
   time?: Timestamp;
   content?: string;
   memberData?: { uid?: string; name?: string; img?: string; url?: string };
@@ -293,7 +294,7 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     await setDoc(doc(db, "books", bookData.isbn), bookData);
     const newBookRef = doc(reviewsRef);
     const reviewData = {
-      reviewId: newBookRef.id,
+      reviewId: `${+new Date()}`,
       booksIsbn: isbn,
       memberId: uid,
       rating,
@@ -430,15 +431,20 @@ export const sentSubReview = async (
   );
 
   const subReviewData = {
-    reviewId: newSubReviewRef.id,
+    reviewId: `${+new Date()}`,
     commentUser: uid,
     like: [],
+    likeCount: 0,
     time: new Date(),
     content: input,
   };
 
   await setDoc(
-    doc(db, `book_reviews/${review.reviewId}/subreviews`, newSubReviewRef.id),
+    doc(
+      db,
+      `book_reviews/${review.reviewId}/subreviews`,
+      `${+subReviewData.time}`
+    ),
     subReviewData
   );
 
@@ -461,7 +467,8 @@ export const likeSubReview = async (
     if (subreviewData && subreviewData.like.includes(uid)) return;
     if (subreviewData) {
       subreviewData.like.push(uid);
-      console.log(subreviewData);
+      subreviewData.likeCount += 1;
+
       if (review.reviewId && subreview.reviewId) {
         await setDoc(
           doc(

@@ -26,6 +26,8 @@ import {
   where,
   doc,
   DocumentData,
+  collection,
+  orderBy,
 } from "firebase/firestore";
 
 const BookReviewsBox = styled.div``;
@@ -76,9 +78,12 @@ const MemberReview = styled.div`
 const EditReviewButton = styled(SentReviewButton)``;
 
 const SubReviewsCount = styled.p``;
-const ShowSubReviewButton = styled.button``;
+const ShowSubReviewButton = styled(SentReviewButton)``;
 
-const SubReviewsBox = styled.div``;
+const SubReviewsBox = styled.div`
+  max-height: 200px;
+  overflow: auto;
+`;
 const SubReviewBox = styled.div``;
 
 const SubReviewLikes = styled.p``;
@@ -216,58 +221,100 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   const [subReviews, setSubReviews] = useState<SubReview[]>();
 
   useEffect(() => {
-    if (showSubReviews) {
-      showSubReview(review).then((data) => setSubReviews(data));
-    }
-  }, [showSubReviews, review]);
+    let unsubscribe: Function;
+    const getSubReviewsData = async () => {
+      const reviewId = review.reviewId;
+      const reviewQuery = query(
+        collection(db, `book_reviews/${reviewId}/subreviews`),
+        orderBy("likeCount", "desc")
+      );
+      unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
+        // setSubReviews(undefined);
+        const subreviewsArr: SubReview[] = [];
+        const userIds: string[] = [];
+
+        querySnapshot.forEach((doc) => {
+          subreviewsArr.push(doc.data());
+          userIds.push(doc.data().commentUser);
+        });
+        const requests = userIds.map(async (userId) => {
+          const docData = await getDoc(doc(db, "members", userId));
+          return docData.data();
+        });
+        const allMemberInfo = (await Promise.all(requests)) as {
+          uid?: string;
+          name?: string;
+          img?: string;
+          url?: string;
+        }[];
+        const newSubreviews = subreviewsArr.map((subreview) => {
+          const userData = allMemberInfo.find(
+            (member) => member.uid === subreview.commentUser
+          );
+          return { ...subreview, memberData: userData };
+        });
+        setSubReviews(newSubreviews);
+      });
+    };
+    getSubReviewsData();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [review.reviewId]);
   return showSubReviews ? (
-    <SubReviewsBox>
-      <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
-      {subReviews &&
-        subReviews.map((subreview) => {
-          const ReviewDate = new Date(
-            subreview.time ? subreview.time?.seconds * 1000 : ""
-          );
-          const year = ReviewDate.getFullYear();
-          const month = ReviewDate.getMonth() + 1;
-          const date = ReviewDate.getDate();
-          return (
-            <SubReviewBox key={subreview.reviewId}>
-              <Image
-                src={
-                  subreview.memberData && subreview.memberData.url
-                    ? subreview.memberData.url
-                    : male
-                }
-                alt={
-                  subreview.memberData && subreview.memberData.name
-                    ? subreview.memberData.name
-                    : "user Img"
-                }
-                width={25}
-                height={25}
-              ></Image>
-              <ReviewMemberName>{subreview.memberData?.name}</ReviewMemberName>
-              <SubReviewContent>{subreview.content}</SubReviewContent>
-              <SubReviewTime>
-                評價時間：{`${year}-${month}-${date}`}
-              </SubReviewTime>
-              <SubReviewLikes>
-                {subreview.like?.length} Likes{" "}
-                <SubReviewLikeButton
-                  onClick={() => {
-                    userInfo.uid &&
-                      likeSubReview(review, subreview, userInfo.uid);
-                  }}
-                >
-                  喜歡
-                </SubReviewLikeButton>
-              </SubReviewLikes>
-            </SubReviewBox>
-          );
-        })}
+    <>
+      <SubReviewsBox>
+        <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
+        {subReviews &&
+          subReviews.map((subreview) => {
+            const ReviewDate = new Date(
+              subreview.time ? subreview.time.seconds * 1000 : ""
+            );
+            const year = ReviewDate.getFullYear();
+            const month = ReviewDate.getMonth() + 1;
+            const date = ReviewDate.getDate();
+            return (
+              <SubReviewBox key={subreview.reviewId}>
+                <Image
+                  src={
+                    subreview.memberData && subreview.memberData.url
+                      ? subreview.memberData.url
+                      : male
+                  }
+                  alt={
+                    subreview.memberData && subreview.memberData.name
+                      ? subreview.memberData.name
+                      : "user Img"
+                  }
+                  width={25}
+                  height={25}
+                ></Image>
+                <ReviewMemberName>
+                  {subreview.memberData?.name}
+                </ReviewMemberName>
+                <SubReviewContent>{subreview.content}</SubReviewContent>
+                <SubReviewTime>
+                  評價時間：{`${year}-${month}-${date}`}
+                </SubReviewTime>
+                <SubReviewLikes>
+                  {subreview.like?.length} Likes
+                  <SubReviewLikeButton
+                    onClick={() => {
+                      userInfo.uid &&
+                        likeSubReview(review, subreview, userInfo.uid);
+                    }}
+                  >
+                    喜歡
+                  </SubReviewLikeButton>
+                </SubReviewLikes>
+              </SubReviewBox>
+            );
+          })}
+      </SubReviewsBox>
       <SentSubReviewComponent review={review} />
-    </SubReviewsBox>
+    </>
   ) : (
     <>
       <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
