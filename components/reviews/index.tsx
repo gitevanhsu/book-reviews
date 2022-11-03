@@ -14,6 +14,8 @@ import {
   SubReview,
   sentSubReview,
   likeSubReview,
+  upperReview,
+  lowerReview,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
@@ -31,7 +33,10 @@ import {
 } from "firebase/firestore";
 
 const BookReviewsBox = styled.div``;
-const BookReviewBox = styled.div``;
+const BookReviewBox = styled.div`
+  padding-left: 50px;
+  position: relative;
+`;
 const ReviewTitle = styled.h2``;
 const ReviewContent = styled.h2``;
 const ReviewRating = styled.p``;
@@ -73,7 +78,6 @@ const SignMessage = styled.h2``;
 
 const MemberReview = styled.div`
   border: solid 1px;
-  display: inline-block;
 `;
 const EditReviewButton = styled(SentReviewButton)``;
 
@@ -93,6 +97,33 @@ const SubReviewInput = styled.input``;
 const SubReviewSubmit = styled(SentReviewButton)``;
 const SubReviewLikeButton = styled(SentReviewButton)``;
 
+const RatingReviewBox = styled.div`
+  display: inline-block;
+  text-align: center;
+  border: solid 1px;
+  position: absolute;
+  top: 0;
+  left: 0;
+`;
+const RatingCount = styled.p`
+  border: solid 1px;
+`;
+const RatingReviewButtonUp = styled.div`
+  cursor: pointer;
+  display: inline-block;
+  height: 40px;
+  width: 40px;
+  border: solid 1px;
+  background-color: #f00;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  &:hover {
+    opacity: 0.5;
+  }
+`;
+const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+`;
+
 export function LeaveRatingComponent({
   bookIsbn,
   memberReview,
@@ -109,6 +140,7 @@ export function LeaveRatingComponent({
   }, [memberReview]);
   return userInfo.isSignIn ? (
     <LeaveRatingBox>
+      <ReviewMemberName>您的評價</ReviewMemberName>
       {[...Array(5)].map((_, index) => {
         index += 1;
         return (
@@ -421,18 +453,23 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [reviews, setReviews] = useState<BookReview[]>([]);
   const [memberReview, setMemberReview] = useState<BookReview>();
-
   useEffect(() => {
     let unsubscribe: Function;
     const getReviewsData = async () => {
-      const reviewQuery = query(reviewsRef, where("booksIsbn", "==", bookIsbn));
+      const reviewQuery = query(
+        reviewsRef,
+        // where("booksIsbn", "==", bookIsbn)
+        where("reviewRating", ">", -999999),
+        orderBy("reviewRating", "desc")
+      );
       unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
         setMemberReview(undefined);
         const reviewsArr: BookReview[] = [];
         const userIds: string[] = [];
 
         querySnapshot.forEach((review) => {
-          reviewsArr.push(review.data());
+          review.data().booksIsbn === bookIsbn &&
+            reviewsArr.push(review.data());
           userIds.push(review.data().memberId);
         });
         const requests = userIds.map(async (userId) => {
@@ -479,34 +516,53 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
           const date = ReviewDate.getDate();
           if (review.title?.length === 0) return;
           return (
-            <BookReviewBox key={review.reviewId}>
-              <ReviewMemberBox>
-                <Image
-                  src={
-                    review.memberData && review.memberData.url
-                      ? review.memberData.url
-                      : male
-                  }
-                  alt={
-                    review.memberData && review.memberData.name
-                      ? review.memberData.name
-                      : "user Img"
-                  }
-                  width={50}
-                  height={50}
-                ></Image>
-                <ReviewMemberName>
-                  用戶名：{review.memberData && review.memberData.name}
-                </ReviewMemberName>
-              </ReviewMemberBox>
-              <ReviewTitle>評價標題：{review.title}</ReviewTitle>
-              <ReviewContent>評價內容：{review.content}</ReviewContent>
-              <ReviewRating>評價星星：{review.rating}</ReviewRating>
-              <ReviewRating>
-                評價時間：{`${year}-${month}-${date}`}
-              </ReviewRating>
-              <SubReviewComponent review={review} />
-            </BookReviewBox>
+            <>
+              <BookReviewBox key={review.reviewId}>
+                <ReviewMemberBox>
+                  <Image
+                    src={
+                      review.memberData && review.memberData.url
+                        ? review.memberData.url
+                        : male
+                    }
+                    alt={
+                      review.memberData && review.memberData.name
+                        ? review.memberData.name
+                        : "user Img"
+                    }
+                    width={50}
+                    height={50}
+                  ></Image>
+                  <ReviewMemberName>
+                    用戶名：{review.memberData && review.memberData.name}
+                  </ReviewMemberName>
+                </ReviewMemberBox>
+                <ReviewTitle>評價標題：{review.title}</ReviewTitle>
+                <ReviewContent>評價內容：{review.content}</ReviewContent>
+                <ReviewRating>評價星星：{review.rating}</ReviewRating>
+                <ReviewRating>
+                  評價時間：{`${year}-${month}-${date}`}
+                </ReviewRating>
+                <RatingReviewBox>
+                  <RatingReviewButtonUp
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        upperReview(userInfo.uid, review);
+                      }
+                    }}
+                  ></RatingReviewButtonUp>
+                  <RatingCount>{review.reviewRating}</RatingCount>
+                  <RatingReviewButtonDown
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        lowerReview(userInfo.uid, review);
+                      }
+                    }}
+                  ></RatingReviewButtonDown>
+                </RatingReviewBox>
+                <SubReviewComponent review={review} />
+              </BookReviewBox>
+            </>
           );
         })
       ) : (

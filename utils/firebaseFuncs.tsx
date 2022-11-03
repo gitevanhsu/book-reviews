@@ -82,6 +82,7 @@ export interface BookReview {
   time?: Timestamp;
   liked?: string[];
   disliked?: string[];
+  reviewRating?: number;
   subReviewsNumber?: number;
   subReviews?: SubReview[];
 }
@@ -384,6 +385,7 @@ export const editReview = async (
   content: string
 ) => {
   const newReview = { ...review, title, content };
+  delete newReview.memberData;
   await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
 };
 
@@ -481,4 +483,48 @@ export const likeSubReview = async (
       }
     }
   }
+};
+
+export const upperReview = async (uid: string, review: BookReview) => {
+  console.log("UPPER!");
+  const reviewId = review.reviewId;
+  const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
+  const reviewData = reviewDoc.data() as BookReview;
+  const liked = reviewData.liked?.filter((id) => id !== uid) || [];
+  const disliked = reviewData.disliked?.filter((id) => id !== uid) || [];
+  liked?.push(uid);
+  const reviewRating = liked.length - disliked.length;
+  const newReviewData = {
+    ...reviewData,
+    disliked,
+    liked,
+    reviewRating,
+  };
+  newReviewData.reviewId &&
+    (await setDoc(
+      doc(db, "book_reviews", newReviewData.reviewId),
+      newReviewData
+    ));
+};
+export const lowerReview = async (uid: string, review: BookReview) => {
+  console.log("LOWER!");
+  const reviewId = review.reviewId;
+  const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
+  const reviewData = reviewDoc.data() as BookReview;
+
+  const liked = reviewData.liked?.filter((id) => id !== uid) || [];
+  const disliked = reviewData.disliked?.filter((id) => id !== uid) || [];
+  disliked?.push(uid);
+  const reviewRating = liked.length - disliked.length;
+  const newReviewData = {
+    ...reviewData,
+    disliked,
+    liked,
+    reviewRating,
+  };
+  newReviewData.reviewId &&
+    (await setDoc(
+      doc(db, "book_reviews", newReviewData.reviewId),
+      newReviewData
+    ));
 };
