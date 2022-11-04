@@ -101,17 +101,17 @@ export const addBooksData = async (bookIsbn: string) => {
     try {
       const bookInfo: BookInfo = {
         isbn: bookIsbn,
-        title: items[0].volumeInfo.title,
+        title: items[0].volumeInfo.title || "",
         subtitle: items[0].volumeInfo.subtitle || "",
-        authors: items[0].volumeInfo.authors,
-        categories: items[0].volumeInfo.categories,
+        authors: items[0].volumeInfo.authors || "",
+        categories: items[0].volumeInfo.categories || "",
         thumbnail: items[0].volumeInfo.imageLinks.thumbnail || "",
         smallThumbnail: items[0].volumeInfo.imageLinks.smallThumbnail || "",
-        textSnippet: items[0].searchInfo.textSnippet,
-        description: items[0].volumeInfo.description,
-        publisher: items[0].volumeInfo.publisher,
-        publishedDate: items[0].volumeInfo.publishedDate,
-        infoLink: items[0].volumeInfo.infoLink,
+        textSnippet: items[0].searchInfo.textSnippet || "",
+        description: items[0].volumeInfo.description || "",
+        publisher: items[0].volumeInfo.publisher || "",
+        publishedDate: items[0].volumeInfo.publishedDate || "",
+        infoLink: items[0].volumeInfo.infoLink || "",
         ratingMember: [],
         ratingCount: 0,
         reviewCount: 0,
@@ -293,7 +293,6 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     bookData.ratingMember.push(uid);
     bookData.ratingCount += rating;
     await setDoc(doc(db, "books", bookData.isbn), bookData);
-    const newBookRef = doc(reviewsRef);
     const reviewData = {
       reviewId: `${+new Date()}`,
       booksIsbn: isbn,
@@ -307,7 +306,7 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
       disliked: [],
       subReviewsNumber: 0,
     };
-    await setDoc(doc(db, "book_reviews", newBookRef.id), reviewData);
+    await setDoc(doc(db, "book_reviews", reviewData.reviewId), reviewData);
   }
 };
 export const removeBookRating = async (

@@ -30,19 +30,24 @@ export function Header() {
     };
   });
   return (
-    <Ul>
-      <Li>
-        <Link href="/">Home</Link>
-      </Li>
-      <Li>
-        <Link href="/profile">Profile</Link>
-      </Li>
-      <Li>
-        <Link href="/books/">Books</Link>
-      </Li>
-      <Li>
-        <Link href="/groups/">Groups</Link>
-      </Li>
-    </Ul>
+    <>
+      <Ul>
+        <Li>
+          <Link href="/">Home</Link>
+        </Li>
+        <Li>
+          <Link href="/profile">Profile</Link>
+        </Li>
+        <Li>
+          <Link href="/books/">Books</Link>
+        </Li>
+        <Li>
+          <Link href="/groups/">Groups</Link>
+        </Li>
+        <Li>
+          <Link href="/search/">搜尋</Link>
+        </Li>
+      </Ul>
+    </>
   );
 }
