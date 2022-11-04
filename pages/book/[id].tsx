@@ -50,7 +50,6 @@ const NoimgTitle = styled.h2`
 `;
 
 function BookComponent({ data }: { data: BookInfo }) {
-  console.log(data);
   return data ? (
     <BookBox>
       <Image

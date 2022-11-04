@@ -293,7 +293,6 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     bookData.ratingMember.push(uid);
     bookData.ratingCount += rating;
     await setDoc(doc(db, "books", bookData.isbn), bookData);
-    const newBookRef = doc(reviewsRef);
     const reviewData = {
       reviewId: `${+new Date()}`,
       booksIsbn: isbn,
@@ -307,7 +306,7 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
       disliked: [],
       subReviewsNumber: 0,
     };
-    await setDoc(doc(db, "book_reviews", newBookRef.id), reviewData);
+    await setDoc(doc(db, "book_reviews", reviewData.reviewId), reviewData);
   }
 };
 export const removeBookRating = async (
