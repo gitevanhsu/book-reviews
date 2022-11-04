@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { BookInfo, db } from "../../utils/firebaseFuncs";
 import Link from "next/link";
 import Image from "next/image";
-import noimg from "/public/img/noImg.png";
+import bookcover from "/public/img/bookcover.jpeg";
 import { useRouter } from "next/router";
 
 const Title = styled.h1``;
@@ -21,6 +21,7 @@ const Books = styled.div`
   flex-wrap: wrap;
 `;
 const Book = styled.div`
+  position: relative;
   width: 25%;
 `;
 const BookTitle = styled.h2``;
@@ -52,6 +53,20 @@ const Move = styled.div`
   min-height: 193px;
   position: relative;
 `;
+const NoimgTitle = styled.h2`
+  position: absolute;
+  color: #fff;
+  font-size: 16px;
+  width: 128px;
+  height: 193px;
+  overflow: hidden;
+  padding: 20px 10px;
+  text-align: center;
+  letter-spacing: 2px;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+`;
 
 export default function Search() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,8 +94,8 @@ export default function Search() {
           isbn: isbn,
           title: book.volumeInfo.title || "",
           subtitle: book.volumeInfo.subtitle || "",
-          authors: book.volumeInfo.authors || "",
-          categories: book.volumeInfo.categories || "",
+          authors: book.volumeInfo.authors || [],
+          categories: book.volumeInfo.categories || [],
           thumbnail: book.volumeInfo.imageLinks?.thumbnail || "",
           smallThumbnail: book.volumeInfo.imageLinks?.smallThumbnail || "",
           textSnippet: book.searchInfo?.textSnippet || "",
@@ -134,12 +149,13 @@ export default function Search() {
                   }}
                 >
                   <Image
-                    src={data.smallThumbnail ? data.smallThumbnail : noimg}
+                    src={data.smallThumbnail ? data.smallThumbnail : bookcover}
                     alt={`${data.title}`}
                     width={128}
                     height={193}
                   />
                 </Move>
+                {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
                 <BookTitle>書名：{data.title}</BookTitle>
                 {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
                 {data.authors &&

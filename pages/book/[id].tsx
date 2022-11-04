@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import noimg from "/public/img/noImg.png";
+import bookcover from "/public/img/bookcover.jpeg";
 
 import {
   ReviewsComponent,
@@ -23,6 +23,7 @@ import { RootState } from "../../store";
 const BookBox = styled.div`
   display: flex;
   align-items: center;
+  position: relative;
 `;
 const BookDetail = styled.div``;
 const BookTitle = styled.h2``;
@@ -33,29 +34,55 @@ const BookPublishedDate = styled.p``;
 const BookDescription = styled.p``;
 const BookAuthor = styled.h4``;
 const Categories = styled.p``;
+const NoimgTitle = styled.h2`
+  position: absolute;
+  color: #fff;
+  font-size: 16px;
+  width: 128px;
+  height: 193px;
+  overflow: hidden;
+  padding: 20px 10px;
+  text-align: center;
+  letter-spacing: 2px;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+`;
+
 function BookComponent({ data }: { data: BookInfo }) {
+  console.log(data);
   return data ? (
     <BookBox>
       <Image
-        src={data.smallThumbnail ? data.smallThumbnail : noimg}
+        src={data.smallThumbnail ? data.smallThumbnail : bookcover}
         alt={`${data.title}`}
         width={128}
         height={193}
         priority
       />
+      {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
       <BookDetail>
         <BookTitle>書名：{data.title}</BookTitle>
         {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
         {data.authors?.map((author: string) => (
           <BookAuthor key={author}>作者:{author}</BookAuthor>
         ))}
-        {data.categories?.map((category: string) => (
-          <Categories key={category}>分類：{category}</Categories>
-        ))}
-        <BookPublisher>出版社：{data.publisher}</BookPublisher>
+        {data.categories &&
+          data.categories?.length > 0 &&
+          data.categories?.map((category: string) => (
+            <Categories key={category}>分類：{category}</Categories>
+          ))}
+        <BookPublisher>
+          出版社：{data.publisher?.length === 0 && "NO DATA"}
+        </BookPublisher>
         <BookPublishedDate>出版日期：{data.publishedDate}</BookPublishedDate>
         <BookIsbn>ISBN：{data.isbn}</BookIsbn>
-        <BookDescription>簡介：{data.description}</BookDescription>
+        <BookDescription>
+          簡介：
+          {data.description?.length === 0 && data.textSnippet?.length === 0
+            ? "NO DATA"
+            : data.textSnippet}
+        </BookDescription>
       </BookDetail>
     </BookBox>
   ) : (

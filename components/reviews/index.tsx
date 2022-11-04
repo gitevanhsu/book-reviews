@@ -548,6 +548,8 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
                     onClick={() => {
                       if (userInfo.uid && review) {
                         upperReview(userInfo.uid, review);
+                      } else {
+                        alert("請先登入喔");
                       }
                     }}
                   ></RatingReviewButtonUp>
@@ -556,6 +558,8 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
                     onClick={() => {
                       if (userInfo.uid && review) {
                         lowerReview(userInfo.uid, review);
+                      } else {
+                        alert("請先登入喔");
                       }
                     }}
                   ></RatingReviewButtonDown>
