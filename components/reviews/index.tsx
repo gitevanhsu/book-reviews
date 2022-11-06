@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styled from "styled-components";
 import {
   getBookReviews,
@@ -16,6 +17,7 @@ import {
   likeSubReview,
   upperReview,
   lowerReview,
+  MemberInfo,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
@@ -31,6 +33,7 @@ import {
   collection,
   orderBy,
 } from "firebase/firestore";
+import { useRouter } from "next/router";
 
 const BookReviewsBox = styled.div``;
 const BookReviewBox = styled.div`
@@ -122,6 +125,11 @@ const RatingReviewButtonUp = styled.div`
 `;
 const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
   clip-path: polygon(0 0, 50% 100%, 100% 0);
+`;
+
+const Gotomember = styled.div`
+  display: inline-block;
+  cursor: pointer;
 `;
 
 export function LeaveRatingComponent({
@@ -251,6 +259,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
   const [subReviews, setSubReviews] = useState<SubReview[]>();
+  const router = useRouter();
 
   useEffect(() => {
     let unsubscribe: Function;
@@ -264,7 +273,6 @@ function SubReviewComponent({ review }: { review: BookReview }) {
         // setSubReviews(undefined);
         const subreviewsArr: SubReview[] = [];
         const userIds: string[] = [];
-
         querySnapshot.forEach((doc) => {
           subreviewsArr.push(doc.data());
           userIds.push(doc.data().commentUser);
@@ -273,12 +281,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
           const docData = await getDoc(doc(db, "members", userId));
           return docData.data();
         });
-        const allMemberInfo = (await Promise.all(requests)) as {
-          uid?: string;
-          name?: string;
-          img?: string;
-          url?: string;
-        }[];
+        const allMemberInfo = (await Promise.all(requests)) as MemberInfo[];
         const newSubreviews = subreviewsArr.map((subreview) => {
           const userData = allMemberInfo.find(
             (member) => member.uid === subreview.commentUser
@@ -295,6 +298,23 @@ function SubReviewComponent({ review }: { review: BookReview }) {
       }
     };
   }, [review.reviewId]);
+
+  const gotoMemberPage = (
+    memberdata: {
+      uid?: string;
+      name?: string;
+      img?: string;
+      url?: string;
+    },
+    uid: string
+  ) => {
+    if (memberdata.uid === uid) {
+      router.push(`/profile`);
+    } else {
+      router.push(`/member/id:${memberdata.uid}`);
+    }
+  };
+
   return showSubReviews ? (
     <>
       <SubReviewsBox>
@@ -309,20 +329,28 @@ function SubReviewComponent({ review }: { review: BookReview }) {
             const date = ReviewDate.getDate();
             return (
               <SubReviewBox key={subreview.reviewId}>
-                <Image
-                  src={
-                    subreview.memberData && subreview.memberData.url
-                      ? subreview.memberData.url
-                      : male
-                  }
-                  alt={
-                    subreview.memberData && subreview.memberData.name
-                      ? subreview.memberData.name
-                      : "user Img"
-                  }
-                  width={25}
-                  height={25}
-                ></Image>
+                <Gotomember
+                  onClick={() => {
+                    subreview.memberData &&
+                      userInfo.uid &&
+                      gotoMemberPage(subreview.memberData, userInfo.uid);
+                  }}
+                >
+                  <Image
+                    src={
+                      subreview.memberData && subreview.memberData.url
+                        ? subreview.memberData.url
+                        : male
+                    }
+                    alt={
+                      subreview.memberData && subreview.memberData.name
+                        ? subreview.memberData.name
+                        : "user Img"
+                    }
+                    width={25}
+                    height={25}
+                  ></Image>
+                </Gotomember>
                 <ReviewMemberName>
                   {subreview.memberData?.name}
                 </ReviewMemberName>
@@ -365,6 +393,7 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
   const [isEdit, setIsEdit] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const contentInputRef = useRef<HTMLTextAreaElement>(null);
+
   return isEdit ? (
     <MemberReview>
       <Image
@@ -453,6 +482,8 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [reviews, setReviews] = useState<BookReview[]>([]);
   const [memberReview, setMemberReview] = useState<BookReview>();
+  const router = useRouter();
+
   useEffect(() => {
     let unsubscribe: Function;
     const getReviewsData = async () => {
@@ -497,7 +528,21 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
       }
     };
   }, [bookIsbn, userInfo.uid]);
-
+  const gotoMemberPage = (
+    memberdata: {
+      uid?: string;
+      name?: string;
+      img?: string;
+      url?: string;
+    },
+    uid: string
+  ) => {
+    if (memberdata.uid === uid) {
+      router.push(`/profile`);
+    } else {
+      router.push(`/member/id:${memberdata.uid}`);
+    }
+  };
   return (
     <BookReviewsBox>
       {memberReview && memberReview.title && memberReview.title.length > 0 ? (
@@ -519,20 +564,28 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
             <>
               <BookReviewBox key={review.reviewId}>
                 <ReviewMemberBox>
-                  <Image
-                    src={
-                      review.memberData && review.memberData.url
-                        ? review.memberData.url
-                        : male
-                    }
-                    alt={
-                      review.memberData && review.memberData.name
-                        ? review.memberData.name
-                        : "user Img"
-                    }
-                    width={50}
-                    height={50}
-                  ></Image>
+                  <Gotomember
+                    onClick={() => {
+                      review.memberData &&
+                        userInfo.uid &&
+                        gotoMemberPage(review.memberData, userInfo.uid);
+                    }}
+                  >
+                    <Image
+                      src={
+                        review.memberData && review.memberData.url
+                          ? review.memberData.url
+                          : male
+                      }
+                      alt={
+                        review.memberData && review.memberData.name
+                          ? review.memberData.name
+                          : "user Img"
+                      }
+                      width={50}
+                      height={50}
+                    ></Image>
+                  </Gotomember>
                   <ReviewMemberName>
                     用戶名：{review.memberData && review.memberData.name}
                   </ReviewMemberName>

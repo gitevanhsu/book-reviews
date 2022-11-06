@@ -6,6 +6,8 @@ export interface UserState {
   name?: string;
   email?: string;
   intro?: string;
+  img?: string;
+  friends?: string[];
   isSignIn?: boolean;
 }
 

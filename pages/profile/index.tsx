@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { useDispatch } from "react-redux";
 import { userSignOut } from "../../slices/userInfoSlice";
+import FriendsListComponent from "../../components/friendList";
 const InputArea = styled.div``;
 const Inputbox = styled.div``;
 const InputTitle = styled.p``;
@@ -145,6 +146,7 @@ export default function Profile() {
       )}
       <SignupComponent />
       <SigninComponent />
+      <FriendsListComponent />
     </>
   );
 }
