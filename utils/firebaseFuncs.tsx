@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
+import produce from "immer";
 import {
+  addDoc,
   deleteDoc,
   doc,
   DocumentData,
@@ -24,6 +26,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  UserInfo,
 } from "firebase/auth";
 import { UserState } from "../slices/userInfoSlice";
 
@@ -43,6 +46,7 @@ const auth = getAuth();
 export const reviewsRef = collection(db, "book_reviews");
 export const memersRef = collection(db, "members");
 export const booksRef = collection(db, "books");
+export const friendRequestRef = collection(db, "friends_requests");
 
 export interface BookInfo {
   isbn?: string;
@@ -85,6 +89,21 @@ export interface BookReview {
   reviewRating?: number;
   subReviewsNumber?: number;
   subReviews?: SubReview[];
+}
+
+export interface MemberInfo {
+  uid: string;
+  name: string;
+  email: string;
+  img: string;
+  intro: string;
+  friends: string[];
+}
+
+export interface FriendRequest {
+  invitor: string;
+  receiver: string;
+  state: string;
 }
 
 export const addBooksData = async (bookIsbn: string) => {
@@ -526,4 +545,75 @@ export const lowerReview = async (uid: string, review: BookReview) => {
       doc(db, "book_reviews", newReviewData.reviewId),
       newReviewData
     ));
+};
+
+export const sentFriendRequest = async (
+  invitorUid: string,
+  receiverUid: string
+) => {
+  const q = query(
+    friendRequestRef,
+    where("invitor", "==", invitorUid),
+    where("receiver", "==", receiverUid)
+  );
+  const querySnapshot = await getDocs(q);
+  let requestDataArr: FriendRequest[] = [];
+  querySnapshot.forEach((request) =>
+    requestDataArr.push(request.data() as FriendRequest)
+  );
+
+  if (requestDataArr[0] && requestDataArr[0].state === "pending") {
+    alert("請等待對方接受。");
+  } else if (
+    querySnapshot.empty ||
+    (requestDataArr[0] && requestDataArr[0].state === "reject")
+  ) {
+    const request = {
+      invitor: invitorUid,
+      receiver: receiverUid,
+      state: "pending",
+    };
+    await setDoc(
+      doc(db, "friends_requests", invitorUid + receiverUid),
+      request
+    );
+    alert("成功送出邀請。");
+  }
+};
+
+export const acceptFriendRequest = async (
+  receiverUid: string,
+  invitorUid: string
+) => {
+  const requestDocRef = await getDoc(
+    doc(db, "friends_requests", invitorUid + receiverUid)
+  );
+  const receiverMemberDocRef = await getDoc(doc(db, "members", receiverUid));
+  const invitorMemberDocRef = await getDoc(doc(db, "members", invitorUid));
+  const reciverData = receiverMemberDocRef.data() as MemberInfo;
+  const invitorData = invitorMemberDocRef.data() as MemberInfo;
+  const newReciverFriends = [...reciverData.friends, invitorUid];
+  const newInvitorFriends = [...invitorData.friends, receiverUid];
+  const newReceiverData = { ...reciverData, friends: newReciverFriends };
+  const newInvitorData = { ...invitorData, friends: newInvitorFriends };
+  const newRequests = { ...requestDocRef.data(), state: "accept" };
+  await setDoc(doc(db, "members", invitorUid), newInvitorData);
+  await setDoc(doc(db, "members", receiverUid), newReceiverData);
+  await setDoc(
+    doc(db, "friends_requests", invitorUid + receiverUid),
+    newRequests
+  );
+};
+export const rejectFriendRequest = async (
+  receiverUid: string,
+  invitorUid: string
+) => {
+  const requestDocRef = await getDoc(
+    doc(db, "friends_requests", invitorUid + receiverUid)
+  );
+  const newRequests = { ...requestDocRef.data(), state: "reject" };
+  await setDoc(
+    doc(db, "friends_requests", invitorUid + receiverUid),
+    newRequests
+  );
 };
