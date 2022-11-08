@@ -80,7 +80,7 @@ export default function Search() {
     );
     const books: BookInfo[] = [];
     const parseData = await result.json();
-    parseData.items.map((book: any) => {
+    parseData.items?.map((book: any) => {
       const bookIsbnArr = book.volumeInfo.industryIdentifiers?.filter(
         (isbn: any) => {
           if (isbn.type === "ISBN_13") {

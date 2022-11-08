@@ -43,13 +43,15 @@ export default function FriendsListComponent() {
           doc(db, "members", userInfo.uid),
           async (doc) => {
             const members: MemberInfo[] = [];
-            const membberInfo = doc.data() as MemberInfo;
-            const request = membberInfo.friends.map(async (uids) => {
-              const res = await getMemberData(uids);
-              return res as MemberInfo;
-            });
-            const allMemberInfo = await Promise.all(request);
-            setFriendList(allMemberInfo);
+            const memberInfo = doc.data() as MemberInfo;
+            if (memberInfo?.friends && memberInfo.friends.length > 0) {
+              const request = memberInfo.friends.map(async (uids) => {
+                const res = await getMemberData(uids);
+                return res as MemberInfo;
+              });
+              const allMemberInfo = await Promise.all(request);
+              setFriendList(allMemberInfo);
+            }
           }
         );
     };

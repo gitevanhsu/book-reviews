@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import produce from "immer";
+import firebase from "firebase/app";
 import {
   addDoc,
   deleteDoc,
@@ -42,6 +43,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const firestore = getFirestore(app);
 const auth = getAuth();
 export const reviewsRef = collection(db, "book_reviews");
 export const memersRef = collection(db, "members");
@@ -104,6 +106,13 @@ export interface FriendRequest {
   invitor: string;
   receiver: string;
   state: string;
+}
+export interface ChatMessage {
+  uid: string;
+  time: Timestamp;
+  content: string;
+  memberData?: MemberInfo;
+  messageId: string;
 }
 
 export const addBooksData = async (bookIsbn: string) => {
@@ -197,6 +206,7 @@ export const emailSignUp = async (
       name,
       email,
       intro,
+      img: "",
     };
     await setDoc(doc(db, "members", user.uid), userData);
     return userData;
@@ -241,8 +251,7 @@ export const signout = () => {
 export const getMemberData = async (
   uid: string
 ): Promise<UserState | undefined> => {
-  const docRef = doc(db, "members", uid);
-  const docData = await getDoc(docRef);
+  const docData = await getDoc(doc(db, "members", uid));
   return docData.data();
 };
 
@@ -615,5 +624,22 @@ export const rejectFriendRequest = async (
   await setDoc(
     doc(db, "friends_requests", invitorUid + receiverUid),
     newRequests
+  );
+};
+
+export const sentMessage = async (
+  isbn: string,
+  userInfo: UserState,
+  content: string
+) => {
+  const messageData = {
+    messageId: `${+new Date()}`,
+    uid: userInfo.uid,
+    content,
+    time: new Date(),
+  };
+  await setDoc(
+    doc(db, "books", `${isbn}/chat_room/${messageData.messageId}`),
+    messageData
   );
 };

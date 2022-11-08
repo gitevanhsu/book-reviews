@@ -19,6 +19,7 @@ import {
 } from "../../components/reviews";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
+import Link from "next/link";
 
 const BookBox = styled.div`
   display: flex;
@@ -48,8 +49,13 @@ const NoimgTitle = styled.h2`
   left: 0;
   pointer-events: none;
 `;
+const StartGroup = styled(Link)`
+  display: inline-block;
+  padding: 5px 10px;
+  border: solid 1px;
+`;
 
-function BookComponent({ data }: { data: BookInfo }) {
+export function BookComponent({ data }: { data: BookInfo }) {
   return data ? (
     <BookBox>
       <Image
@@ -115,6 +121,11 @@ export default function Post() {
   return (
     <>
       <BookComponent data={bookData} />
+      {typeof id === "string" && (
+        <StartGroup href={`/group/id:${id.replace("id:", "")}`}>
+          Start a Group
+        </StartGroup>
+      )}
       <LeaveRatingComponent
         memberReview={memberReviews}
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
