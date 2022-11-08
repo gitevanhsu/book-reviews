@@ -108,6 +108,16 @@ export interface FriendRequest {
   state: string;
 }
 
+export interface GroupReview {
+  reviewId: string;
+  uid: string;
+  title: string;
+  content: string;
+  likeCount: number;
+  like: string[];
+  userData?: MemberInfo;
+}
+
 export const addBooksData = async (bookIsbn: string) => {
   if (bookIsbn.length !== 13) {
     console.log("wrong ISBN");
@@ -199,6 +209,7 @@ export const emailSignUp = async (
       name,
       email,
       intro,
+      img: "",
     };
     await setDoc(doc(db, "members", user.uid), userData);
     return userData;
@@ -243,8 +254,7 @@ export const signout = () => {
 export const getMemberData = async (
   uid: string
 ): Promise<UserState | undefined> => {
-  const docRef = doc(db, "members", uid);
-  const docData = await getDoc(docRef);
+  const docData = await getDoc(doc(db, "members", uid));
   return docData.data();
 };
 
@@ -617,5 +627,72 @@ export const rejectFriendRequest = async (
   await setDoc(
     doc(db, "friends_requests", invitorUid + receiverUid),
     newRequests
+  );
+};
+
+export const leaveGroupReview = async (
+  isbn: string,
+  uid: string,
+  title: string,
+  content: string
+) => {
+  const reviewData: GroupReview = {
+    reviewId: `${+new Date()}`,
+    uid,
+    title,
+    content,
+    likeCount: 0,
+    like: [],
+  };
+
+  await setDoc(
+    doc(db, "books", `${isbn}/group_reviews/${reviewData.reviewId}`),
+    reviewData
+  );
+};
+
+export const likeGroupReview = async (
+  isbn: string,
+  review: GroupReview,
+  userInfo: UserState
+) => {
+  const docRef = await getDoc(
+    doc(db, `books/${isbn}/group_reviews`, review.reviewId)
+  );
+  const reviewData = docRef.data() as GroupReview;
+  const newReviewData: GroupReview = produce(
+    reviewData,
+    (draft: GroupReview) => {
+      if (draft.like.includes(userInfo.uid!)) {
+        draft.like = draft.like.filter((id) => id !== userInfo.uid);
+      } else {
+        draft.like.push(userInfo.uid!);
+      }
+      draft.likeCount = draft.like.length;
+    }
+  );
+  await setDoc(
+    doc(db, "books", `${isbn}/group_reviews/${newReviewData.reviewId}`),
+    newReviewData
+  );
+};
+export const editGroupReview = async (
+  isbn: string,
+  review: GroupReview,
+  userInfo: UserState,
+  title: string,
+  content: string
+) => {
+  const docRef = await getDoc(
+    doc(db, `books/${isbn}/group_reviews`, review.reviewId)
+  );
+  const reviewData = docRef.data() as GroupReview;
+  const newReview = produce(reviewData, (draft) => {
+    draft.title = title;
+    draft.content = content;
+  });
+  await setDoc(
+    doc(db, "books", `${isbn}/group_reviews/${newReview.reviewId}`),
+    newReview
   );
 };

@@ -293,7 +293,9 @@ export default function Group() {
           開啟 1 to 1 通話
         </StartButton>
       )}
-      <GroupReviewComponent />
+      {typeof id === "string" && (
+        <GroupReviewComponent id={id.replace("id:", "")} />
+      )}
     </>
   );
 }
