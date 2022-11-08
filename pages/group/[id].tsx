@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import Link from "next/link";
 import { BookComponent } from "../book/[id]";
-import GroupReviewComponent from "../../components/group_review";
+import ChatRoomComponent from "../../components/group_chat";
 
 const GoToReview = styled(Link)`
   padding: 5px 10px;
@@ -90,6 +90,21 @@ export default function Group() {
     };
     const pc = new RTCPeerConnection(servers);
     pcRef.current = pc;
+
+    return () => {
+      if (pcRef.current && localVideoRef.current) {
+        (localVideoRef.current.srcObject as MediaStream)
+          .getTracks()
+          .forEach((track: { stop: () => void }) => track.stop());
+        setShoeVideo(false);
+      }
+      if (pcRef.current && remotoVideoRef.current) {
+        (remotoVideoRef.current.srcObject as MediaStream)
+          .getTracks()
+          .forEach((track: { stop: () => void }) => track.stop());
+        setShoeVideo(false);
+      }
+    };
   }, []);
 
   const start = async () => {
@@ -294,7 +309,7 @@ export default function Group() {
         </StartButton>
       )}
       {typeof id === "string" && (
-        <GroupReviewComponent id={id.replace("id:", "")} />
+        <ChatRoomComponent id={id.replace("id:", "")} />
       )}
     </>
   );

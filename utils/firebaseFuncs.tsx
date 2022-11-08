@@ -107,15 +107,12 @@ export interface FriendRequest {
   receiver: string;
   state: string;
 }
-
-export interface GroupReview {
-  reviewId: string;
+export interface ChatMessage {
   uid: string;
-  title: string;
+  time: Timestamp;
   content: string;
-  likeCount: number;
-  like: string[];
-  userData?: MemberInfo;
+  memberData?: MemberInfo;
+  messageId: string;
 }
 
 export const addBooksData = async (bookIsbn: string) => {
@@ -630,69 +627,19 @@ export const rejectFriendRequest = async (
   );
 };
 
-export const leaveGroupReview = async (
+export const sentMessage = async (
   isbn: string,
-  uid: string,
-  title: string,
-  content: string
-) => {
-  const reviewData: GroupReview = {
-    reviewId: `${+new Date()}`,
-    uid,
-    title,
-    content,
-    likeCount: 0,
-    like: [],
-  };
-
-  await setDoc(
-    doc(db, "books", `${isbn}/group_reviews/${reviewData.reviewId}`),
-    reviewData
-  );
-};
-
-export const likeGroupReview = async (
-  isbn: string,
-  review: GroupReview,
-  userInfo: UserState
-) => {
-  const docRef = await getDoc(
-    doc(db, `books/${isbn}/group_reviews`, review.reviewId)
-  );
-  const reviewData = docRef.data() as GroupReview;
-  const newReviewData: GroupReview = produce(
-    reviewData,
-    (draft: GroupReview) => {
-      if (draft.like.includes(userInfo.uid!)) {
-        draft.like = draft.like.filter((id) => id !== userInfo.uid);
-      } else {
-        draft.like.push(userInfo.uid!);
-      }
-      draft.likeCount = draft.like.length;
-    }
-  );
-  await setDoc(
-    doc(db, "books", `${isbn}/group_reviews/${newReviewData.reviewId}`),
-    newReviewData
-  );
-};
-export const editGroupReview = async (
-  isbn: string,
-  review: GroupReview,
   userInfo: UserState,
-  title: string,
   content: string
 ) => {
-  const docRef = await getDoc(
-    doc(db, `books/${isbn}/group_reviews`, review.reviewId)
-  );
-  const reviewData = docRef.data() as GroupReview;
-  const newReview = produce(reviewData, (draft) => {
-    draft.title = title;
-    draft.content = content;
-  });
+  const messageData = {
+    messageId: `${+new Date()}`,
+    uid: userInfo.uid,
+    content,
+    time: new Date(),
+  };
   await setDoc(
-    doc(db, "books", `${isbn}/group_reviews/${newReview.reviewId}`),
-    newReview
+    doc(db, "books", `${isbn}/chat_room/${messageData.messageId}`),
+    messageData
   );
 };
