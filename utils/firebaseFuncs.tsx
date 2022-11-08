@@ -643,3 +643,9 @@ export const sentMessage = async (
     messageData
   );
 };
+
+export const getBooks = async () => {
+  const books = query(booksRef, limit(30));
+  const booksSnapshots = await getDocs(books);
+  return booksSnapshots.docs.map((doc) => doc.data());
+};
