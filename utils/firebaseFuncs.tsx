@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import produce from "immer";
+import firebase from "firebase/app";
 import {
   addDoc,
   deleteDoc,
@@ -42,6 +43,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const firestore = getFirestore(app);
 const auth = getAuth();
 export const reviewsRef = collection(db, "book_reviews");
 export const memersRef = collection(db, "members");
