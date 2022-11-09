@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
 import { BookInfo, getBooks } from "../utils/firebaseFuncs";
+import bookcover from "/public/img/bookcover.jpeg";
 
 const PageTitle = styled.h1`
   font-size: 36px;
@@ -27,9 +28,10 @@ interface PageProps {
 interface ColorProps {
   arrcolor: boolean;
 }
-const Book = styled.div<PageProps>`
+const BookWarp = styled.div<PageProps>`
   transform: ${(props) => `translateX(${props.page * -100}%)`};
   display: inline-block;
+  position: relative;
   width: 25%;
   height: 100%;
   border: solid 1px;
@@ -37,6 +39,9 @@ const Book = styled.div<PageProps>`
   text-align: center;
   padding: 20px 0;
   transition: 0.2s;
+`;
+const Book = styled.div`
+  position: relative;
 `;
 const ButtonRight = styled.div<ColorProps>`
   clip-path: polygon(33% 0, 100% 50%, 33% 100%);
@@ -64,7 +69,22 @@ const BookTitle = styled.h2`
 const BookAuthor = styled.p`
   margin-top: 20px;
 `;
-
+const NoimgTitle = styled.h2`
+  position: absolute;
+  color: #fff;
+  font-size: 12px;
+  width: 100px;
+  height: 150px;
+  overflow: hidden;
+  padding: 20px 10px;
+  text-align: center;
+  letter-spacing: 2px;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: pre-wrap;
+  pointer-events: none;
+`;
 export default function Home() {
   const [books, setBooks] = useState<BookInfo[]>();
   const [page, setPage] = useState<number>(0);
@@ -90,20 +110,27 @@ export default function Home() {
           {books &&
             books.map((book) => {
               return (
-                <Book key={book.isbn} page={page}>
-                  <Link href={`/book/id:${book.isbn}`}>
-                    <Image
-                      src={book.smallThumbnail ? book.smallThumbnail : ""}
-                      alt={`${book.title}`}
-                      width={100}
-                      height={150}
-                    />
-                  </Link>
-                  <BookTitle>書名{"\n\n" + book.title}</BookTitle>
-                  {book.authors && (
-                    <BookAuthor>作者：{book.authors[0]}</BookAuthor>
-                  )}
-                </Book>
+                <BookWarp key={book.isbn} page={page}>
+                  <Book>
+                    <Link href={`/book/id:${book.isbn}`}>
+                      <Image
+                        src={
+                          book.smallThumbnail ? book.smallThumbnail : bookcover
+                        }
+                        alt={`${book.title}`}
+                        width={100}
+                        height={150}
+                      />
+                    </Link>
+                    {!book.smallThumbnail && (
+                      <NoimgTitle>{book.title}</NoimgTitle>
+                    )}
+                    <BookTitle>書名{"\n\n" + book.title}</BookTitle>
+                    {book.authors && book.authors[0]?.length > 0 && (
+                      <BookAuthor>作者：{book.authors[0]}</BookAuthor>
+                    )}
+                  </Book>
+                </BookWarp>
               );
             })}
         </Books>

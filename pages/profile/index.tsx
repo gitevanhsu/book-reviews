@@ -309,6 +309,11 @@ function BookShelfComponent() {
                               height={20}
                               onClick={() => {
                                 if (book.isbn && books) {
+                                  setBooks((prev) =>
+                                    prev.filter(
+                                      (bookinfo) => bookinfo.isbn !== book.isbn
+                                    )
+                                  );
                                   removeBook(book.isbn, userInfo.uid!, "books");
                                 }
                               }}
@@ -376,6 +381,11 @@ function BookShelfComponent() {
                               height={20}
                               onClick={() => {
                                 if (book.isbn && books) {
+                                  setReading((prev) =>
+                                    prev.filter(
+                                      (bookinfo) => bookinfo.isbn !== book.isbn
+                                    )
+                                  );
                                   removeBook(book.isbn, userInfo.uid!, "books");
                                 }
                               }}
@@ -442,6 +452,11 @@ function BookShelfComponent() {
                               height={20}
                               onClick={() => {
                                 if (book.isbn && books) {
+                                  setFinish((prev) =>
+                                    prev.filter(
+                                      (bookinfo) => bookinfo.isbn !== book.isbn
+                                    )
+                                  );
                                   removeBook(book.isbn, userInfo.uid!, "books");
                                 }
                               }}
@@ -482,12 +497,12 @@ export default function Profile() {
           >
             登出
           </SubmitButton>
+          <FriendsListComponent />
+          <BookShelfComponent />
         </>
       )}
       <SignupComponent />
       <SigninComponent />
-      <FriendsListComponent />
-      <BookShelfComponent />
     </>
   );
 }
