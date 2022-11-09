@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import produce from "immer";
-import firebase from "firebase/app";
 import {
   addDoc,
   deleteDoc,
@@ -29,7 +28,6 @@ import {
   signOut,
   UserInfo,
 } from "firebase/auth";
-// import { UserState } from "../slices/userInfoSlice";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -694,4 +692,25 @@ export const removeBook = async (isbn: string, uid: string, shelf: string) => {
     });
     await setDoc(doc(db, "members", uid), newUserData);
   }
+};
+
+export const updateBooks = async (
+  {
+    newBooks,
+    newReading,
+    newFinish,
+  }: { newBooks: BookInfo[]; newReading: BookInfo[]; newFinish: BookInfo[] },
+  uid: string
+) => {
+  const booksIsbns = newBooks.map((book) => book.isbn);
+  const readingIsbns = newReading.map((book) => book.isbn);
+  const finishIsbns = newFinish.map((book) => book.isbn);
+  const memberData = (await getMemberData(uid)) as MemberInfo;
+
+  await setDoc(doc(db, "members", uid), {
+    ...memberData,
+    books: booksIsbns,
+    reading: readingIsbns,
+    finish: finishIsbns,
+  });
 };

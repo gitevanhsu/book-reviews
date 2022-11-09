@@ -11,6 +11,8 @@ import {
   removeBook,
   db,
   MemberInfo,
+  updateBooks,
+  getMemberData,
 } from "../../utils/firebaseFuncs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -19,7 +21,12 @@ import { userSignOut } from "../../slices/userInfoSlice";
 import FriendsListComponent from "../../components/friendList";
 import bookcover from "/public/img/bookcover.jpeg";
 import x from "/public/img/VectorX.png";
-import { doc, onSnapshot } from "firebase/firestore";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
 const InputArea = styled.div``;
 const Inputbox = styled.div``;
 const InputTitle = styled.p``;
@@ -156,7 +163,9 @@ const ShelfTitle = styled.h2`
   background-color: #f0f;
   z-index: 1;
 `;
-const Books = styled.div``;
+const Books = styled.div`
+  min-height: 480px;
+`;
 const Book = styled.div`
   display: flex;
   align-items: center;
@@ -192,84 +201,263 @@ const RemoveBtn = styled(Image)`
 
 function BookShelfComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [books, setBooks] = useState<BookInfo[]>();
-  const [reading, setReading] = useState<BookInfo[]>();
-  const [finish, setFinish] = useState<BookInfo[]>();
+  const [books, setBooks] = useState<BookInfo[]>([]);
+  const [reading, setReading] = useState<BookInfo[]>([]);
+  const [finish, setFinish] = useState<BookInfo[]>([]);
   useEffect(() => {
-    let unsub: Function;
     const getBooks = async () => {
       if (userInfo.uid) {
-        unsub = onSnapshot(doc(db, "members", userInfo.uid), async (doc) => {
-          const memberData = doc.data() as MemberInfo;
-          if (memberData.books) {
-            const datas = await getBookDatas(memberData.books);
-            datas.length > 0 && setBooks(datas as BookInfo[]);
-          }
-          if (memberData.reading) {
-            const datas = await getBookDatas(memberData.reading);
-            datas.length > 0 && setBooks(datas as BookInfo[]);
-          }
-
-          if (memberData.finish) {
-            const datas = await getBookDatas(memberData.finish);
-            datas.length > 0 && setBooks(datas as BookInfo[]);
-          }
-        });
+        const memberData = (await getMemberData(userInfo.uid)) as MemberInfo;
+        if (memberData.books && memberData.reading && memberData.finish) {
+          const booksDatas = await getBookDatas(memberData.books);
+          booksDatas.length && setBooks(booksDatas as BookInfo[]);
+          const readingDatas = await getBookDatas(memberData.reading);
+          readingDatas.length && setReading(readingDatas as BookInfo[]);
+          const finishDatas = await getBookDatas(memberData.finish);
+          finishDatas.length && setFinish(finishDatas as BookInfo[]);
+        }
       }
     };
     getBooks();
-    return () => {
-      unsub && unsub();
-    };
-  }, [userInfo.books, userInfo.finish, userInfo.reading, userInfo.uid]);
+  }, [userInfo.uid]);
+
+  const onDragEnd = async (event: DropResult) => {
+    const { source, destination, draggableId: isbn } = event;
+    if (!destination) {
+      return;
+    }
+    const from = source.droppableId;
+    const fromIndex = source.index;
+    const to = destination.droppableId;
+    const toIndex = destination.index;
+    const newBooks = [...books];
+    const newReading = [...reading];
+    const newFinish = [...finish];
+    let remove;
+    if (from === "books") {
+      [remove] = newBooks.splice(fromIndex, 1);
+    } else if (from === "reading") {
+      [remove] = newReading.splice(fromIndex, 1);
+    } else if (from === "finish") {
+      [remove] = newFinish.splice(fromIndex, 1);
+    }
+    if (remove && to === "books") {
+      newBooks.splice(toIndex, 0, remove);
+    } else if (remove && to === "reading") {
+      newReading.splice(toIndex, 0, remove);
+    } else if (remove && to === "finish") {
+      newFinish.splice(toIndex, 0, remove);
+    }
+    setBooks(newBooks);
+    setReading(newReading);
+    setFinish(newFinish);
+    userInfo.uid &&
+      updateBooks({ newBooks, newReading, newFinish }, userInfo.uid);
+  };
   return (
-    <BookShelfs>
-      <BookShelf>
-        <ShelfTitle>已收藏</ShelfTitle>
-        <Books>
-          {books?.map((book) => (
-            <Book key={book.isbn}>
-              <BookLink href={`/book/id:${book.isbn}`}>
-                <BookImg
-                  src={book.smallThumbnail ? book.smallThumbnail : bookcover}
-                  alt={`${book.title}`}
-                  width={80}
-                  height={120}
-                  priority
-                ></BookImg>
-              </BookLink>
-              <BookData>
-                {!book.smallThumbnail && <NoimgTitle>{book.title}</NoimgTitle>}
-                <BookTitle>書名：{book.title}</BookTitle>
-                <br />
-                {book.authors!.length > 0 && (
-                  <BookAuthor>作者：{book.authors![0]}</BookAuthor>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <BookShelfs>
+        <BookShelf>
+          <ShelfTitle>已收藏</ShelfTitle>
+          <Droppable droppableId="books">
+            {(provided) => (
+              <Books ref={provided.innerRef} {...provided.droppableProps}>
+                {books?.map(
+                  (book, index) =>
+                    book.isbn && (
+                      <Draggable
+                        draggableId={book.isbn}
+                        index={index}
+                        key={book.isbn}
+                      >
+                        {(provided) => (
+                          <Book
+                            key={book.isbn}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            ref={provided.innerRef}
+                          >
+                            <BookLink href={`/book/id:${book.isbn}`}>
+                              <BookImg
+                                src={
+                                  book.smallThumbnail
+                                    ? book.smallThumbnail
+                                    : bookcover
+                                }
+                                alt={`${book.title}`}
+                                width={80}
+                                height={120}
+                                priority
+                              ></BookImg>
+                            </BookLink>
+                            <BookData>
+                              {!book.smallThumbnail && (
+                                <NoimgTitle>{book.title}</NoimgTitle>
+                              )}
+                              <BookTitle>書名：{book.title}</BookTitle>
+                              <br />
+                              {book.authors!.length > 0 && (
+                                <BookAuthor>
+                                  作者：{book.authors![0]}
+                                </BookAuthor>
+                              )}
+                            </BookData>
+                            <RemoveBtn
+                              src={x}
+                              alt="delete"
+                              width={20}
+                              height={20}
+                              onClick={() => {
+                                if (book.isbn && books) {
+                                  removeBook(book.isbn, userInfo.uid!, "books");
+                                }
+                              }}
+                            />
+                          </Book>
+                        )}
+                      </Draggable>
+                    )
                 )}
-              </BookData>
-              <RemoveBtn
-                src={x}
-                alt="delete"
-                width={20}
-                height={20}
-                onClick={() => {
-                  if (book.isbn && books) {
-                    removeBook(book.isbn, userInfo.uid!, "books");
-                  }
-                }}
-              />
-            </Book>
-          ))}
-        </Books>
-      </BookShelf>
-      <BookShelf>
-        <ShelfTitle>閱讀中</ShelfTitle>
-        <Books></Books>
-      </BookShelf>
-      <BookShelf>
-        <ShelfTitle>已閱讀完</ShelfTitle>
-        <Books></Books>
-      </BookShelf>
-    </BookShelfs>
+                {provided.placeholder}
+              </Books>
+            )}
+          </Droppable>
+        </BookShelf>
+
+        <BookShelf>
+          <ShelfTitle>閱讀中</ShelfTitle>
+          <Droppable droppableId="reading">
+            {(provided) => (
+              <Books ref={provided.innerRef} {...provided.droppableProps}>
+                {reading?.map(
+                  (book, index) =>
+                    book.isbn && (
+                      <Draggable
+                        draggableId={book.isbn}
+                        index={index}
+                        key={book.isbn}
+                      >
+                        {(provided) => (
+                          <Book
+                            key={book.isbn}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            ref={provided.innerRef}
+                          >
+                            <BookLink href={`/book/id:${book.isbn}`}>
+                              <BookImg
+                                src={
+                                  book.smallThumbnail
+                                    ? book.smallThumbnail
+                                    : bookcover
+                                }
+                                alt={`${book.title}`}
+                                width={80}
+                                height={120}
+                                priority
+                              ></BookImg>
+                            </BookLink>
+                            <BookData>
+                              {!book.smallThumbnail && (
+                                <NoimgTitle>{book.title}</NoimgTitle>
+                              )}
+                              <BookTitle>書名：{book.title}</BookTitle>
+                              <br />
+                              {book.authors!.length > 0 && (
+                                <BookAuthor>
+                                  作者：{book.authors![0]}
+                                </BookAuthor>
+                              )}
+                            </BookData>
+                            <RemoveBtn
+                              src={x}
+                              alt="delete"
+                              width={20}
+                              height={20}
+                              onClick={() => {
+                                if (book.isbn && books) {
+                                  removeBook(book.isbn, userInfo.uid!, "books");
+                                }
+                              }}
+                            />
+                          </Book>
+                        )}
+                      </Draggable>
+                    )
+                )}
+                {provided.placeholder}
+              </Books>
+            )}
+          </Droppable>
+        </BookShelf>
+        <BookShelf>
+          <ShelfTitle>已閱讀完</ShelfTitle>
+          <Droppable droppableId="finish">
+            {(provided) => (
+              <Books ref={provided.innerRef} {...provided.droppableProps}>
+                {finish?.map(
+                  (book, index) =>
+                    book.isbn && (
+                      <Draggable
+                        draggableId={book.isbn}
+                        index={index}
+                        key={book.isbn}
+                      >
+                        {(provided) => (
+                          <Book
+                            key={book.isbn}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            ref={provided.innerRef}
+                          >
+                            <BookLink href={`/book/id:${book.isbn}`}>
+                              <BookImg
+                                src={
+                                  book.smallThumbnail
+                                    ? book.smallThumbnail
+                                    : bookcover
+                                }
+                                alt={`${book.title}`}
+                                width={80}
+                                height={120}
+                                priority
+                              ></BookImg>
+                            </BookLink>
+                            <BookData>
+                              {!book.smallThumbnail && (
+                                <NoimgTitle>{book.title}</NoimgTitle>
+                              )}
+                              <BookTitle>書名：{book.title}</BookTitle>
+                              <br />
+                              {book.authors!.length > 0 && (
+                                <BookAuthor>
+                                  作者：{book.authors![0]}
+                                </BookAuthor>
+                              )}
+                            </BookData>
+                            <RemoveBtn
+                              src={x}
+                              alt="delete"
+                              width={20}
+                              height={20}
+                              onClick={() => {
+                                if (book.isbn && books) {
+                                  removeBook(book.isbn, userInfo.uid!, "books");
+                                }
+                              }}
+                            />
+                          </Book>
+                        )}
+                      </Draggable>
+                    )
+                )}
+                {provided.placeholder}
+              </Books>
+            )}
+          </Droppable>
+        </BookShelf>
+      </BookShelfs>
+    </DragDropContext>
   );
 }
 
