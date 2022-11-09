@@ -319,6 +319,13 @@ function SubReviewComponent({ review }: { review: BookReview }) {
     <>
       <SubReviewsBox>
         <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
+        <ShowSubReviewButton
+          onClick={() => {
+            setShowSubReviews(false);
+          }}
+        >
+          隱藏回應
+        </ShowSubReviewButton>
         {subReviews &&
           subReviews.map((subreview) => {
             const ReviewDate = new Date(
@@ -561,65 +568,63 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
           const date = ReviewDate.getDate();
           if (review.title?.length === 0) return;
           return (
-            <>
-              <BookReviewBox key={review.reviewId}>
-                <ReviewMemberBox>
-                  <Gotomember
-                    onClick={() => {
-                      review.memberData &&
-                        userInfo.uid &&
-                        gotoMemberPage(review.memberData, userInfo.uid);
-                    }}
-                  >
-                    <Image
-                      src={
-                        review.memberData && review.memberData.url
-                          ? review.memberData.url
-                          : male
-                      }
-                      alt={
-                        review.memberData && review.memberData.name
-                          ? review.memberData.name
-                          : "user Img"
-                      }
-                      width={50}
-                      height={50}
-                    ></Image>
-                  </Gotomember>
-                  <ReviewMemberName>
-                    用戶名：{review.memberData && review.memberData.name}
-                  </ReviewMemberName>
-                </ReviewMemberBox>
-                <ReviewTitle>評價標題：{review.title}</ReviewTitle>
-                <ReviewContent>評價內容：{review.content}</ReviewContent>
-                <ReviewRating>評價星星：{review.rating}</ReviewRating>
-                <ReviewRating>
-                  評價時間：{`${year}-${month}-${date}`}
-                </ReviewRating>
-                <RatingReviewBox>
-                  <RatingReviewButtonUp
-                    onClick={() => {
-                      if (userInfo.uid && review) {
-                        upperReview(userInfo.uid, review);
-                      } else {
-                        alert("請先登入喔");
-                      }
-                    }}
-                  ></RatingReviewButtonUp>
-                  <RatingCount>{review.reviewRating}</RatingCount>
-                  <RatingReviewButtonDown
-                    onClick={() => {
-                      if (userInfo.uid && review) {
-                        lowerReview(userInfo.uid, review);
-                      } else {
-                        alert("請先登入喔");
-                      }
-                    }}
-                  ></RatingReviewButtonDown>
-                </RatingReviewBox>
-                <SubReviewComponent review={review} />
-              </BookReviewBox>
-            </>
+            <BookReviewBox key={review.reviewId}>
+              <ReviewMemberBox>
+                <Gotomember
+                  onClick={() => {
+                    review.memberData &&
+                      userInfo.uid &&
+                      gotoMemberPage(review.memberData, userInfo.uid);
+                  }}
+                >
+                  <Image
+                    src={
+                      review.memberData && review.memberData.url
+                        ? review.memberData.url
+                        : male
+                    }
+                    alt={
+                      review.memberData && review.memberData.name
+                        ? review.memberData.name
+                        : "user Img"
+                    }
+                    width={50}
+                    height={50}
+                  ></Image>
+                </Gotomember>
+                <ReviewMemberName>
+                  用戶名：{review.memberData && review.memberData.name}
+                </ReviewMemberName>
+              </ReviewMemberBox>
+              <ReviewTitle>評價標題：{review.title}</ReviewTitle>
+              <ReviewContent>評價內容：{review.content}</ReviewContent>
+              <ReviewRating>評價星星：{review.rating}</ReviewRating>
+              <ReviewRating>
+                評價時間：{`${year}-${month}-${date}`}
+              </ReviewRating>
+              <RatingReviewBox>
+                <RatingReviewButtonUp
+                  onClick={() => {
+                    if (userInfo.uid && review) {
+                      upperReview(userInfo.uid, review);
+                    } else {
+                      alert("請先登入喔");
+                    }
+                  }}
+                ></RatingReviewButtonUp>
+                <RatingCount>{review.reviewRating}</RatingCount>
+                <RatingReviewButtonDown
+                  onClick={() => {
+                    if (userInfo.uid && review) {
+                      lowerReview(userInfo.uid, review);
+                    } else {
+                      alert("請先登入喔");
+                    }
+                  }}
+                ></RatingReviewButtonDown>
+              </RatingReviewBox>
+              <SubReviewComponent review={review} />
+            </BookReviewBox>
           );
         })
       ) : (

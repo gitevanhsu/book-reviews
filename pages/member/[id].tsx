@@ -1,8 +1,11 @@
 import styled from "styled-components";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { getMemberData, sentFriendRequest } from "../../utils/firebaseFuncs";
-import { UserState } from "../../slices/userInfoSlice";
+import {
+  getMemberData,
+  MemberInfo,
+  sentFriendRequest,
+} from "../../utils/firebaseFuncs";
 import Image from "next/image";
 import male from "/public/img/reading-male.png";
 import { RootState } from "../../store";
@@ -21,13 +24,13 @@ const AddFriendButton = styled.button`
 
 export default function MemberPageComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [member, setMember] = useState<UserState>({});
+  const [member, setMember] = useState<MemberInfo>({});
   const router = useRouter();
   const { id } = router.query;
   useEffect(() => {
     const memberData = async () => {
       if (typeof id === "string") {
-        const data = (await getMemberData(id.replace("id:", ""))) as UserState;
+        const data = (await getMemberData(id.replace("id:", ""))) as MemberInfo;
         setMember(data);
       }
     };

@@ -4,6 +4,7 @@ import Link from "next/link";
 import styled from "styled-components";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { loadBooks, BookInfo } from "../../utils/firebaseFuncs";
+import bookcover from "/public/img/bookcover.jpeg";
 
 const Books = styled.div`
   display: flex;
@@ -34,18 +35,36 @@ const PageButton = styled.button`
 const PageNumber = styled.p`
   margin: 0 10px;
 `;
+const Book = styled.div`
+  position: relative;
+`;
+const NoimgTitle = styled.h2`
+  position: absolute;
+  color: #fff;
+  font-size: 16px;
+  width: 128px;
+  height: 193px;
+  overflow: hidden;
+  padding: 20px 10px;
+  text-align: center;
+  letter-spacing: 2px;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+`;
 
 function BookComponent({ data }: { data: BookInfo }) {
   return (
-    <>
+    <Book>
       <Link href={`/book/id:${data.isbn}`}>
         <Image
-          src={data.smallThumbnail ? data.smallThumbnail : ""}
+          src={data.smallThumbnail ? data.smallThumbnail : bookcover}
           alt={`${data.title}`}
           width={128}
           height={193}
         />
       </Link>
+      {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
       <BookTitle>書名：{data.title}</BookTitle>
       {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
       {data.authors?.map((author) => (
@@ -58,7 +77,7 @@ function BookComponent({ data }: { data: BookInfo }) {
       <BookPublishedDate>出版日期：{data.publishedDate}</BookPublishedDate>
       <BookIsbn>ISBN：{data.isbn}</BookIsbn>
       <BookTextSnippet>簡介：{data.textSnippet}</BookTextSnippet>
-    </>
+    </Book>
   );
 }
 

@@ -102,28 +102,26 @@ export default function ChatRoomComponent({ id }: { id: string }) {
             );
           } else {
             return (
-              <>
-                <MemberChat key={chat.messageId}>
-                  <Member>
-                    <MemberImg
-                      src={
-                        chat.memberData && chat.memberData.img
-                          ? chat.memberData.img
-                          : male
-                      }
-                      alt={
-                        chat.memberData && chat.memberData.name
-                          ? chat.memberData.name
-                          : "user Img"
-                      }
-                      width={25}
-                      height={25}
-                    />
-                    <MemberName>{chat.memberData?.name}</MemberName>
-                  </Member>
-                  <MemberContent>{chat.content}</MemberContent>
-                </MemberChat>
-              </>
+              <MemberChat key={chat.messageId}>
+                <Member>
+                  <MemberImg
+                    src={
+                      chat.memberData && chat.memberData.img
+                        ? chat.memberData.img
+                        : male
+                    }
+                    alt={
+                      chat.memberData && chat.memberData.name
+                        ? chat.memberData.name
+                        : "user Img"
+                    }
+                    width={25}
+                    height={25}
+                  />
+                  <MemberName>{chat.memberData?.name}</MemberName>
+                </Member>
+                <MemberContent>{chat.content}</MemberContent>
+              </MemberChat>
             );
           }
         })

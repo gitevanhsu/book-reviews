@@ -6,6 +6,8 @@ import {
   getMemberReviews,
   BookReview,
   db,
+  addToshelf,
+  MemberInfo,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -17,9 +19,10 @@ import {
   LeaveCommentComponent,
   LeaveRatingComponent,
 } from "../../components/reviews";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store";
 import Link from "next/link";
+import { userSignIn } from "../../slices/userInfoSlice";
 
 const BookBox = styled.div`
   display: flex;
@@ -53,6 +56,16 @@ const StartGroup = styled(Link)`
   display: inline-block;
   padding: 5px 10px;
   border: solid 1px;
+`;
+const AddToShelf = styled.button`
+  cursor: pointer;
+  border: solid 1px;
+  padding: 5px 10px;
+`;
+const P = styled.p`
+  display: inline-block;
+  border: solid 1px;
+  padding: 5px 10px;
 `;
 
 export function BookComponent({ data }: { data: BookInfo }) {
@@ -101,9 +114,10 @@ export default function Post() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [bookData, setBookData] = useState<BookInfo>({});
   const [memberReviews, setMemberReviews] = useState<BookReview>({});
+  const [inShelf, setInShelf] = useState<boolean>(false);
   const router = useRouter();
   const { id } = router.query;
-
+  const dispatch = useDispatch();
   useEffect(() => {
     if (typeof id === "string") {
       getBookInfo(id.replace("id:", "")).then(
@@ -116,11 +130,41 @@ export default function Post() {
         setMemberReviews(res);
       });
     }
-  }, [id, userInfo.isSignIn, userInfo.uid]);
+    if (
+      typeof id === "string" &&
+      (userInfo.books?.includes(id.replace("id:", "")) ||
+        userInfo.reading?.includes(id.replace("id:", "")) ||
+        userInfo.finish?.includes(id.replace("id:", "")))
+    ) {
+      setInShelf(true);
+    }
+    let unsub: Function;
+    if (userInfo.uid) {
+      unsub = onSnapshot(doc(db, "members", userInfo.uid!), (doc) => {
+        dispatch(userSignIn(doc.data() as MemberInfo));
+      });
+    }
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [dispatch, id, userInfo.books, userInfo.isSignIn, userInfo.uid]);
 
   return (
     <>
       <BookComponent data={bookData} />
+      {inShelf ? (
+        <P>已收藏 </P>
+      ) : (
+        <AddToShelf
+          onClick={() => {
+            if (typeof id === "string" && userInfo && userInfo.uid)
+              addToshelf(id.replace("id:", ""), userInfo.uid);
+          }}
+        >
+          加入書櫃
+        </AddToShelf>
+      )}
+      <br />
       {typeof id === "string" && (
         <StartGroup href={`/group/id:${id.replace("id:", "")}`}>
           Start a Group

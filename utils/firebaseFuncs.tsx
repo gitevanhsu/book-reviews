@@ -29,7 +29,7 @@ import {
   signOut,
   UserInfo,
 } from "firebase/auth";
-import { UserState } from "../slices/userInfoSlice";
+// import { UserState } from "../slices/userInfoSlice";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -94,12 +94,16 @@ export interface BookReview {
 }
 
 export interface MemberInfo {
-  uid: string;
-  name: string;
-  email: string;
-  img: string;
-  intro: string;
-  friends: string[];
+  uid?: string;
+  name?: string;
+  email?: string;
+  isSignIn?: boolean;
+  intro?: string;
+  img?: string;
+  friends?: string[];
+  books?: string[];
+  reading?: string[];
+  finish?: string[];
 }
 
 export interface FriendRequest {
@@ -207,6 +211,10 @@ export const emailSignUp = async (
       email,
       intro,
       img: "",
+      books: [],
+      friends: [],
+      reading: [],
+      finish: [],
     };
     await setDoc(doc(db, "members", user.uid), userData);
     return userData;
@@ -250,7 +258,7 @@ export const signout = () => {
 
 export const getMemberData = async (
   uid: string
-): Promise<UserState | undefined> => {
+): Promise<MemberInfo | undefined> => {
   const docData = await getDoc(doc(db, "members", uid));
   return docData.data();
 };
@@ -601,8 +609,8 @@ export const acceptFriendRequest = async (
   const invitorMemberDocRef = await getDoc(doc(db, "members", invitorUid));
   const reciverData = receiverMemberDocRef.data() as MemberInfo;
   const invitorData = invitorMemberDocRef.data() as MemberInfo;
-  const newReciverFriends = [...reciverData.friends, invitorUid];
-  const newInvitorFriends = [...invitorData.friends, receiverUid];
+  const newReciverFriends = [...reciverData.friends!, invitorUid];
+  const newInvitorFriends = [...invitorData.friends!, receiverUid];
   const newReceiverData = { ...reciverData, friends: newReciverFriends };
   const newInvitorData = { ...invitorData, friends: newInvitorFriends };
   const newRequests = { ...requestDocRef.data(), state: "accept" };
@@ -629,7 +637,7 @@ export const rejectFriendRequest = async (
 
 export const sentMessage = async (
   isbn: string,
-  userInfo: UserState,
+  userInfo: MemberInfo,
   content: string
 ) => {
   const messageData = {
@@ -648,4 +656,42 @@ export const getBooks = async () => {
   const books = query(booksRef, limit(30));
   const booksSnapshots = await getDocs(books);
   return booksSnapshots.docs.map((doc) => doc.data());
+};
+
+export const addToshelf = async (isbn: string, uid: string) => {
+  const docData = await getDoc(doc(db, "members", uid));
+  const memberData = docData.data();
+  const newMemberData = produce(memberData, (draft: MemberInfo) => {
+    draft.books!.push(isbn);
+  });
+  await setDoc(doc(db, "members", uid), newMemberData);
+};
+
+export const getBookDatas = async (isbns: string[]) => {
+  const bookDatas = isbns.map(async (isbn) => {
+    const res = await getBookInfo(isbn);
+    return res;
+  });
+  const datas = await Promise.all(bookDatas);
+  return datas;
+};
+
+export const removeBook = async (isbn: string, uid: string, shelf: string) => {
+  const userData = await getMemberData(uid);
+  if (userData && shelf === "books") {
+    const newUserData = produce(userData, (data) => {
+      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+    });
+    await setDoc(doc(db, "members", uid), newUserData);
+  } else if (userData && shelf === "reading") {
+    const newUserData = produce(userData, (data) => {
+      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+    });
+    await setDoc(doc(db, "members", uid), newUserData);
+  } else if (userData && shelf === "finish") {
+    const newUserData = produce(userData, (data) => {
+      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+    });
+    await setDoc(doc(db, "members", uid), newUserData);
+  }
 };
