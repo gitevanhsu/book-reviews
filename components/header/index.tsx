@@ -210,9 +210,6 @@ export function Header() {
           <Link href="/books/">Books</Link>
         </Li>
         <Li>
-          <Link href="/group/">Groups</Link>
-        </Li>
-        <Li>
           <Link href="/search/">搜尋</Link>
         </Li>
       </Ul>

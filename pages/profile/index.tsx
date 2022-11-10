@@ -13,6 +13,7 @@ import {
   MemberInfo,
   updateBooks,
   getMemberData,
+  editMemberInfo,
 } from "../../utils/firebaseFuncs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -27,6 +28,9 @@ import {
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
+import SignupComponent from "../../components/signup";
+import Portal from "../../components/portal";
+
 const InputArea = styled.div``;
 const Inputbox = styled.div``;
 const InputTitle = styled.p``;
@@ -36,77 +40,19 @@ const SubmitButton = styled.button`
   border: solid 1px;
   cursor: pointer;
 `;
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #00000050;
+`;
 
-function SignupComponent() {
-  const nameRef = useRef<HTMLInputElement>(null);
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
-  const introRef = useRef<HTMLInputElement>(null);
-
-  const signup = () => {
-    if (
-      nameRef.current &&
-      emailRef.current &&
-      passwordRef.current &&
-      introRef.current
-    ) {
-      const name = nameRef.current.value;
-      const email = emailRef.current.value;
-      const password = passwordRef.current.value;
-      const intro = introRef.current.value;
-
-      name && email && password && emailSignUp(name, email, password, intro);
-      nameRef.current.value = "";
-      emailRef.current.value = "";
-      passwordRef.current.value = "";
-      introRef.current.value = "";
-    }
-  };
-
-  return (
-    <>
-      <InputArea>
-        <Inputbox>
-          <InputTitle>Name: </InputTitle>
-          <InputContent
-            key="signUpName"
-            ref={nameRef}
-            type="text"
-          ></InputContent>
-        </Inputbox>
-        <Inputbox>
-          <InputTitle>Email: </InputTitle>
-          <InputContent
-            key="signUpEmail"
-            ref={emailRef}
-            type="email"
-          ></InputContent>
-        </Inputbox>
-        <Inputbox>
-          <InputTitle>Password: </InputTitle>
-          <InputContent
-            key="signUpPassword"
-            ref={passwordRef}
-            type="password"
-          ></InputContent>
-        </Inputbox>
-        <Inputbox>
-          <InputTitle>自我介紹: </InputTitle>
-          <InputContent
-            key="signUpIntro"
-            ref={introRef}
-            type="text"
-          ></InputContent>
-        </Inputbox>
-        <SubmitButton onClick={signup}>註冊</SubmitButton>
-      </InputArea>
-    </>
-  );
-}
 function SigninComponent() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
+  const [showSignup, setSignUp] = useState(false);
   const signin = () => {
     if (emailRef.current && passwordRef.current) {
       const email = emailRef.current.value;
@@ -137,7 +83,14 @@ function SigninComponent() {
           ></InputContent>
         </Inputbox>
         <SubmitButton onClick={signin}>登入</SubmitButton>
+        <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
       </InputArea>
+      {showSignup && (
+        <Portal>
+          <Overlay onClick={() => setSignUp(false)} />
+          <SignupComponent />
+        </Portal>
+      )}
     </>
   );
 }
@@ -198,6 +151,13 @@ const RemoveBtn = styled(Image)`
   margin-left: auto;
   cursor: pointer;
 `;
+const UserAvatar = styled(Image)``;
+
+const EditBox = styled.div``;
+const UserTitle = styled.h1``;
+const TitleInput = styled.input``;
+const UserIntro = styled.p``;
+const IntroTextarea = styled.textarea``;
 
 function BookShelfComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
@@ -478,11 +438,21 @@ function BookShelfComponent() {
 
 export default function Profile() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
+  const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
+  const editNameRef = useRef<HTMLInputElement>(null);
+  const editIntroRef = useRef<HTMLTextAreaElement>(null);
+
   return (
     <>
       {userInfo.isSignIn ? (
         <>
+          <UserAvatar
+            src={userInfo.img!}
+            alt="memberAvatar"
+            width={50}
+            height={50}
+          ></UserAvatar>
           <p>{userInfo.uid}</p>
           <p>{userInfo.name}</p>
           <p>{userInfo.email}</p>
@@ -497,12 +467,53 @@ export default function Profile() {
           >
             登出
           </SubmitButton>
+          <SubmitButton
+            onClick={() => {
+              setEdit(true);
+            }}
+          >
+            編輯資訊
+          </SubmitButton>
+          {edit && (
+            <EditBox>
+              <UserTitle>用戶名稱</UserTitle>
+              <TitleInput ref={editNameRef} defaultValue={userInfo.name} />
+              <UserIntro>自我介紹</UserIntro>
+              <IntroTextarea ref={editIntroRef} defaultValue={userInfo.intro} />
+              <SubmitButton
+                onClick={() => {
+                  setEdit(false);
+                }}
+              >
+                取消編輯
+              </SubmitButton>
+              <SubmitButton
+                onClick={() => {
+                  if (
+                    editNameRef &&
+                    editNameRef.current &&
+                    editIntroRef &&
+                    editIntroRef.current
+                  ) {
+                    editMemberInfo(
+                      userInfo,
+                      editNameRef.current.value,
+                      editIntroRef.current.value,
+                      dispatch
+                    );
+                    setEdit(false);
+                  }
+                }}
+              >
+                送出
+              </SubmitButton>
+            </EditBox>
+          )}
           <FriendsListComponent />
           <BookShelfComponent />
         </>
       ) : (
         <>
-          <SignupComponent />
           <SigninComponent />
         </>
       )}

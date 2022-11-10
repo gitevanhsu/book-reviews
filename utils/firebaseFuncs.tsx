@@ -28,6 +28,7 @@ import {
   signOut,
   UserInfo,
 } from "firebase/auth";
+import { userSignIn } from "../slices/userInfoSlice";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -204,7 +205,8 @@ export const emailSignUp = async (
   name: string,
   email: string,
   password: string,
-  intro: string
+  intro: string,
+  img: string
 ) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -218,7 +220,7 @@ export const emailSignUp = async (
       name,
       email,
       intro,
-      img: "",
+      img,
       books: [],
       friends: [],
       reading: [],
@@ -747,4 +749,19 @@ export const sentNotice = async (
 export const removeNotice = async (notice: NoticeData) => {
   const docData = await getDoc(doc(db, "notices", notice.noticeid));
   await deleteDoc(doc(db, "notices", notice.noticeid));
+};
+
+export const editMemberInfo = async (
+  userinfo: MemberInfo,
+  newName: string,
+  newIntro: string,
+  dispatch: Function
+) => {
+  const newUserInfo = produce(userinfo, (draft) => {
+    draft.name = newName;
+    draft.intro = newIntro;
+  });
+  newUserInfo.uid &&
+    (await setDoc(doc(db, "members", newUserInfo.uid), newUserInfo));
+  dispatch(userSignIn(newUserInfo));
 };

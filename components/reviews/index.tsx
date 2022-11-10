@@ -346,8 +346,8 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                 >
                   <Image
                     src={
-                      subreview.memberData && subreview.memberData.url
-                        ? subreview.memberData.url
+                      subreview.memberData && subreview.memberData.img
+                        ? subreview.memberData.img
                         : male
                     }
                     alt={
@@ -406,8 +406,8 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
     <MemberReview>
       <Image
         src={
-          memberReview.memberData && memberReview.memberData.url
-            ? memberReview.memberData.url
+          memberReview.memberData && memberReview.memberData.img
+            ? memberReview.memberData.img
             : male
         }
         alt={
@@ -460,8 +460,8 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
     <MemberReview>
       <Image
         src={
-          memberReview.memberData && memberReview.memberData.url
-            ? memberReview.memberData.url
+          memberReview.memberData && memberReview.memberData.img
+            ? memberReview.memberData.img
             : male
         }
         alt={
@@ -580,8 +580,8 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
                 >
                   <Image
                     src={
-                      review.memberData && review.memberData.url
-                        ? review.memberData.url
+                      review.memberData && review.memberData.img
+                        ? review.memberData.img
                         : male
                     }
                     alt={

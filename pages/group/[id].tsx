@@ -74,6 +74,26 @@ export default function Group() {
     }
   }, [id]);
   useEffect(() => {
+    if (!localVideoRef.current) return;
+    const localRemove = localVideoRef.current;
+    if (!remotoVideoRef.current) return;
+    const remotoRemove = remotoVideoRef.current;
+
+    return () => {
+      if (pcRef.current && localRemove) {
+        (localRemove.srcObject as MediaStream)
+          .getTracks()
+          .forEach((track: { stop: () => void }) => track.stop());
+        if (pcRef.current && remotoRemove) {
+          (remotoRemove.srcObject as MediaStream)
+            .getTracks()
+            .forEach((track: { stop: () => void }) => track.stop());
+        }
+      }
+    };
+  });
+
+  const start = async () => {
     const servers = {
       iceServers: [
         {
@@ -90,24 +110,6 @@ export default function Group() {
     };
     const pc = new RTCPeerConnection(servers);
     pcRef.current = pc;
-
-    return () => {
-      if (pcRef.current && localVideoRef.current) {
-        (localVideoRef.current.srcObject as MediaStream)
-          .getTracks()
-          .forEach((track: { stop: () => void }) => track.stop());
-        setShoeVideo(false);
-      }
-      if (pcRef.current && remotoVideoRef.current) {
-        (remotoVideoRef.current.srcObject as MediaStream)
-          .getTracks()
-          .forEach((track: { stop: () => void }) => track.stop());
-        setShoeVideo(false);
-      }
-    };
-  }, []);
-
-  const start = async () => {
     setTimeout(async () => {
       const webcamVideo = localVideoRef.current;
       const remoteVideo = remotoVideoRef.current;
@@ -242,6 +244,7 @@ export default function Group() {
 
   return (
     <>
+      {/* <video src=""></video> */}
       <BookComponent data={bookData} />
       {typeof id === "string" && (
         <GoToReview href={`/book/id:${id.replace("id:", "")}`}>
