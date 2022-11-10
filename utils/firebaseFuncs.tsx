@@ -47,6 +47,7 @@ export const reviewsRef = collection(db, "book_reviews");
 export const memersRef = collection(db, "members");
 export const booksRef = collection(db, "books");
 export const friendRequestRef = collection(db, "friends_requests");
+export const noticeRef = collection(db, "notices");
 
 export interface BookInfo {
   isbn?: string;
@@ -115,6 +116,15 @@ export interface ChatMessage {
   content: string;
   memberData?: MemberInfo;
   messageId: string;
+}
+export interface NoticeData {
+  noticeid: string;
+  reciver: string;
+  content: string;
+  postUrl: string;
+  poster: string;
+  time: Date;
+  posterInfo?: MemberInfo;
 }
 
 export const addBooksData = async (bookIsbn: string) => {
@@ -713,4 +723,28 @@ export const updateBooks = async (
     reading: readingIsbns,
     finish: finishIsbns,
   });
+};
+
+export const sentNotice = async (
+  review: BookReview,
+  input: string,
+  uid: string
+) => {
+  const url = `http://localhost:3000/book/id:${review.booksIsbn}`;
+  const reciver = review.memberId;
+  if (reciver === uid) return;
+  const noticeData = {
+    noticeid: `${+new Date()}`,
+    reciver: reciver,
+    content: input,
+    postUrl: url,
+    poster: uid,
+    time: new Date(),
+  };
+  await setDoc(doc(db, "notices", noticeData.noticeid), noticeData);
+};
+
+export const removeNotice = async (notice: NoticeData) => {
+  const docData = await getDoc(doc(db, "notices", notice.noticeid));
+  await deleteDoc(doc(db, "notices", notice.noticeid));
 };

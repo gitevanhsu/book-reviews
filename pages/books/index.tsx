@@ -85,7 +85,6 @@ export default function BooksComponent() {
   const [bookDatas, setBookDatas] = useState<BookInfo[]>([]);
   const [page, setPage] = useState<number>(0);
   const pageRef = useRef<QueryDocumentSnapshot<DocumentData>>();
-  // console.log(pageRef.current);
   useEffect(() => {
     if (page + 1 > bookDatas.length / 10) {
       loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
@@ -93,7 +92,7 @@ export default function BooksComponent() {
         pageRef.current = lastVisible;
       });
     }
-  });
+  }, [bookDatas, page]);
 
   return (
     <>
