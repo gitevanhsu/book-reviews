@@ -4,6 +4,8 @@ import Link from "next/link";
 import styled from "styled-components";
 import { BookInfo, getBooks } from "../utils/firebaseFuncs";
 import bookcover from "/public/img/bookcover.jpeg";
+import Portal from "../components/portal";
+import SignupComponent from "../components/signup";
 
 const PageTitle = styled.h1`
   font-size: 36px;
