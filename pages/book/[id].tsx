@@ -141,31 +141,40 @@ export default function Post() {
     let unsub: Function;
     if (userInfo.uid) {
       unsub = onSnapshot(doc(db, "members", userInfo.uid!), (doc) => {
-        dispatch(userSignIn(doc.data() as MemberInfo));
+        const userData = doc.data() as MemberInfo;
+        if (
+          typeof id === "string" &&
+          (userData.books?.includes(id.replace("id:", "")) ||
+            userData.reading?.includes(id.replace("id:", "")) ||
+            userData.finish?.includes(id.replace("id:", "")))
+        ) {
+          setInShelf(true);
+        }
       });
     }
     return () => {
       if (unsub) unsub();
     };
-  }, [dispatch, id, userInfo.books, userInfo.isSignIn, userInfo.uid]);
+  }, [dispatch, id, userInfo]);
 
   return (
     <>
       <BookComponent data={bookData} />
-      {inShelf ? (
-        <P>已收藏 </P>
-      ) : (
-        <AddToShelf
-          onClick={() => {
-            if (typeof id === "string" && userInfo && userInfo.uid)
-              addToshelf(id.replace("id:", ""), userInfo.uid);
-          }}
-        >
-          加入書櫃
-        </AddToShelf>
-      )}
+      {userInfo.isSignIn &&
+        (inShelf ? (
+          <P>已收藏 </P>
+        ) : (
+          <AddToShelf
+            onClick={() => {
+              if (typeof id === "string" && userInfo && userInfo.uid)
+                addToshelf(id.replace("id:", ""), userInfo.uid);
+            }}
+          >
+            加入書櫃
+          </AddToShelf>
+        ))}
       <br />
-      {typeof id === "string" && (
+      {userInfo.isSignIn && typeof id === "string" && (
         <StartGroup href={`/group/id:${id.replace("id:", "")}`}>
           Start a Group
         </StartGroup>

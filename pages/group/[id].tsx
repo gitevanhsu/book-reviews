@@ -217,7 +217,6 @@ export default function Group() {
         snapshot!
           .docChanges()
           .forEach((change: { type: string; doc: { data: () => any } }) => {
-            console.log(change);
             if (change.type === "added") {
               let data = change.doc.data();
               pcRef.current!.addIceCandidate(new RTCIceCandidate(data));

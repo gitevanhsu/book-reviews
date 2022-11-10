@@ -18,6 +18,7 @@ import {
   upperReview,
   lowerReview,
   MemberInfo,
+  sentNotice,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
@@ -243,10 +244,10 @@ function SentSubReviewComponent({ review }: { review: BookReview }) {
       <SubReviewInput ref={inputRef} />
       <SubReviewSubmit
         onClick={() => {
-          inputRef &&
-            inputRef.current &&
-            userInfo.uid &&
+          if (inputRef && inputRef.current && userInfo.uid) {
             sentSubReview(review, inputRef.current.value, userInfo.uid);
+            sentNotice(review, inputRef.current.value, userInfo.uid);
+          }
         }}
       >
         送出

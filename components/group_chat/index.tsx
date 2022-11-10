@@ -33,6 +33,7 @@ const SentMessageButton = styled.button`
   border: solid 1px;
   padding: 5px 10px;
 `;
+const ChatDate = styled.p``;
 
 export default function ChatRoomComponent({ id }: { id: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
@@ -77,6 +78,10 @@ export default function ChatRoomComponent({ id }: { id: string }) {
     <ChatRoom>
       {chats ? (
         chats.map((chat) => {
+          const chatDate = new Date(chat.time ? chat.time?.seconds * 1000 : "");
+          const year = chatDate.getFullYear();
+          const month = chatDate.getMonth() + 1;
+          const date = chatDate.getDate();
           if (chat.memberData?.uid === userInfo.uid) {
             return (
               <MyChat key={chat.messageId}>
@@ -97,6 +102,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
                     height={25}
                   />
                 </Member>
+                <ChatDate>{`${year}-${month}-${date}`}</ChatDate>
                 <MemberContent>{chat.content}</MemberContent>
               </MyChat>
             );
@@ -120,6 +126,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
                   />
                   <MemberName>{chat.memberData?.name}</MemberName>
                 </Member>
+                <ChatDate>{`${year}-${month}-${date}`}</ChatDate>
                 <MemberContent>{chat.content}</MemberContent>
               </MemberChat>
             );

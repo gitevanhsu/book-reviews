@@ -481,7 +481,7 @@ export default function Profile() {
   const dispatch = useDispatch();
   return (
     <>
-      {userInfo.isSignIn && (
+      {userInfo.isSignIn ? (
         <>
           <p>{userInfo.uid}</p>
           <p>{userInfo.name}</p>
@@ -500,9 +500,12 @@ export default function Profile() {
           <FriendsListComponent />
           <BookShelfComponent />
         </>
+      ) : (
+        <>
+          <SignupComponent />
+          <SigninComponent />
+        </>
       )}
-      <SignupComponent />
-      <SigninComponent />
     </>
   );
 }
