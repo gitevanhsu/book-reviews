@@ -757,7 +757,7 @@ export const editMemberInfo = async (
   newIntro: string,
   dispatch: Function
 ) => {
-  const newUserInfo = produce(userinfo, (draft) => {
+  const newUserInfo: MemberInfo = produce(userinfo, (draft) => {
     draft.name = newName;
     draft.intro = newIntro;
   });

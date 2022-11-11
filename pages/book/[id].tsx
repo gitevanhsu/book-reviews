@@ -24,11 +24,19 @@ import { RootState } from "../../store";
 import Link from "next/link";
 import { userSignIn } from "../../slices/userInfoSlice";
 
+const BookPage = styled.div`
+  width: 100%;
+  min-height: calc(100vh - 50px);
+  background-color: #ccc;
+  padding: 50px 30px;
+`;
 const BookBox = styled.div`
   display: flex;
   align-items: center;
   position: relative;
+  margin: 0 0px 50px;
 `;
+const BookImg = styled(Image)``;
 const BookDetail = styled.div``;
 const BookTitle = styled.h2``;
 const BookSubTitle = styled.h3``;
@@ -71,7 +79,7 @@ const P = styled.p`
 export function BookComponent({ data }: { data: BookInfo }) {
   return data ? (
     <BookBox>
-      <Image
+      <BookImg
         src={data.smallThumbnail ? data.smallThumbnail : bookcover}
         alt={`${data.title}`}
         width={128}
@@ -158,11 +166,11 @@ export default function Post() {
   }, [dispatch, id, userInfo]);
 
   return (
-    <>
+    <BookPage>
       <BookComponent data={bookData} />
       {userInfo.isSignIn &&
         (inShelf ? (
-          <P>已收藏 </P>
+          <P>已收藏</P>
         ) : (
           <AddToShelf
             onClick={() => {
@@ -187,6 +195,6 @@ export default function Post() {
       <ReviewsComponent
         bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
       />
-    </>
+    </BookPage>
   );
 }
