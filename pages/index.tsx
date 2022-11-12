@@ -62,14 +62,16 @@ const Buttonleft = styled(ButtonRight)<ColorProps>`
   background-color: ${(props) => (props.arrcolor ? "#ccc" : "#e5a800")};
   clip-path: polygon(67% 0, 0 50%, 67% 100%);
 `;
-
-const BookTitle = styled.h2`
+const BookInfoTitle = styled.h3`
   margin-top: 20px;
+  margin-bottom: 10px;
+`;
+const BookTitle = styled.h2`
   white-space: pre-wrap;
 `;
 
 const BookAuthor = styled.p`
-  margin-top: 20px;
+  white-space: pre-wrap;
 `;
 const NoimgTitle = styled.h2`
   position: absolute;
@@ -127,9 +129,11 @@ export default function Home() {
                     {!book.smallThumbnail && (
                       <NoimgTitle>{book.title}</NoimgTitle>
                     )}
-                    <BookTitle>書名{"\n\n" + book.title}</BookTitle>
+                    <BookInfoTitle>書名：</BookInfoTitle>
+                    <BookTitle>{book.title}</BookTitle>
+                    <BookInfoTitle>作者：</BookInfoTitle>
                     {book.authors && book.authors[0]?.length > 0 && (
-                      <BookAuthor>作者：{book.authors[0]}</BookAuthor>
+                      <BookAuthor>{book.authors[0]}</BookAuthor>
                     )}
                   </Book>
                 </BookWarp>

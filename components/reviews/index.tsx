@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
 import {
-  getBookReviews,
   BookReview,
   bookRating,
   removeBookRating,
@@ -11,7 +10,6 @@ import {
   reviewsRef,
   db,
   editReview,
-  showSubReview,
   SubReview,
   sentSubReview,
   likeSubReview,
@@ -35,90 +33,172 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { useRouter } from "next/router";
-
-const BookReviewsBox = styled.div``;
-const BookReviewBox = styled.div`
-  padding-left: 50px;
-  position: relative;
-`;
-const ReviewTitle = styled.h2``;
-const ReviewContent = styled.h2``;
-const ReviewRating = styled.p``;
-
-const LeaveReviewBox = styled.div``;
-const LeaveInputBox = styled.div``;
-const LeaveReviewTitle = styled.h3``;
-const LeaveReviewContent = styled.input``;
-const LeaveReviewTextContent = styled.textarea`
-  font-family: Arial;
-`;
-const SentReviewButton = styled.button`
-  cursor: pointer;
-  border: solid 1px;
-  padding: 5px 10px;
-`;
-
-const LeaveRatingBox = styled.div``;
-const LeaveRatingButton = styled.button<{
+import like from "../../public/img/like.svg";
+import liked from "../../public/img/liked.svg";
+interface RatingProps {
   index: number;
   hover: number;
   rating: number;
-}>`
+}
+const BookReviewsBox = styled.div`
+  padding: 10px;
+  width: 100%;
+  border-radius: 10px;
+`;
+const BookReviewBox = styled.div`
+  padding: 50px 0;
+
+  border-bottom: 1px solid #bbb;
+  padding-left: 50px;
+  position: relative;
+`;
+const MemberData = styled.div`
+  margin-left: 10px;
+  width: 80%;
+`;
+
+const ReviewTitle = styled.h2`
+  margin: 10px 0;
+`;
+const ReviewContent = styled.p`
+  line-height: 22px;
+`;
+
+const ShowReviewBtn = styled.button`
+  margin-top: 15px;
+  position: relative;
+  cursor: pointer;
+  padding: 5px 50px;
+  color: #999;
+  &::before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    width: 30px;
+    transform: translateY(-50%);
+    border-top: solid 2px #999;
+  }
+`;
+
+const LeaveRatingBox = styled.div`
+  margin-bottom: 20px;
+`;
+const LeaveRatingButton = styled.button<RatingProps>`
   color: ${(props) =>
-    props.index <= (props.hover || props.rating) ? "#000" : "#ccc"};
+    props.index <= (props.hover || props.rating) ? "#ffcc00" : "#999"};
 
   background-color: transparent;
   border: none;
   outline: none;
   cursor: pointer;
 `;
-const LeaveRatingStart = styled.span``;
-const SentRatingButton = styled(SentReviewButton)``;
+const LeaveRatingStar = styled.span``;
+const SentRatingButton = styled.button`
+  cursor: pointer;
+  margin: 0 30px;
+  padding: 5px 10px;
+  border-radius: 30px;
+  background-color: #b3c7f3;
+  & + & {
+    margin: 0px;
+  }
+`;
 
-const ReviewMemberBox = styled.div``;
-const ReviewMemberName = styled.h3``;
+const ReviewMemberBox = styled.div`
+  display: flex;
+`;
+const ReviewMemberName = styled.h3`
+  margin-bottom: 10px;
+  min-width: 100px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #888;
+`;
 
 const SignMessage = styled.h2``;
 
 const MemberReview = styled.div`
-  border: solid 1px;
+  border-bottom: 3px solid #eee;
+  padding: 10px 10px;
 `;
-const EditReviewButton = styled(SentReviewButton)``;
-
-const SubReviewsCount = styled.p``;
-const ShowSubReviewButton = styled(SentReviewButton)``;
+const EditReviewButton = styled.button`
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 16px;
+  padding: 5px 10px;
+  color: #444;
+  border: solid 1px #ccc;
+  border-radius: 10px;
+  background-color: #eee;
+  &:hover {
+    background-color: #444;
+    color: #eee;
+  }
+  & + & {
+    margin-left: 20px;
+  }
+`;
+const ShowSubReviewButton = styled(ShowReviewBtn)``;
 
 const SubReviewsBox = styled.div`
   max-height: 200px;
   overflow: auto;
+  ::-webkit-scrollbar {
+    display: none;
+  }
 `;
-const SubReviewBox = styled.div``;
+const SubReviewBox = styled.div`
+  margin: 15px 0;
+`;
 
-const SubReviewLikes = styled.p``;
-const SubReviewContent = styled.p``;
-const SubReviewTime = styled.p``;
-const SubReviewInput = styled.input``;
-const SubReviewSubmit = styled(SentReviewButton)``;
-const SubReviewLikeButton = styled(SentReviewButton)``;
+const SubReviewLikes = styled.div`
+  display: inline-block;
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+  margin-left: 25px;
+`;
+const SubReviewContent = styled.p`
+  margin: 10px 25px;
+`;
+const SubReviewTime = styled.p`
+  font-size: 12px;
+  display: inline-block;
+`;
+const SubReviewInput = styled.input`
+  padding: 10px 10px;
+  width: 100%;
+  outline: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+`;
+const LikeButton = styled.button`
+  height: 20px;
+  cursor: pointer;
+`;
 
 const RatingReviewBox = styled.div`
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: 50px 0;
   text-align: center;
-  border: solid 1px;
   position: absolute;
   top: 0;
   left: 0;
 `;
 const RatingCount = styled.p`
-  border: solid 1px;
+  padding: 20px 0;
 `;
 const RatingReviewButtonUp = styled.div`
   cursor: pointer;
   display: inline-block;
   height: 40px;
   width: 40px;
-  border: solid 1px;
-  background-color: #f00;
+  background-color: #ffcc00;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   &:hover {
     opacity: 0.5;
@@ -128,11 +208,91 @@ const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
   clip-path: polygon(0 0, 50% 100%, 100% 0);
 `;
 
-const Gotomember = styled.div`
+const Gotomember = styled(Link)`
   display: inline-block;
   cursor: pointer;
 `;
-
+const SubMemberImg = styled(Image)`
+  border-radius: 50%;
+`;
+const LikeCount = styled.p`
+  display: inline-block;
+  width: 20px;
+`;
+const LeaveReviewBox = styled.div`
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 860px;
+`;
+const LeaveInputBox = styled.div`
+  width: 860px;
+  display: flex;
+  align-items: start;
+  & + & {
+    margin-top: 10px;
+  }
+`;
+const LeaveReviewTitle = styled.h3`
+  min-width: 100px;
+`;
+const LeaveReviewContent = styled.input`
+  width: 100%;
+  padding: 4px 10px;
+`;
+const LeaveReviewTextContent = styled.textarea`
+  padding: 4px 10px;
+  width: 100%;
+  font-family: Arial;
+  height: 100px;
+`;
+const SubmitReviewBtn = styled.button`
+  margin-top: 10px;
+  align-self: end;
+  cursor: pointer;
+  border: solid 1px #ccc;
+  padding: 5px 10px;
+  text-align: center;
+  border-radius: 5px;
+  color: #444;
+  &:hover {
+    color: #fff;
+    background-color: #7382d4;
+  }
+`;
+const ItemBox = styled.div`
+  display: flex;
+  align-content: center;
+  & + & {
+    margin-top: 5px;
+  }
+`;
+const ReviewStar = styled.span`
+  color: #ff0000;
+`;
+const ReviewUserImage = styled(Image)`
+  border-radius: 50%;
+`;
+const MemberName = styled.h3`
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 0;
+`;
+const MainReviewTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+`;
+const MainReviewContent = styled.p`
+  font-size: 16px;
+`;
+const MainReviewStar = styled.div`
+  display: inline-block;
+  margin: 0 20px;
+  font-size: 8px;
+`;
+const MainReviewDate = styled.span`
+  font-size: 8px;
+`;
 export function LeaveRatingComponent({
   bookIsbn,
   memberReview,
@@ -148,44 +308,47 @@ export function LeaveRatingComponent({
     memberReview?.rating && setRating(+memberReview.rating);
   }, [memberReview]);
   return userInfo.isSignIn ? (
-    <LeaveRatingBox>
-      <ReviewMemberName>您的評價</ReviewMemberName>
-      {[...Array(5)].map((_, index) => {
-        index += 1;
-        return (
-          <LeaveRatingButton
-            type="button"
-            key={`start-${index}`}
-            index={index}
-            hover={hover}
-            rating={rating}
-            onClick={() => setRating(index)}
-            onMouseEnter={() => setHover(index)}
-            onMouseLeave={() => setHover(rating)}
-          >
-            <LeaveRatingStart>&#9733;</LeaveRatingStart>
-          </LeaveRatingButton>
-        );
-      })}
-      <SentRatingButton
-        onClick={() => {
-          userInfo.uid && bookRating(userInfo.uid, bookIsbn, rating);
-        }}
-      >
-        送出評價
-      </SentRatingButton>
-      <SentRatingButton
-        onClick={() => {
-          if (userInfo.uid) {
-            removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
-            setRating(0);
-            setHover(0);
-          }
-        }}
-      >
-        移除評價/評論
-      </SentRatingButton>
-    </LeaveRatingBox>
+    <>
+      <LeaveRatingBox>
+        <ReviewMemberName>Rate this book</ReviewMemberName>
+        {[...Array(5)].map((_, index) => {
+          index += 1;
+          return (
+            <LeaveRatingButton
+              type="button"
+              key={`start-${index}`}
+              index={index}
+              hover={hover}
+              rating={rating}
+              onClick={() => setRating(index)}
+              onMouseEnter={() => setHover(index)}
+              onMouseLeave={() => setHover(rating)}
+            >
+              <LeaveRatingStar>&#9733;</LeaveRatingStar>
+            </LeaveRatingButton>
+          );
+        })}
+
+        <SentRatingButton
+          onClick={() => {
+            userInfo.uid && bookRating(userInfo.uid, bookIsbn, rating);
+          }}
+        >
+          Rate
+        </SentRatingButton>
+        <SentRatingButton
+          onClick={() => {
+            if (userInfo.uid) {
+              removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
+              setRating(0);
+              setHover(0);
+            }
+          }}
+        >
+          Remove
+        </SentRatingButton>
+      </LeaveRatingBox>
+    </>
   ) : (
     <LeaveRatingBox>
       <SignMessage>登入才能留下評價喔！</SignMessage>
@@ -201,14 +364,14 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
   return userInfo.isSignIn ? (
     <LeaveReviewBox>
       <LeaveInputBox>
-        <LeaveReviewTitle>評論標題</LeaveReviewTitle>
+        <LeaveReviewTitle>Title</LeaveReviewTitle>
         <LeaveReviewContent ref={titleInputRef} />
       </LeaveInputBox>
       <LeaveInputBox>
-        <LeaveReviewTitle>評論內容</LeaveReviewTitle>
+        <LeaveReviewTitle>Content</LeaveReviewTitle>
         <LeaveReviewTextContent ref={contentInputRef} />
       </LeaveInputBox>
-      <SentReviewButton
+      <SubmitReviewBtn
         onClick={() => {
           if (
             titleInputRef &&
@@ -226,33 +389,10 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
         }}
       >
         送出評論
-      </SentReviewButton>
-      <SentReviewButton>編輯評論</SentReviewButton>
+      </SubmitReviewBtn>
     </LeaveReviewBox>
   ) : (
-    <LeaveReviewBox>
-      <SignMessage>登入才能留下評論喔！</SignMessage>
-    </LeaveReviewBox>
-  );
-}
-
-function SentSubReviewComponent({ review }: { review: BookReview }) {
-  const userInfo = useSelector((state: RootState) => state.userInfo);
-  const inputRef = useRef<HTMLInputElement>(null);
-  return (
-    <>
-      <SubReviewInput ref={inputRef} />
-      <SubReviewSubmit
-        onClick={() => {
-          if (inputRef && inputRef.current && userInfo.uid) {
-            sentSubReview(review, inputRef.current.value, userInfo.uid);
-            sentNotice(review, inputRef.current.value, userInfo.uid);
-          }
-        }}
-      >
-        送出
-      </SubReviewSubmit>
-    </>
+    <></>
   );
 }
 
@@ -260,8 +400,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
   const [subReviews, setSubReviews] = useState<SubReview[]>();
-  const router = useRouter();
-
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let unsubscribe: Function;
     const getSubReviewsData = async () => {
@@ -271,7 +410,6 @@ function SubReviewComponent({ review }: { review: BookReview }) {
         orderBy("likeCount", "desc")
       );
       unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
-        // setSubReviews(undefined);
         const subreviewsArr: SubReview[] = [];
         const userIds: string[] = [];
         querySnapshot.forEach((doc) => {
@@ -300,33 +438,16 @@ function SubReviewComponent({ review }: { review: BookReview }) {
     };
   }, [review.reviewId]);
 
-  const gotoMemberPage = (
-    memberdata: {
-      uid?: string;
-      name?: string;
-      img?: string;
-      url?: string;
-    },
-    uid: string
-  ) => {
-    if (memberdata.uid === uid) {
-      router.push(`/profile`);
-    } else {
-      router.push(`/member/id:${memberdata.uid}`);
-    }
-  };
-
   return showSubReviews ? (
     <>
+      <ShowSubReviewButton
+        onClick={() => {
+          setShowSubReviews(false);
+        }}
+      >
+        隱藏回應
+      </ShowSubReviewButton>
       <SubReviewsBox>
-        <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
-        <ShowSubReviewButton
-          onClick={() => {
-            setShowSubReviews(false);
-          }}
-        >
-          隱藏回應
-        </ShowSubReviewButton>
         {subReviews &&
           subReviews.map((subreview) => {
             const ReviewDate = new Date(
@@ -338,13 +459,13 @@ function SubReviewComponent({ review }: { review: BookReview }) {
             return (
               <SubReviewBox key={subreview.reviewId}>
                 <Gotomember
-                  onClick={() => {
-                    subreview.memberData &&
-                      userInfo.uid &&
-                      gotoMemberPage(subreview.memberData, userInfo.uid);
-                  }}
+                  href={
+                    subreview.memberData!.uid === userInfo.uid!
+                      ? "/profile"
+                      : `/member/id:${subreview.memberData!.uid}`
+                  }
                 >
-                  <Image
+                  <SubMemberImg
                     src={
                       subreview.memberData && subreview.memberData.img
                         ? subreview.memberData.img
@@ -357,43 +478,66 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                     }
                     width={25}
                     height={25}
-                  ></Image>
+                  />
+                  <ReviewMemberName>
+                    {subreview.memberData?.name}
+                  </ReviewMemberName>
                 </Gotomember>
-                <ReviewMemberName>
-                  {subreview.memberData?.name}
-                </ReviewMemberName>
+                <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
                 <SubReviewContent>{subreview.content}</SubReviewContent>
-                <SubReviewTime>
-                  評價時間：{`${year}-${month}-${date}`}
-                </SubReviewTime>
                 <SubReviewLikes>
-                  {subreview.like?.length} Likes
-                  <SubReviewLikeButton
+                  <LikeCount>{subreview.likeCount}</LikeCount>
+                  <LikeButton
                     onClick={() => {
                       userInfo.uid &&
                         likeSubReview(review, subreview, userInfo.uid);
                     }}
                   >
-                    喜歡
-                  </SubReviewLikeButton>
+                    {userInfo.uid ? (
+                      <Image
+                        src={
+                          subreview.like?.includes(userInfo.uid) ? liked : like
+                        }
+                        alt="likeBtn"
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <Image src={liked} alt="likeBtn" width={20} height={20} />
+                    )}
+                  </LikeButton>
                 </SubReviewLikes>
               </SubReviewBox>
             );
           })}
       </SubReviewsBox>
-      <SentSubReviewComponent review={review} />
+      {userInfo.uid && (
+        <SubReviewInput
+          ref={inputRef}
+          placeholder="leave comment...."
+          onKeyDown={(e) => {
+            if (
+              e.code === "Enter" &&
+              inputRef &&
+              inputRef.current &&
+              userInfo.uid
+            ) {
+              sentSubReview(review, inputRef.current.value, userInfo.uid);
+              sentNotice(review, inputRef.current.value, userInfo.uid);
+              inputRef.current.value = "";
+            }
+          }}
+        />
+      )}
     </>
   ) : (
-    <>
-      <SubReviewsCount>回應 {review.subReviewsNumber} 則</SubReviewsCount>
-      <ShowSubReviewButton
-        onClick={() => {
-          setShowSubReviews(true);
-        }}
-      >
-        顯示回應
-      </ShowSubReviewButton>
-    </>
+    <ShowSubReviewButton
+      onClick={() => {
+        setShowSubReviews(true);
+      }}
+    >
+      查看其他{review.subReviewsNumber}則回應
+    </ShowSubReviewButton>
   );
 }
 
@@ -404,42 +548,21 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
 
   return isEdit ? (
     <MemberReview>
-      <Image
-        src={
-          memberReview.memberData && memberReview.memberData.img
-            ? memberReview.memberData.img
-            : male
-        }
-        alt={
-          memberReview.memberData && memberReview.memberData.name
-            ? memberReview.memberData.name
-            : "user Img"
-        }
-        width={50}
-        height={50}
-      ></Image>
-      <ReviewMemberName>您的評論</ReviewMemberName>
+      <ReviewMemberName>Your review</ReviewMemberName>
       <LeaveInputBox>
-        <LeaveReviewTitle>評論標題</LeaveReviewTitle>
+        <LeaveReviewTitle>Title</LeaveReviewTitle>
         <LeaveReviewContent
           ref={titleInputRef}
           defaultValue={memberReview.title}
         />
       </LeaveInputBox>
       <LeaveInputBox>
-        <LeaveReviewTitle>評論內容</LeaveReviewTitle>
+        <LeaveReviewTitle>Content</LeaveReviewTitle>
         <LeaveReviewTextContent
           ref={contentInputRef}
           defaultValue={memberReview.content}
         />
       </LeaveInputBox>
-      <EditReviewButton
-        onClick={() => {
-          setIsEdit(false);
-        }}
-      >
-        取消編輯
-      </EditReviewButton>
       <EditReviewButton
         onClick={() => {
           titleInputRef &&
@@ -453,34 +576,35 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
             );
         }}
       >
-        送出評論
+        Submit
+      </EditReviewButton>
+      <EditReviewButton
+        onClick={() => {
+          setIsEdit(false);
+        }}
+      >
+        Cancle
       </EditReviewButton>
     </MemberReview>
   ) : (
     <MemberReview>
-      <Image
-        src={
-          memberReview.memberData && memberReview.memberData.img
-            ? memberReview.memberData.img
-            : male
-        }
-        alt={
-          memberReview.memberData && memberReview.memberData.name
-            ? memberReview.memberData.name
-            : "user Img"
-        }
-        width={50}
-        height={50}
-      ></Image>
-      <ReviewMemberName>您的評論</ReviewMemberName>
-      <ReviewTitle>評價標題：{memberReview.title}</ReviewTitle>
-      <ReviewContent>評價內容：{memberReview.content}</ReviewContent>
+      <ReviewMemberName>Your review</ReviewMemberName>
+      <LeaveInputBox>
+        <LeaveReviewTitle>Title</LeaveReviewTitle>
+        <ReviewTitle>{memberReview.title}</ReviewTitle>
+      </LeaveInputBox>
+      <LeaveInputBox>
+        <LeaveReviewTitle>Content</LeaveReviewTitle>
+        <ReviewContent>
+          {memberReview?.content?.substring(0, 250)} ......
+        </ReviewContent>
+      </LeaveInputBox>
       <EditReviewButton
         onClick={() => {
           setIsEdit(true);
         }}
       >
-        編輯評論
+        Edit
       </EditReviewButton>
     </MemberReview>
   );
@@ -536,101 +660,102 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
       }
     };
   }, [bookIsbn, userInfo.uid]);
-  const gotoMemberPage = (
-    memberdata: {
-      uid?: string;
-      name?: string;
-      img?: string;
-      url?: string;
-    },
-    uid: string
-  ) => {
-    if (memberdata.uid === uid) {
-      router.push(`/profile`);
-    } else {
-      router.push(`/member/id:${memberdata.uid}`);
-    }
-  };
   return (
-    <BookReviewsBox>
+    <>
       {memberReview && memberReview.title && memberReview.title.length > 0 ? (
         <MemberReviewComponent memberReview={memberReview} />
       ) : (
         <LeaveCommentComponent bookIsbn={bookIsbn} />
       )}
-
-      {reviews.length > 0 ? (
-        reviews.map((review) => {
-          const ReviewDate = new Date(
-            review.time ? review.time?.seconds * 1000 : ""
-          );
-          const year = ReviewDate.getFullYear();
-          const month = ReviewDate.getMonth() + 1;
-          const date = ReviewDate.getDate();
-          if (review.title?.length === 0) return;
-          return (
-            <BookReviewBox key={review.reviewId}>
-              <ReviewMemberBox>
-                <Gotomember
-                  onClick={() => {
-                    review.memberData &&
-                      userInfo.uid &&
-                      gotoMemberPage(review.memberData, userInfo.uid);
-                  }}
-                >
-                  <Image
-                    src={
-                      review.memberData && review.memberData.img
-                        ? review.memberData.img
-                        : male
+      <BookReviewsBox>
+        {reviews.length > 0 ? (
+          reviews.map((review) => {
+            const ReviewDate = new Date(
+              review.time ? review.time?.seconds * 1000 : ""
+            );
+            const year = ReviewDate.getFullYear();
+            const month = ReviewDate.getMonth() + 1;
+            const date = ReviewDate.getDate();
+            if (review.title?.length === 0) return;
+            return (
+              <BookReviewBox key={review.reviewId}>
+                <ReviewMemberBox>
+                  <Gotomember
+                    href={
+                      review.memberId! === userInfo.uid!
+                        ? "/profile"
+                        : `/member/id:${review.memberId}`
                     }
-                    alt={
-                      review.memberData && review.memberData.name
-                        ? review.memberData.name
-                        : "user Img"
-                    }
-                    width={50}
-                    height={50}
-                  ></Image>
-                </Gotomember>
-                <ReviewMemberName>
-                  用戶名：{review.memberData && review.memberData.name}
-                </ReviewMemberName>
-              </ReviewMemberBox>
-              <ReviewTitle>評價標題：{review.title}</ReviewTitle>
-              <ReviewContent>評價內容：{review.content}</ReviewContent>
-              <ReviewRating>評價星星：{review.rating}</ReviewRating>
-              <ReviewRating>
-                評價時間：{`${year}-${month}-${date}`}
-              </ReviewRating>
-              <RatingReviewBox>
-                <RatingReviewButtonUp
-                  onClick={() => {
-                    if (userInfo.uid && review) {
-                      upperReview(userInfo.uid, review);
-                    } else {
-                      alert("請先登入喔");
-                    }
-                  }}
-                ></RatingReviewButtonUp>
-                <RatingCount>{review.reviewRating}</RatingCount>
-                <RatingReviewButtonDown
-                  onClick={() => {
-                    if (userInfo.uid && review) {
-                      lowerReview(userInfo.uid, review);
-                    } else {
-                      alert("請先登入喔");
-                    }
-                  }}
-                ></RatingReviewButtonDown>
-              </RatingReviewBox>
-              <SubReviewComponent review={review} />
-            </BookReviewBox>
-          );
-        })
-      ) : (
-        <ReviewTitle>留下第一則評論吧！</ReviewTitle>
-      )}
-    </BookReviewsBox>
+                  >
+                    <ReviewUserImage
+                      src={
+                        review.memberData && review.memberData.img
+                          ? review.memberData.img
+                          : male
+                      }
+                      alt={
+                        review.memberData && review.memberData.name
+                          ? review.memberData.name
+                          : "user Img"
+                      }
+                      width={30}
+                      height={30}
+                    ></ReviewUserImage>
+                  </Gotomember>
+                  <MemberData>
+                    <Gotomember
+                      href={
+                        review.memberId! === userInfo.uid!
+                          ? "/profile"
+                          : `/member/id:${review.memberId}`
+                      }
+                    >
+                      <MemberName>
+                        {review.memberData && review.memberData.name}
+                      </MemberName>
+                    </Gotomember>
+                    <MainReviewStar>
+                      <ReviewStar>&#9733;</ReviewStar>
+                      {review.rating}
+                    </MainReviewStar>
+                    <MainReviewDate>{`${year}-${month}-${date}`}</MainReviewDate>
+                    <ItemBox>
+                      <MainReviewTitle>{review.title}</MainReviewTitle>
+                    </ItemBox>
+                    <ItemBox>
+                      <MainReviewContent>{review.content}</MainReviewContent>
+                    </ItemBox>
+                  </MemberData>
+                </ReviewMemberBox>
+                <RatingReviewBox>
+                  <RatingReviewButtonUp
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        upperReview(userInfo.uid, review);
+                      } else {
+                        alert("請先登入喔");
+                      }
+                    }}
+                  ></RatingReviewButtonUp>
+                  <RatingCount>{review.reviewRating}</RatingCount>
+                  <RatingReviewButtonDown
+                    onClick={() => {
+                      if (userInfo.uid && review) {
+                        lowerReview(userInfo.uid, review);
+                      } else {
+                        alert("請先登入喔");
+                      }
+                    }}
+                  ></RatingReviewButtonDown>
+                </RatingReviewBox>
+                <SubReviewComponent review={review} />
+              </BookReviewBox>
+            );
+          })
+        ) : (
+          <ReviewTitle>留下第一則評論吧！</ReviewTitle>
+        )}
+      </BookReviewsBox>
+    </>
   );
 }
