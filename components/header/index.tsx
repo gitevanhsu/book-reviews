@@ -15,9 +15,10 @@ import {
   noticeRef,
   NoticeData,
   removeNotice,
+  signout,
 } from "../../utils/firebaseFuncs";
 import { useDispatch, useSelector } from "react-redux";
-import { userSignIn } from "../../slices/userInfoSlice";
+import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
 import { doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
 import { RootState } from "../../store";
 import { useRouter } from "next/router";
@@ -34,8 +35,10 @@ interface MesProps {
 interface MesBoxProps {
   isOpen?: boolean;
 }
+interface LiProps {
+  nowpath: boolean;
+}
 const MesBox = styled.div<MesProps>`
-  margin-left: auto;
   margin-right: 20px;
   position: relative;
   &::after {
@@ -72,9 +75,6 @@ const Ul = styled.ul`
   height: 100%;
   overflow: hidden;
 `;
-interface LiProps {
-  nowpath: boolean;
-}
 
 const Li = styled.li<LiProps>`
   list-style: none;
@@ -115,13 +115,14 @@ const Li = styled.li<LiProps>`
 const NoticeBox = styled.div<MesBoxProps>`
   position: absolute;
   top: calc(100% - 1px);
-  right: ${(props) => (props.isOpen ? "0px" : "-425px")};
-  display: ${(props) => (props.isOpen ? "block" : "none")};
+  right: 0;
   width: 400px;
-  z-index: 1;
+  width: ${(props) => (props.isOpen ? "400px" : "0px")};
+  overflow: hidden;
+  z-index: 10;
   background: #ffe;
-  padding: 5px 10px;
-  transition: 0.3s;
+  padding: ${(props) => (props.isOpen ? "5px 20px" : "0px")};
+  transition: 0.2s;
   border-radius: 10px;
   box-shadow: 5px 5px 10px #bbb;
 `;
@@ -134,6 +135,7 @@ const MesImg = styled(Image)`
 const FriendRequests = styled.div`
   max-height: 200px;
   overflow: auto;
+  border-bottom: 1px solid #000;
   ::-webkit-scrollbar {
     display: none;
   }
@@ -152,7 +154,6 @@ const ResImgs = styled.div`
   display: flex;
   justify-content: space-around;
   width: 100px;
-  margin-left: auto;
   justify-items: end;
 `;
 const ResImg1 = styled(Image)`
@@ -176,9 +177,7 @@ const Notices = styled.div`
 const Notice = styled.div`
   display: flex;
   align-items: center;
-  & + & {
-    margin: 20px 0;
-  }
+  margin: 20px 0;
 `;
 const PosterData = styled.div``;
 const MemberName = styled.h3`
@@ -192,7 +191,57 @@ const NoticeMessage = styled.p`
   font-size: 14px;
   letter-spacing: 2px;
 `;
+interface OverLayProps {
+  isOpen: boolean;
+}
+const OverLay = styled.div<OverLayProps>`
+  display: ${(props) => (props.isOpen ? "block" : "none")};
+  position: absolute;
+  z-index: 9;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  right: 0;
+  background-color: #000;
+  opacity: 0.3;
+`;
+const ProfileUl = styled.ul`
+  border-top: 2px solid #7f7311;
+  background-color: #eee;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 150px;
+  overflow: hidden;
+`;
+const ProfileLi = styled.li`
+  padding: 0 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-align: right;
+  cursor: pointer;
+  height: 0px;
+  opacity: 0;
+  border: 1px solid #000;
+  border-top: none;
+`;
+const ProfileBox = styled.div`
+  position: relative;
+  cursor: pointer;
+  height: 100%;
+  z-index: 5;
+  margin-left: auto;
+  margin-right: 20px;
+  &:hover ${ProfileLi} {
+    height: 40px;
+    transition: 0.3s;
+    opacity: 1;
+  }
+`;
 
+const ProfileImgWrap = styled.div``;
+const ProfileImgImage = styled(Image)``;
 function NoticeComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [notices, setNotice] = useState<NoticeData[]>([]);
@@ -252,124 +301,181 @@ function NoticeComponent() {
       }
     };
   }, [userInfo.uid]);
+
   return (
-    <MesBox mesCount={notices.length + friendRequest.length}>
-      <MesImg
-        src={message}
-        alt="Message"
-        width={50}
-        height={50}
-        onClick={() => {
-          setOpenMsg((prev) => !prev);
-        }}
-      />
-      {notices.length + friendRequest.length > 0 ? (
-        <NoticeBox isOpen={openMsg}>
-          <FriendRequests>
-            {friendRequest &&
-              friendRequest.map((invitor) => {
-                return (
-                  <FriendRequestBox key={invitor && invitor.uid}>
-                    {invitor.img && (
-                      <Link href={`/member/id:${invitor.uid}`}>
-                        <MemberImg
-                          src={invitor && invitor?.img ? invitor?.img : male}
-                          alt={
-                            invitor && invitor?.name ? invitor.name : "user Img"
-                          }
-                          width={50}
-                          height={50}
-                        />
-                      </Link>
-                    )}
-                    <NoticeContent>
-                      <MemberName>{invitor.name}</MemberName>
-                      <NoticeMessage>向您發出好友邀請</NoticeMessage>
-                    </NoticeContent>
-                    <ResImgs>
-                      <ResImg1
-                        src={acceptImg}
-                        alt="acceptImg"
-                        width={25}
-                        height={25}
-                        onClick={() => {
-                          if (userInfo.uid && invitor.uid)
-                            acceptFriendRequest(userInfo.uid, invitor.uid);
-                        }}
-                      />
-                      <ResImg2
-                        src={rejectImg}
-                        alt="rejectImg"
-                        width={25}
-                        height={25}
-                        onClick={() => {
-                          if (userInfo.uid && invitor.uid) {
-                            rejectFriendRequest(userInfo.uid, invitor.uid);
-                          }
-                        }}
-                      />
-                    </ResImgs>
-                  </FriendRequestBox>
-                );
-              })}
-          </FriendRequests>
-          <Notices>
-            {notices &&
-              notices.map((notice) => {
-                return (
-                  <Notice key={`${+notice.time}`}>
-                    <PosterData>
-                      <Link href={`/member/id:${notice.poster}`}>
-                        <MemberImg
-                          src={
-                            notice?.posterInfo && notice?.posterInfo?.img
-                              ? notice?.posterInfo?.img
-                              : male
-                          }
-                          alt={
-                            notice?.posterInfo && notice?.posterInfo?.name
-                              ? notice?.posterInfo.name
-                              : "user Img"
-                          }
-                          width={50}
-                          height={50}
-                        ></MemberImg>
-                      </Link>
-                    </PosterData>
-                    <NoticeContent>
-                      <MemberName>{notice?.posterInfo?.name}</MemberName>
-                      <NoticeMessage>回應了您的評論</NoticeMessage>
-                    </NoticeContent>
-                    <ResImgs>
-                      <Link href={notice?.postUrl}>
-                        <ResImg3
-                          src={linkImg}
-                          alt="delete"
-                          width={25}
-                          height={25}
-                        />
-                      </Link>
-                      <ResImg2
-                        src={rejectImg}
-                        alt="delete"
-                        width={25}
-                        height={25}
-                        onClick={() => {
-                          removeNotice(notice);
-                        }}
-                      />
-                    </ResImgs>
-                  </Notice>
-                );
-              })}
-          </Notices>
-        </NoticeBox>
-      ) : (
-        <NoticeBox>
-          <Notices></Notices>
-        </NoticeBox>
+    <>
+      {userInfo.isSignIn && (
+        <>
+          <OverLay
+            isOpen={openMsg}
+            onClick={() => {
+              setOpenMsg((prev) => !prev);
+            }}
+          />
+          <MesBox mesCount={notices.length + friendRequest.length}>
+            <MesImg
+              src={message}
+              alt="Message"
+              width={50}
+              height={50}
+              onClick={() => {
+                setOpenMsg((prev) => !prev);
+              }}
+            />
+            {notices.length + friendRequest.length > 0 ? (
+              <NoticeBox isOpen={openMsg}>
+                <FriendRequests>
+                  {friendRequest &&
+                    friendRequest.map((invitor) => {
+                      return (
+                        <FriendRequestBox key={invitor && invitor.uid}>
+                          {invitor.img && (
+                            <Link href={`/member/id:${invitor.uid}`}>
+                              <MemberImg
+                                src={
+                                  invitor && invitor?.img ? invitor?.img : male
+                                }
+                                alt={
+                                  invitor && invitor?.name
+                                    ? invitor.name
+                                    : "user Img"
+                                }
+                                width={50}
+                                height={50}
+                              />
+                            </Link>
+                          )}
+                          <NoticeContent>
+                            <MemberName>{invitor.name}</MemberName>
+                            <NoticeMessage>向您發出好友邀請</NoticeMessage>
+                          </NoticeContent>
+                          <ResImgs>
+                            <ResImg1
+                              src={acceptImg}
+                              alt="acceptImg"
+                              width={25}
+                              height={25}
+                              onClick={() => {
+                                if (userInfo.uid && invitor.uid)
+                                  acceptFriendRequest(
+                                    userInfo.uid,
+                                    invitor.uid
+                                  );
+                              }}
+                            />
+                            <ResImg2
+                              src={rejectImg}
+                              alt="rejectImg"
+                              width={25}
+                              height={25}
+                              onClick={() => {
+                                if (userInfo.uid && invitor.uid) {
+                                  rejectFriendRequest(
+                                    userInfo.uid,
+                                    invitor.uid
+                                  );
+                                }
+                              }}
+                            />
+                          </ResImgs>
+                        </FriendRequestBox>
+                      );
+                    })}
+                </FriendRequests>
+                <Notices>
+                  {notices &&
+                    notices.map((notice) => {
+                      return (
+                        <Notice key={`${+notice.time}`}>
+                          <PosterData>
+                            <Link href={`/member/id:${notice.poster}`}>
+                              <MemberImg
+                                src={
+                                  notice?.posterInfo && notice?.posterInfo?.img
+                                    ? notice?.posterInfo?.img
+                                    : male
+                                }
+                                alt={
+                                  notice?.posterInfo && notice?.posterInfo?.name
+                                    ? notice?.posterInfo.name
+                                    : "user Img"
+                                }
+                                width={50}
+                                height={50}
+                              ></MemberImg>
+                            </Link>
+                          </PosterData>
+                          <NoticeContent>
+                            <MemberName>{notice?.posterInfo?.name}</MemberName>
+                            <NoticeMessage>回應了您的評論</NoticeMessage>
+                          </NoticeContent>
+                          <ResImgs>
+                            <Link href={notice?.postUrl}>
+                              <ResImg3
+                                src={linkImg}
+                                alt="delete"
+                                width={25}
+                                height={25}
+                              />
+                            </Link>
+                            <ResImg2
+                              src={rejectImg}
+                              alt="delete"
+                              width={25}
+                              height={25}
+                              onClick={() => {
+                                removeNotice(notice);
+                              }}
+                            />
+                          </ResImgs>
+                        </Notice>
+                      );
+                    })}
+                </Notices>
+              </NoticeBox>
+            ) : (
+              <NoticeBox isOpen={openMsg}>
+                <NoticeContent>目前沒有訊息喔！</NoticeContent>
+              </NoticeBox>
+            )}
+          </MesBox>
+        </>
       )}
-    </MesBox>
+    </>
+  );
+}
+
+function MemberComponent() {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const path = router.pathname;
+
+  return (
+    <ProfileBox>
+      <ProfileImgWrap>
+        <ProfileImgImage src={male} width={50} height={50} alt="MemberAvatar" />
+        <ProfileUl>
+          <ProfileLi>
+            <Link href="/profile">
+              {userInfo.isSignIn ? "Profile" : "SignIn"}
+            </Link>
+          </ProfileLi>
+          {userInfo.isSignIn && (
+            <ProfileLi
+              onClick={() => {
+                dispatch(
+                  userSignOut({ uid: "", name: "", email: "", intro: "" })
+                );
+                signout();
+              }}
+            >
+              SignOut
+            </ProfileLi>
+          )}
+        </ProfileUl>
+      </ProfileImgWrap>
+    </ProfileBox>
   );
 }
 
@@ -401,9 +507,6 @@ export function HeaderComponent() {
         <Li nowpath={path === "/"}>
           <Link href="/">Home</Link>
         </Li>
-        <Li nowpath={path === "/profile"}>
-          <Link href="/profile">Profile</Link>
-        </Li>
         <Li nowpath={path === "/books"}>
           <Link href="/books">Books</Link>
         </Li>
@@ -411,6 +514,7 @@ export function HeaderComponent() {
           <Link href="/search">Search</Link>
         </Li>
       </Ul>
+      <MemberComponent />
       <NoticeComponent />
     </Header>
   );

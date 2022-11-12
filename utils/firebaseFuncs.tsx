@@ -511,21 +511,35 @@ export const likeSubReview = async (
       doc(db, `book_reviews/${review.reviewId}/subreviews`, subreview.reviewId)
     );
     const subreviewData = docData.data();
-    if (subreviewData && subreviewData.like.includes(uid)) return;
-    if (subreviewData) {
-      subreviewData.like.push(uid);
-      subreviewData.likeCount += 1;
 
-      if (review.reviewId && subreview.reviewId) {
-        await setDoc(
-          doc(
-            db,
-            `book_reviews/${review.reviewId}/subreviews`,
-            subreview.reviewId
-          ),
-          subreviewData
+    if (subreviewData && subreviewData.like.includes(uid)) {
+      const NewSubreviewData = produce(subreviewData, (draft) => {
+        const newLikes = draft.like.filter(
+          (dataUid: string) => dataUid !== uid
         );
-      }
+        return { ...draft, like: newLikes, likeCount: newLikes.length };
+      });
+      await setDoc(
+        doc(
+          db,
+          `book_reviews/${review.reviewId}/subreviews`,
+          subreview.reviewId
+        ),
+        NewSubreviewData
+      );
+    } else if (subreviewData) {
+      const newSubreviewData: SubReview = produce(subreviewData, (draft) => {
+        draft.like.push(uid);
+        draft.likeCount = draft.like.length;
+      });
+      await setDoc(
+        doc(
+          db,
+          `book_reviews/${review.reviewId}/subreviews`,
+          subreview.reviewId
+        ),
+        newSubreviewData
+      );
     }
   }
 };
