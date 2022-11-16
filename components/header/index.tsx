@@ -17,7 +17,7 @@ import {
 } from "../../utils/firebaseFuncs";
 import { useDispatch, useSelector } from "react-redux";
 import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
-import { doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
+import { onSnapshot, query, where } from "firebase/firestore";
 import { RootState } from "../../store";
 import { useRouter } from "next/router";
 import logo from "../../public/img/book-shelf-books-education-learning-school-study-svgrepo-com.svg";
@@ -25,6 +25,7 @@ import message from "../../public/img/message.svg";
 import acceptImg from "../../public/img/accept.svg";
 import rejectImg from "../../public/img/reject.svg";
 import linkImg from "../../public/img/new-link.svg";
+import menu from "../../public/img/menu.svg";
 
 const LogoImg = styled(Image)``;
 interface MesProps {
@@ -42,28 +43,30 @@ const MesBox = styled.div<MesProps>`
   &::after {
     content: ${(props) =>
       props.mesCount !== 0 ? `'` + `${props.mesCount}` + `'` : null};
-    font-size: 15px;
+    font-size: ${(props) => props.theme.fz}px;
     display: inline-block;
     background-color: #f00;
+    color: ${(props) => props.theme.white};
     position: absolute;
     text-align: center;
-    line-height: 20px;
-    width: 20px;
-    height: 20px;
-    bottom: 5px;
-    right: -5px;
+    line-height: 15px;
+    width: 15px;
+    height: 15px;
+    bottom: 3px;
+    right: -4px;
     border-radius: 50%;
   }
 `;
 
 const Header = styled.header`
+  padding-top: 10px;
   width: 100%;
-  border-bottom: solid 2px rgba(0, 0, 0, 0.5);
-  height: 50px;
+  border-bottom: solid 1px ${(props) => props.theme.greyGreen};
+  height: 60px;
   position: relative;
   display: flex;
   align-items: center;
-  background: linear-gradient(45deg, #fff496, #ffe500);
+  background: ${(props) => props.theme.white};
 `;
 const Ul = styled.ul`
   display: flex;
@@ -72,6 +75,9 @@ const Ul = styled.ul`
   padding: 0 20px;
   height: 100%;
   overflow: hidden;
+  @media screen and (max-width: 576px) {
+    display: none;
+  }
 `;
 
 const Li = styled.li<LiProps>`
@@ -81,41 +87,38 @@ const Li = styled.li<LiProps>`
   width: 100%;
   padding: 0 10px;
   margin: 0;
-  background-color: rgba(255, 255, 61, 0.3);
+  background-color: ${(props) =>
+    props.nowpath ? props.theme.greyBlue : props.theme.white};
   display: flex;
   align-items: center;
   transform: ${(props) =>
-    props.nowpath ? "translateY(10%)" : "translateY(30%)"};
-  border-radius: 5px;
+    props.nowpath ? "translateY(0%)" : "translateY(10%)"};
+  border-radius: 10px 10px 0 0;
   font-size: 20px;
   transition: 0.2s;
-  box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.5);
   &:hover {
-    transform: translateY(10%);
-    background-color: rgba(255, 187, 61, 1);
+    transform: translateY(0%);
+    background-color: ${(props) => props.theme.greyBlue};
   }
   & + & {
     margin-left: 20px;
   }
-  &:nth-child(1) {
-    background-color: #098b00;
-  }
-  &:nth-child(2) {
-    background-color: #f64;
-  }
-  &:nth-child(3) {
-    background-color: #aac;
-  }
-  &:nth-child(4) {
-    background-color: #ccc;
-  }
+`;
+const PageLink = styled(Link)`
+  display: inline-block;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: ${(props) => props.theme.black};
 `;
 const NoticeBox = styled.div<MesBoxProps>`
   position: absolute;
   top: calc(100% - 1px);
   right: 0;
-  width: 400px;
-  width: ${(props) => (props.isOpen ? "400px" : "0px")};
+  width: 0px;
+  width: ${(props) => (props.isOpen ? "300px" : "0px")};
   overflow: hidden;
   z-index: 10;
   background: #ffe;
@@ -140,10 +143,12 @@ const FriendRequests = styled.div`
 `;
 const FriendRequestBox = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
   margin: 20px 0;
 `;
 const NoticeContent = styled.div`
+  white-space: nowrap;
   display: flex;
   flex-direction: column;
 `;
@@ -151,7 +156,7 @@ const ResImgs = styled.div`
   align-self: center;
   display: flex;
   justify-content: space-around;
-  width: 100px;
+  width: 60px;
   justify-items: end;
 `;
 const ResImg1 = styled(Image)`
@@ -174,10 +179,10 @@ const Notices = styled.div`
 `;
 const Notice = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
   margin: 20px 0;
 `;
-const PosterData = styled.div``;
 const MemberName = styled.h3`
   letter-spacing: 2px;
   font-size: 22px;
@@ -204,14 +209,15 @@ const OverLay = styled.div<OverLayProps>`
   opacity: 0.3;
 `;
 const ProfileUl = styled.ul`
-  border-top: 2px solid #7f7311;
-  background-color: #eee;
+  border-top: 1px solid transparent;
+  background-color: ${(props) => props.theme.greyGreen};
   position: absolute;
   top: 100%;
   right: 0;
   width: 150px;
   overflow: hidden;
 `;
+const ProfileLink = styled(Link)``;
 const ProfileLi = styled.li`
   padding: 0 10px;
   width: 100%;
@@ -219,22 +225,37 @@ const ProfileLi = styled.li`
   align-items: center;
   text-align: right;
   cursor: pointer;
-  height: 0px;
+  height: 0;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
   opacity: 0;
-  border: 1px solid #000;
-  border-top: none;
+  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
+  border-top: 1px solid transparent;
+  transition: 0.3s;
+  & > ${ProfileLink} {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    color: ${(props) => props.theme.black};
+  }
 `;
 const ProfileBox = styled.div`
   position: relative;
-  cursor: pointer;
   height: 100%;
   z-index: 5;
   margin-left: auto;
   margin-right: 20px;
+  overflow: hidden;
+  &:hover {
+    overflow: visible;
+  }
   &:hover ${ProfileLi} {
-    height: 40px;
+    height: 50px;
     transition: 0.3s;
     opacity: 1;
+  }
+  @media screen and (max-width: 576px) {
+    margin-left: 0;
   }
 `;
 
@@ -314,8 +335,8 @@ function NoticeComponent() {
             <MesImg
               src={message}
               alt="Message"
-              width={50}
-              height={50}
+              width={40}
+              height={40}
               onClick={() => {
                 setOpenMsg((prev) => !prev);
               }}
@@ -385,24 +406,22 @@ function NoticeComponent() {
                     notices.map((notice) => {
                       return (
                         <Notice key={`${+notice.time}`}>
-                          <PosterData>
-                            <Link href={`/member/id:${notice.poster}`}>
-                              <MemberImg
-                                src={
-                                  notice?.posterInfo && notice?.posterInfo?.img
-                                    ? notice?.posterInfo?.img
-                                    : male
-                                }
-                                alt={
-                                  notice?.posterInfo && notice?.posterInfo?.name
-                                    ? notice?.posterInfo.name
-                                    : "user Img"
-                                }
-                                width={50}
-                                height={50}
-                              ></MemberImg>
-                            </Link>
-                          </PosterData>
+                          <Link href={`/member/id:${notice.poster}`}>
+                            <MemberImg
+                              src={
+                                notice?.posterInfo && notice?.posterInfo?.img
+                                  ? notice?.posterInfo?.img
+                                  : male
+                              }
+                              alt={
+                                notice?.posterInfo && notice?.posterInfo?.name
+                                  ? notice?.posterInfo.name
+                                  : "user Img"
+                              }
+                              width={50}
+                              height={50}
+                            ></MemberImg>
+                          </Link>
                           <NoticeContent>
                             <MemberName>{notice?.posterInfo?.name}</MemberName>
                             <NoticeMessage>回應了您的評論</NoticeMessage>
@@ -452,12 +471,12 @@ function MemberComponent() {
   return (
     <ProfileBox>
       <ProfileImgWrap>
-        <ProfileImgImage src={male} width={50} height={50} alt="MemberAvatar" />
+        <ProfileImgImage src={male} width={40} height={40} alt="MemberAvatar" />
         <ProfileUl>
           <ProfileLi>
-            <Link href="/profile">
+            <ProfileLink href="/profile">
               {userInfo.isSignIn ? "Profile" : "SignIn"}
-            </Link>
+            </ProfileLink>
           </ProfileLi>
           {userInfo.isSignIn && (
             <ProfileLi
@@ -476,7 +495,64 @@ function MemberComponent() {
     </ProfileBox>
   );
 }
+const MobileUl = styled.ul`
+  background-color: ${(props) => props.theme.greyGreen};
+  position: absolute;
+  top: 100%;
+  right: -10px;
+  width: 140px;
+  z-index: 4;
+  height: 0;
+  overflow: hidden;
+  transition: 0.3s;
+`;
+const MobileMenuBox = styled.div`
+  position: relative;
+  display: none;
+  align-items: center;
+  margin: 0 15px;
+  margin-left: auto;
+  height: 100%;
+  &:hover ${MobileUl} {
+    height: 150px;
+    transition: 0.3s;
+  }
+  @media screen and (max-width: 576px) {
+    display: flex;
+  }
+`;
+const MobileMenuImg = styled(Image)``;
 
+const MobileLi = styled.li`
+  cursor: pointer;
+  width: 100%;
+  height: 50px;
+  padding: 0 10px;
+  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  & > ${PageLink} {
+    color: ${(props) => props.theme.black};
+  }
+`;
+
+function MobileSlideComponent() {
+  return (
+    <MobileMenuBox>
+      <MobileMenuImg src={menu} alt="mobile icon" width={30} height={30} />
+      <MobileUl>
+        <MobileLi>
+          <PageLink href="/">Home</PageLink>
+        </MobileLi>
+        <MobileLi>
+          <PageLink href="/books">Books</PageLink>
+        </MobileLi>
+        <MobileLi>
+          <PageLink href="/search">Search</PageLink>
+        </MobileLi>
+      </MobileUl>
+    </MobileMenuBox>
+  );
+}
 export function HeaderComponent() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -504,15 +580,16 @@ export function HeaderComponent() {
       </Link>
       <Ul>
         <Li nowpath={path === "/"}>
-          <Link href="/">Home</Link>
+          <PageLink href="/">Home</PageLink>
         </Li>
         <Li nowpath={path === "/books"}>
-          <Link href="/books">Books</Link>
+          <PageLink href="/books">Books</PageLink>
         </Li>
         <Li nowpath={path === "/search"}>
-          <Link href="/search">Search</Link>
+          <PageLink href="/search">Search</PageLink>
         </Li>
       </Ul>
+      <MobileSlideComponent />
       <MemberComponent />
       <NoticeComponent />
     </Header>
