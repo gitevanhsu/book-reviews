@@ -73,7 +73,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
         unsub();
       }
     };
-  }, []);
+  }, [id]);
   return (
     <ChatRoom>
       {chats ? (

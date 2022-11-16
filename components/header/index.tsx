@@ -1,5 +1,4 @@
 import male from "/public/img/reading-male.png";
-import x from "/public/img/VectorX.png";
 import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
@@ -8,7 +7,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   getMemberData,
   friendRequestRef,
-  db,
   acceptFriendRequest,
   rejectFriendRequest,
   MemberInfo,
@@ -100,7 +98,7 @@ const Li = styled.li<LiProps>`
     margin-left: 20px;
   }
   &:nth-child(1) {
-    background-color: #f0f;
+    background-color: #098b00;
   }
   &:nth-child(2) {
     background-color: #f64;
@@ -497,7 +495,8 @@ export function HeaderComponent() {
     return () => {
       unSubscriptAuthState();
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <Header>
       <Link href="/">

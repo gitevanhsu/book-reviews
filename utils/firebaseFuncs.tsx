@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import produce from "immer";
 import {
-  addDoc,
   deleteDoc,
   doc,
   DocumentData,
@@ -26,7 +25,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  UserInfo,
 } from "firebase/auth";
 import { userSignIn } from "../slices/userInfoSlice";
 
@@ -38,9 +36,10 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_MESSAGINGSENDERID,
   appId: process.env.NEXT_PUBLIC_APPID,
   measurementId: process.env.NEXT_PUBLIC_MEASUREMENTID,
+  databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const firestore = getFirestore(app);
 const auth = getAuth();
