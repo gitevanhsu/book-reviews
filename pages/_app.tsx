@@ -4,16 +4,38 @@ import { HeaderComponent } from "../components/header";
 import { Provider } from "react-redux";
 import store from "../store";
 import { resetServerContext } from "react-beautiful-dnd";
+import { ThemeProvider } from "styled-components";
+import Head from "next/head";
+
+const theme = {
+  red: "#E84545",
+  greyBlue: "#A0BCC2",
+  greyGreen: "#DAE5D0",
+  yellow: "#F9EBC8",
+  white: "#F9F7F7",
+  lightWhite: "#F6F6F6",
+  grey: "#EEE",
+  black: "#393E46",
+  fz: "12",
+};
+
 export default function App({ Component, pageProps }: AppProps) {
   resetServerContext();
   return (
     <>
+      <Head>
+        <title>Book Reviews!</title>
+        <link rel="shortcut icon" href="static/favicon.ico" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </Head>
       <ResetStyle />
       <GlobalStyle />
-      <Provider store={store}>
-        <HeaderComponent />
-        <Component {...pageProps} />
-      </Provider>
+      <ThemeProvider theme={theme}>
+        <Provider store={store}>
+          <HeaderComponent />
+          <Component {...pageProps} />
+        </Provider>
+      </ThemeProvider>
     </>
   );
 }
