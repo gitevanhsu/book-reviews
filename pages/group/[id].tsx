@@ -7,9 +7,21 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import { getBookInfo, BookInfo, db } from "../../utils/firebaseFuncs";
+import {
+  getBookInfo,
+  BookInfo,
+  db,
+  getMemberData,
+  MemberInfo,
+} from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  VideoHTMLAttributes,
+} from "react";
 
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -91,7 +103,7 @@ export default function Group() {
         }
       }
     };
-  });
+  }, []);
 
   const start = async () => {
     const servers = {
@@ -171,6 +183,7 @@ export default function Group() {
       (snapshot) => {
         snapshot.docChanges().forEach((change: any) => {
           if (change.type === "added") {
+            console.log(change.doc.data());
             const candidate = new RTCIceCandidate(change.doc.data());
             pcRef.current!.addIceCandidate(candidate);
           }
@@ -187,6 +200,7 @@ export default function Group() {
     const callDoc = await getDoc(doc(db, "calls", callId));
 
     pcRef.current!.onicecandidate = async (event) => {
+      console.log("onicecandidate");
       event.candidate &&
         (await setDoc(
           doc(collection(db, `calls/${callDoc.id}/offerCandidates`)),
@@ -202,6 +216,7 @@ export default function Group() {
     );
 
     const answerDescription = await pcRef.current!.createAnswer();
+    console.log("answerDescription", answerDescription);
     await pcRef.current!.setLocalDescription(answerDescription);
 
     const answer = {
@@ -244,7 +259,6 @@ export default function Group() {
 
   return (
     <>
-      {/* <video src=""></video> */}
       <BookComponent data={bookData} />
       {typeof id === "string" && (
         <GoToReview href={`/book/id:${id.replace("id:", "")}`}>
@@ -256,7 +270,7 @@ export default function Group() {
           <>
             <Title3>Local Stream</Title3>
             <br />
-            <MyVideo ref={localVideoRef} autoPlay playsInline />
+            <MyVideo ref={localVideoRef} autoPlay playsInline muted />
           </>
         )}
 
@@ -313,6 +327,158 @@ export default function Group() {
       {typeof id === "string" && (
         <ChatRoomComponent id={id.replace("id:", "")} />
       )}
+      {typeof id === "string" && <LiveChat id={id.replace("id:", "")} />}
+    </>
+  );
+}
+
+import {
+  getDatabase,
+  ref,
+  child,
+  onValue,
+  update,
+  onDisconnect,
+  remove,
+} from "firebase/database";
+import { rtcFireSession, RTCFireSession } from "../../utils/service";
+
+const PlayVideo = styled.video`
+  width: 300px;
+  aspect-ratio: 4/3;
+  background-color: #f0f;
+`;
+const BTN = styled.button`
+  border: solid 1px;
+  cursor: pointer;
+  padding: 5px 10px;
+`;
+
+const MyLocalVideo = styled(PlayVideo)`
+  transform: scaleX(-1);
+`;
+interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
+  srcObject: MediaStream;
+}
+function VideoConponent({ srcObject, ...props }: VideoProps) {
+  const refVideo = useCallback(
+    (node: HTMLVideoElement) => {
+      if (node) node.srcObject = srcObject;
+    },
+    [srcObject]
+  );
+
+  return <PlayVideo ref={refVideo} {...props} autoPlay playsInline muted />;
+}
+
+function LiveChat({ id }: { id: string }) {
+  const db = getDatabase();
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const [openChat, setOpenChat] = useState(false);
+  const myVideoRef = useRef<HTMLVideoElement>(null);
+  const participantsRef = useRef<string[]>([]);
+  const videoStreamsRef = useRef<{ [key: string]: MediaStream }>();
+  const rtcSessionRef = useRef<RTCFireSession>();
+
+  const allVideoStream = useRef<{
+    [key: string]: MediaStream;
+  }>();
+  const otherParticipant = useRef<string[]>([]);
+
+  const [participants, setParticipants] = useState<MemberInfo[]>([]);
+  const [videoStreams, setVideoStreams] = useState<{
+    [key: string]: MediaStream;
+  }>({});
+
+  const updatePeers = async (
+    participants: string[],
+    videoStreams: { [key: string]: MediaStream }
+  ) => {
+    const otherparticipant = participants.filter((pid) => pid !== userInfo.uid);
+    const requests = otherparticipant.map(async (pid: string) => {
+      return await getMemberData(pid);
+    });
+    const newParticipants = (await Promise.all(requests)) as MemberInfo[];
+
+    console.log(newParticipants);
+    otherParticipant.current = participants;
+    setParticipants(newParticipants);
+    allVideoStream.current = videoStreams;
+    setVideoStreams(videoStreams);
+  };
+
+  const setupVideo = async () => {
+    const livechatRef = ref(db, `livechat/${id}/participants`);
+    videoStreamsRef.current = {};
+    let meRef = child(livechatRef, userInfo.uid!);
+    update(meRef, { joined: true });
+    onDisconnect(meRef).set(null);
+
+    rtcSessionRef.current = rtcFireSession({
+      myId: userInfo.uid!,
+      negotiationRef: ref(db, `livechat/${id}/negotiations`),
+      onMyStream: (stream) => {
+        return (myVideoRef.current!.srcObject = stream);
+      },
+      onParticipantStream: (pid, stream) => {
+        videoStreamsRef.current![pid] = stream!;
+        updatePeers(participantsRef.current, videoStreamsRef.current!);
+      },
+    });
+    onValue(livechatRef, (snap) => {
+      participantsRef.current = Object.keys(snap.val() || {});
+      rtcSessionRef.current!.participants = participantsRef.current;
+      updatePeers(participantsRef.current, videoStreamsRef.current!);
+    });
+  };
+
+  const hanUp = () => {
+    (myVideoRef.current!.srcObject as MediaStream)
+      .getTracks()
+      .forEach((track: { stop: () => void }) => track.stop());
+    remove(ref(db, `livechat/${id}/participants/${userInfo.uid}`));
+    remove(ref(db, `livechat/${id}/negotiations/${userInfo.uid}`));
+  };
+  return (
+    <>
+      {openChat && (
+        <>
+          <MyLocalVideo
+            key="myvideo"
+            ref={myVideoRef}
+            muted
+            autoPlay
+            playsInline
+          />
+          <h1>{userInfo.name}</h1>
+          <ul>
+            {participants &&
+              participants.map((participant: MemberInfo) => (
+                <li key={participant.uid}>
+                  <VideoConponent srcObject={videoStreams[participant.uid!]} />
+                  <p>{participant.name}</p>
+                </li>
+              ))}
+          </ul>
+        </>
+      )}
+      <BTN
+        onClick={() => {
+          setOpenChat(true);
+          setupVideo();
+        }}
+      >
+        OPEN!
+      </BTN>
+
+      <BTN
+        onClick={() => {
+          setOpenChat(false);
+          hanUp();
+        }}
+      >
+        Hang UP!
+      </BTN>
     </>
   );
 }

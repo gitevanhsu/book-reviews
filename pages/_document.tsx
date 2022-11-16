@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-sync-scripts */
 import Document, {
   DocumentContext,
   DocumentInitialProps,
@@ -6,6 +7,7 @@ import Document, {
   Main,
   NextScript,
 } from "next/document";
+import Script from "next/script";
 import styled, { ServerStyleSheet } from "styled-components";
 
 export default class MyDocument extends Document {
