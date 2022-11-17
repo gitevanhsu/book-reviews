@@ -495,6 +495,10 @@ function MemberComponent() {
     </ProfileBox>
   );
 }
+interface MobileMenuBoxProps {
+  isSignin: string;
+}
+
 const MobileUl = styled.ul`
   background-color: ${(props) => props.theme.greyGreen};
   position: absolute;
@@ -506,7 +510,7 @@ const MobileUl = styled.ul`
   overflow: hidden;
   transition: 0.3s;
 `;
-const MobileMenuBox = styled.div`
+const MobileMenuBox = styled.div<MobileMenuBoxProps>`
   position: relative;
   display: none;
   align-items: center;
@@ -514,7 +518,7 @@ const MobileMenuBox = styled.div`
   margin-left: auto;
   height: 100%;
   &:hover ${MobileUl} {
-    height: 250px;
+    height: ${(props) => props.isSignin};
     transition: 0.3s;
   }
   @media screen and (max-width: 576px) {
@@ -539,8 +543,9 @@ function MobileSlideComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
   const router = useRouter();
+
   return (
-    <MobileMenuBox>
+    <MobileMenuBox isSignin={userInfo.isSignIn ? "250px" : "200px"}>
       <MobileMenuImg src={menu} alt="mobile icon" width={30} height={30} />
       <MobileUl>
         <MobileLi>
