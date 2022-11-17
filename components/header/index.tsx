@@ -256,6 +256,7 @@ const ProfileBox = styled.div`
   }
   @media screen and (max-width: 576px) {
     margin-left: 0;
+    display: none;
   }
 `;
 
@@ -466,7 +467,6 @@ function MemberComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
   const router = useRouter();
-  const path = router.pathname;
 
   return (
     <ProfileBox>
@@ -495,6 +495,10 @@ function MemberComponent() {
     </ProfileBox>
   );
 }
+interface MobileMenuBoxProps {
+  isSignin: string;
+}
+
 const MobileUl = styled.ul`
   background-color: ${(props) => props.theme.greyGreen};
   position: absolute;
@@ -506,7 +510,7 @@ const MobileUl = styled.ul`
   overflow: hidden;
   transition: 0.3s;
 `;
-const MobileMenuBox = styled.div`
+const MobileMenuBox = styled.div<MobileMenuBoxProps>`
   position: relative;
   display: none;
   align-items: center;
@@ -514,7 +518,7 @@ const MobileMenuBox = styled.div`
   margin-left: auto;
   height: 100%;
   &:hover ${MobileUl} {
-    height: 150px;
+    height: ${(props) => props.isSignin};
     transition: 0.3s;
   }
   @media screen and (max-width: 576px) {
@@ -536,8 +540,12 @@ const MobileLi = styled.li`
 `;
 
 function MobileSlideComponent() {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
   return (
-    <MobileMenuBox>
+    <MobileMenuBox isSignin={userInfo.isSignIn ? "250px" : "200px"}>
       <MobileMenuImg src={menu} alt="mobile icon" width={30} height={30} />
       <MobileUl>
         <MobileLi>
@@ -549,6 +557,26 @@ function MobileSlideComponent() {
         <MobileLi>
           <PageLink href="/search">Search</PageLink>
         </MobileLi>
+        <MobileLi>
+          <PageLink href="/profile">
+            {userInfo.isSignIn ? "Profile" : "SignIn"}
+          </PageLink>
+        </MobileLi>
+        {userInfo.isSignIn && (
+          <MobileLi>
+            <PageLink
+              href=""
+              onClick={() => {
+                dispatch(
+                  userSignOut({ uid: "", name: "", email: "", intro: "" })
+                );
+                signout();
+              }}
+            >
+              SignOut
+            </PageLink>
+          </MobileLi>
+        )}
       </MobileUl>
     </MobileMenuBox>
   );
