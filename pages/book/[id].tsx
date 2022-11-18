@@ -29,52 +29,115 @@ interface StartProps {
 const BookPage = styled.div`
   width: 100%;
   min-height: calc(100vh - 50px);
-  background-color: #ffe;
+  background-color: ${(props) => props.theme.lightWhite};
   padding: 50px 30px;
+`;
+const BookPageWrap = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 const BookBox = styled.div`
   display: flex;
   align-items: start;
   position: relative;
   margin: 0 0 10px;
-`;
-const BookImg = styled(Image)`
-  margin-right: 20px;
-`;
-const BookDetail = styled.div`
-  border: solid 1px #ccc;
-  padding: 10px 20px;
-  border-radius: 20px;
-`;
-const ItemBox = styled.div`
-  display: flex;
-  align-items: start;
-  margin-top: 10px;
-  &:nth-child(2) {
-    margin-top: 0;
+  @media screen and (max-width: 576px) {
+    flex-direction: column;
+    align-items: center;
   }
 `;
-const ItemTitle = styled.h2`
+const BookImgBox = styled.div`
+  margin-right: 20px;
+  @media screen and (max-width: 576px) {
+    margin: 0 0 50px;
+  }
+`;
+const BookImg = styled(Image)`
+  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+`;
+const BookDetail = styled.div`
+  border: solid 1px ${(props) => props.theme.greyBlue};
+  padding: 10px 20px;
+  border-radius: 10px;
+`;
+interface ItemBoxProps {
+  hasSub?: boolean;
+}
+interface TitleProps {
+  isTitle?: boolean;
+}
+const ItemBox = styled.div<ItemBoxProps>`
+  display: flex;
+  align-items: start;
+  margin-top: ${(props) => (props.hasSub ? "0px" : "15px")};
+`;
+const ItemTitle = styled.h2<TitleProps>`
   min-width: 90px;
+  line-height: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  @media screen and (max-width: 768px) {
+    line-height: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+  @media screen and (max-width: 576px) {
+    min-width: 70px;
+  }
 `;
-const ItemContent = styled.p`
-  line-height: 20px;
+const ItemContent = styled.p<TitleProps>`
+  line-height: ${(props) =>
+    props.isTitle ? props.theme.fz * 3 : props.theme.fz * 1.5}px;
+  font-size: ${(props) =>
+    props.isTitle ? props.theme.fz * 3 : props.theme.fz * 1.5}px;
+
+  @media screen and (max-width: 768px) {
+    line-height: ${(props) =>
+      props.isTitle ? props.theme.fz * 2.5 : props.theme.fz * 1.5}px;
+    font-size: ${(props) =>
+      props.isTitle ? props.theme.fz * 2.5 : props.theme.fz * 1}px;
+  }
+  @media screen and (max-width: 576px) {
+    line-height: ${(props) =>
+      props.isTitle ? props.theme.fz * 2 : props.theme.fz * 1.5}px;
+    font-size: ${(props) =>
+      props.isTitle ? props.theme.fz * 2 : props.theme.fz * 1}px;
+  }
 `;
-const BookRating = styled.div`
-  line-height: 20px;
+const SubItemBox = styled.div`
   margin-top: 10px;
   display: flex;
-  align-items: center;
+  justify-content: center;
+  & > ${ItemContent} {
+    line-height: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
+
+const DeskDescript = styled(ItemContent)`
+  display: block;
+  @media screen and (max-width: 576px) {
+    display: none;
+  }
+`;
+const MobileDescript = styled(ItemContent)`
+  display: none;
+  @media screen and (max-width: 576px) {
+    display: block;
+  }
+`;
+const BookRating = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
 `;
 const BookRatingStart = styled.div`
   color: #000;
-  min-width: 90px;
   display: flex;
   align-items: center;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
 const BookRatingNum = styled.p`
-  font-size: 8px;
-  align-self: end;
+  line-height: 24px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
 
 const Start = styled.div<StartProps>`
@@ -105,10 +168,19 @@ const ToChatWrap = styled.div`
   align-items: center;
   margin: 0 10px;
 `;
-const ChatLink = styled(Link)``;
-const AddToShelf = styled.div`
+const ChatLink = styled(Link)`
+  display: inline-block;
   display: flex;
   align-items: center;
+  color: #000;
+`;
+
+const InShelf = styled.div`
+  display: flex;
+  align-items: center;
+`;
+const AddToShelf = styled(InShelf)`
+  cursor: pointer;
 `;
 const AddToShelfImg = styled(Image)`
   margin-left: 5px;
@@ -128,45 +200,28 @@ const P = styled.p`
   font-size: 14px;
 `;
 const SeeMoreBtn = styled.button`
+  font-size: ${(props) => props.theme.fz}px;
   padding: 5px 10px;
-  border-radius: 20px;
-  background-color: #eef;
+  margin: 0 10px;
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.yellow};
+  cursor: pointer;
 `;
 
 export function BookComponent({ data }: { data: BookInfo }) {
   const [showMore, setShowMore] = useState(false);
   return data ? (
     <BookBox>
-      <BookImg
-        src={data.smallThumbnail ? data.smallThumbnail : bookcover}
-        alt={`${data.title}`}
-        width={128}
-        height={193}
-        priority
-      />
-      {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
-      <BookDetail>
-        <ItemBox>
-          <ItemTitle>Title：</ItemTitle>
-          <ItemContent>{data.title}</ItemContent>
-        </ItemBox>
-        {data.subtitle && (
-          <ItemBox>
-            <ItemTitle />
-            <ItemContent>{data.subtitle}</ItemContent>
-          </ItemBox>
-        )}
-        {data.authors && (
-          <ItemBox>
-            <ItemTitle>Author:</ItemTitle>
-            {data.authors?.map((author: string) => (
-              <ItemContent key={author}>{author}</ItemContent>
-            ))}
-          </ItemBox>
-        )}
+      <BookImgBox>
+        <BookImg
+          src={data.smallThumbnail ? data.smallThumbnail : bookcover}
+          alt={`${data.title}`}
+          width={128}
+          height={193}
+          priority
+        />
         {data.ratingMember && data.ratingMember.length > 0 && data.ratingCount && (
           <BookRating>
-            <ItemTitle>Rating:</ItemTitle>
             <BookRatingStart>
               {[...Array(5)].map((_, index) => {
                 return (
@@ -191,23 +246,29 @@ export function BookComponent({ data }: { data: BookInfo }) {
           </BookRating>
         )}
         {data.categories && data.categories?.length > 0 && (
-          <ItemBox>
-            <ItemTitle>Cat：</ItemTitle>
+          <SubItemBox>
             {data.categories?.map((category: string) => (
               <ItemContent key={category}>{category}</ItemContent>
             ))}
+          </SubItemBox>
+        )}
+      </BookImgBox>
+      {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
+      <BookDetail>
+        <ItemBox>
+          <ItemContent isTitle={true}>{data.title}</ItemContent>
+        </ItemBox>
+        {data.subtitle && (
+          <ItemBox hasSub={true}>
+            <ItemContent>{data.subtitle}</ItemContent>
           </ItemBox>
         )}
-        {data.publisher && data.publisher.length > 0 && (
+        {data.authors && (
           <ItemBox>
-            <ItemTitle>Publisher：</ItemTitle>
-            <ItemContent>{data.publisher}</ItemContent>
-          </ItemBox>
-        )}
-        {data.publishedDate && (
-          <ItemBox>
-            <ItemTitle>Date：</ItemTitle>
-            <ItemContent> {data.publishedDate}</ItemContent>
+            <ItemTitle>Author:</ItemTitle>
+            {data.authors?.map((author: string) => (
+              <ItemContent key={author}>{author}</ItemContent>
+            ))}
           </ItemBox>
         )}
         <ItemBox>
@@ -217,15 +278,28 @@ export function BookComponent({ data }: { data: BookInfo }) {
         {data.description && data.description.length > 0 && (
           <ItemBox>
             <ItemTitle>Describe：</ItemTitle>
-            <ItemContent>
-              {showMore ? data.description : data.description.substring(0, 250)}
+            <DeskDescript>
+              {showMore
+                ? data.description
+                : data.description.substring(0, 250) + "......"}
               <SeeMoreBtn
                 className="btn"
                 onClick={() => setShowMore(!showMore)}
               >
                 {showMore ? "Show less" : "Show more"}
               </SeeMoreBtn>
-            </ItemContent>
+            </DeskDescript>
+            <MobileDescript>
+              {showMore
+                ? data.description
+                : data.description.substring(0, 150) + "......"}
+              <SeeMoreBtn
+                className="btn"
+                onClick={() => setShowMore(!showMore)}
+              >
+                {showMore ? "Show less" : "Show more"}
+              </SeeMoreBtn>
+            </MobileDescript>
           </ItemBox>
         )}
       </BookDetail>
@@ -292,48 +366,46 @@ export default function Post() {
 
   return (
     <BookPage>
-      <BookComponent data={bookData} />
-      <Wrap>
-        {userInfo.isSignIn &&
-          (inShelf ? (
-            <AddToShelf>
-              <InShelfImg src={inshelf} alt="add" width={20} height={20} />
-              <P>已收藏</P>
-            </AddToShelf>
-          ) : (
-            <AddToShelf>
-              {inShelf || (
-                <AddToShelfImg
-                  src={add}
-                  alt="add"
-                  width={20}
-                  height={20}
-                  onClick={() => {
-                    if (typeof id === "string" && userInfo && userInfo.uid)
-                      addToshelf(id.replace("id:", ""), userInfo.uid);
-                  }}
-                />
-              )}
-              <P>加入書櫃</P>
-            </AddToShelf>
-          ))}
-        {userInfo.isSignIn && typeof id === "string" && (
-          <ToChatWrap>
-            <ChatLink href={`/group/id:${id.replace("id:", "")}`}>
-              <ToChatRoom src={chat} alt="add" width={20} height={20} />
-            </ChatLink>
-            <P>進入會員討論區</P>
-          </ToChatWrap>
-        )}
-      </Wrap>
-      <LeaveRatingComponent
-        memberReview={memberReviews}
-        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
-      />
+      <BookPageWrap>
+        <BookComponent data={bookData} />
+        <Wrap>
+          {userInfo.isSignIn &&
+            (inShelf ? (
+              <InShelf>
+                <InShelfImg src={inshelf} alt="add" width={20} height={20} />
+                <P>已收藏</P>
+              </InShelf>
+            ) : (
+              <AddToShelf
+                onClick={() => {
+                  if (typeof id === "string" && userInfo && userInfo.uid)
+                    addToshelf(id.replace("id:", ""), userInfo.uid);
+                }}
+              >
+                {inShelf || (
+                  <AddToShelfImg src={add} alt="add" width={20} height={20} />
+                )}
+                <P>加入書櫃</P>
+              </AddToShelf>
+            ))}
+          {userInfo.isSignIn && typeof id === "string" && (
+            <ToChatWrap>
+              <ChatLink href={`/group/id:${id.replace("id:", "")}`}>
+                <ToChatRoom src={chat} alt="add" width={20} height={20} />
+                <P>進入會員討論區</P>
+              </ChatLink>
+            </ToChatWrap>
+          )}
+        </Wrap>
+        <LeaveRatingComponent
+          memberReview={memberReviews}
+          bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+        />
 
-      <ReviewsComponent
-        bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
-      />
+        <ReviewsComponent
+          bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+        />
+      </BookPageWrap>
     </BookPage>
   );
 }

@@ -19,6 +19,13 @@ const theme = {
   fz: "12",
 };
 
+// break point
+// 1280
+// 992
+// 768
+// 576
+// 480
+
 export default function App({ Component, pageProps }: AppProps) {
   resetServerContext();
   return (

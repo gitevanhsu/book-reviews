@@ -62,15 +62,6 @@ const Person = styled.p`
   font-size: ${(props) => props.theme.fz * 2}px;
   margin-top: 30px;
   align-self: end;
-  /* @media screen and (max-width: 992px) {
-    font-size: ${(props) => props.theme.fz * 2}px;
-  }
-  @media screen and (max-width: 768px) {
-    font-size: ${(props) => props.theme.fz * 2}px;
-  }
-  @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 2}px;
-  } */
 `;
 
 const PageTitle = styled.h1`
@@ -155,17 +146,19 @@ const Buttonleft = styled(ButtonRight)<ColorProps>`
 const BookInfoTitle = styled.h3`
   font-size: ${(props) => props.theme.fz * 1}px;
   font-weight: 700;
-  margin-top: 20px;
-  margin-bottom: 10px;
 `;
 const BookTitle = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
   white-space: pre-wrap;
+  margin-top: 20px;
+  margin-bottom: 10px;
 `;
 
 const BookAuthor = styled.p`
   font-size: ${(props) => props.theme.fz * 1}px;
   white-space: pre-wrap;
+  margin-top: 20px;
+  margin-bottom: 10px;
 `;
 const NoimgTitle = styled.h2`
   position: absolute;
@@ -241,9 +234,7 @@ export default function Home() {
                       {!book.smallThumbnail && (
                         <NoimgTitle>{book.title}</NoimgTitle>
                       )}
-                      <BookInfoTitle>書名：</BookInfoTitle>
                       <BookTitle>{book.title}</BookTitle>
-                      <BookInfoTitle>作者：</BookInfoTitle>
                       {book.authors && book.authors[0]?.length > 0 && (
                         <BookAuthor>{book.authors[0]}</BookAuthor>
                       )}
