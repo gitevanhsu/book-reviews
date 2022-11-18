@@ -12,7 +12,7 @@ const theme = {
   greyBlue: "#A0BCC2",
   greyGreen: "#DAE5D0",
   yellow: "#F9EBC8",
-  white: "#F9F7F7",
+  white: "#F5F5F5",
   lightWhite: "#F6F6F6",
   grey: "#EEE",
   black: "#393E46",
