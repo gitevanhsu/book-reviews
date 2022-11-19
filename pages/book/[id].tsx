@@ -216,8 +216,8 @@ export function BookComponent({ data }: { data: BookInfo }) {
         <BookImg
           src={data.smallThumbnail ? data.smallThumbnail : bookcover}
           alt={`${data.title}`}
-          width={128}
-          height={193}
+          width={220}
+          height={331}
           priority
         />
         {data.ratingMember && data.ratingMember.length > 0 && data.ratingCount && (
@@ -281,7 +281,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
             <DeskDescript>
               {showMore
                 ? data.description
-                : data.description.substring(0, 250) + "......"}
+                : `${data.description.substring(0, 250)}......`}
               <SeeMoreBtn
                 className="btn"
                 onClick={() => setShowMore(!showMore)}
@@ -292,7 +292,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
             <MobileDescript>
               {showMore
                 ? data.description
-                : data.description.substring(0, 150) + "......"}
+                : `${data.description.substring(0, 150)}......`}
               <SeeMoreBtn
                 className="btn"
                 onClick={() => setShowMore(!showMore)}

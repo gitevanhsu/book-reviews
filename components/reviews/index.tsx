@@ -66,7 +66,7 @@ const ReviewTitle = styled.h2`
   margin: 10px 0;
   font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
-const ReviewContent = styled.p`
+const ReviewContent = styled.div`
   line-height: 22px;
 `;
 
@@ -128,6 +128,11 @@ const ReviewMemberName = styled.h3`
   font-weight: 700;
   color: ${(props) => props.theme.black};
 `;
+const SUbReviewMemberName = styled(ReviewMemberName)`
+  display: inline-block;
+  margin-left: 10px;
+  min-width: 50px;
+`;
 
 const SignMessage = styled.h2``;
 
@@ -152,7 +157,7 @@ const TitleContent = styled.h3`
 interface ContentProps {
   showMore: boolean;
 }
-const Content = styled.p<ContentProps>`
+const Content = styled.div<ContentProps>`
   width: 100%;
   font-size: ${(props) => props.theme.fz * 1}px;
   max-height: ${(props) => (props.showMore ? "auto" : "150px")};
@@ -238,12 +243,12 @@ const SubReviewLikes = styled.div`
   display: flex;
   align-items: center;
   padding: 5px 0;
-  margin-left: 25px;
+  margin-left: 35px;
 `;
-const SubReviewContent = styled.p`
-  margin: 10px 25px;
+const SubReviewContent = styled.div`
+  margin: 10px 36px;
 `;
-const SubReviewTime = styled.p`
+const SubReviewTime = styled.div`
   font-size: 12px;
   display: inline-block;
 `;
@@ -270,7 +275,7 @@ const RatingReviewBox = styled.div`
   top: 0;
   left: 0;
 `;
-const RatingCount = styled.p`
+const RatingCount = styled.div`
   padding: 20px 0;
 `;
 const RatingReviewButtonUp = styled.div`
@@ -297,9 +302,10 @@ const Gotomember = styled(Link)`
   cursor: pointer;
 `;
 const SubMemberImg = styled(Image)`
+  display: inline-block;
   border-radius: 50%;
 `;
-const LikeCount = styled.p`
+const LikeCount = styled.div`
   display: inline-block;
   width: 20px;
 `;
@@ -389,7 +395,7 @@ const MainReviewTitle = styled.h3`
   font-size: 18px;
   font-weight: 700;
 `;
-const MainReviewContent = styled.p<ContentProps>`
+const MainReviewContent = styled.div<ContentProps>`
   margin: 10px 0;
   max-height: ${(props) => (props.showMore ? "auto" : "100px")};
   width: 100%;
@@ -591,9 +597,9 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                     width={25}
                     height={25}
                   />
-                  <ReviewMemberName>
+                  <SUbReviewMemberName>
                     {subreview.memberData?.name}
-                  </ReviewMemberName>
+                  </SUbReviewMemberName>
                 </Gotomember>
                 <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
                 <SubReviewContent>{parse(subreview.content!)}</SubReviewContent>

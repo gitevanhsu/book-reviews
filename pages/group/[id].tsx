@@ -24,12 +24,17 @@ import LinkImg from "../../public/img/link.svg";
 import videoChat from "../../public/img/video-call.svg";
 import microPhone from "../../public/img/microphone.svg";
 import video from "../../public/img/video.svg";
+import phone from "../../public/img/phone.svg";
 
 const GroupPage = styled.div`
   width: 100%;
   min-height: calc(100vh - 50px);
   background-color: ${(props) => props.theme.lightWhite};
   padding: 50px 30px;
+`;
+const GroupPageWrap = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
 `;
 const GoToReviewBox = styled(Link)`
   display: inline-block;
@@ -47,10 +52,14 @@ const GoToReviewImg = styled(Image)`
   vertical-align: middle;
 `;
 const VideoAndChatBox = styled.div`
+  width: 100%;
   border-top: 1px solid ${(props) => props.theme.black};
-  padding: 0 10%;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 // const VideoBox = styled.div`
@@ -280,14 +289,15 @@ export default function Group() {
 
   return (
     <GroupPage>
-      <BookComponent data={bookData} />
-      {typeof id === "string" && (
-        <GoToReviewBox href={`/book/id:${id.replace("id:", "")}`}>
-          <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
-          <GoToReview>Review Page</GoToReview>
-        </GoToReviewBox>
-      )}
-      {/* <VideoBox>
+      <GroupPageWrap>
+        <BookComponent data={bookData} />
+        {typeof id === "string" && (
+          <GoToReviewBox href={`/book/id:${id.replace("id:", "")}`}>
+            <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
+            <GoToReview>Review Page</GoToReview>
+          </GoToReviewBox>
+        )}
+        {/* <VideoBox>
         {showVideo && (
           <>
             <Title3>Local Stream</Title3>
@@ -346,12 +356,13 @@ export default function Group() {
           開啟 1 to 1 通話
         </StartButton>
       )} */}
-      <VideoAndChatBox>
-        {typeof id === "string" && <LiveChat id={id.replace("id:", "")} />}
-        {typeof id === "string" && (
-          <ChatRoomComponent id={id.replace("id:", "")} />
-        )}
-      </VideoAndChatBox>
+        <VideoAndChatBox>
+          {typeof id === "string" && <LiveChat id={id.replace("id:", "")} />}
+          {typeof id === "string" && (
+            <ChatRoomComponent id={id.replace("id:", "")} />
+          )}
+        </VideoAndChatBox>
+      </GroupPageWrap>
     </GroupPage>
   );
 }
@@ -368,19 +379,28 @@ import {
 import { rtcFireSession, RTCFireSession } from "../../utils/service";
 
 const PlayVideo = styled.video`
-  width: 300px;
+  width: 100%;
   aspect-ratio: 4/3;
-  background-color: #f0f;
+  background-color: ${(props) => props.theme.grey};
 `;
-const BTN = styled.button`
-  border: solid 1px;
+const OpenChatBTN = styled.button`
+  background-color: ${(props) => props.theme.greyBlue};
+  color: ${(props) => props.theme.black};
+  border-radius: 10px;
+  font-size: ${(props) => props.theme.fz}px;
   cursor: pointer;
-  padding: 5px 10px;
+  padding: 10px 20px;
 `;
 const MyVideoBox = styled.div`
+  margin-top: 30px;
+  width: 30%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  align-self: end;
+  @media screen and (max-width: 480px) {
+    width: 100%;
+  }
 `;
 const MyLocalVideo = styled(PlayVideo)`
   transform: scaleX(-1);
@@ -392,9 +412,15 @@ const OpenVideoBox = styled.div`
   flex-direction: column;
   justify-content: center;
 `;
-const VideosBox = styled(OpenVideoBox)``;
+const VideosBox = styled.div`
+  padding: 10px 10px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+`;
 const OpenVideoImg = styled(Image)``;
 const VideoControls = styled.div`
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: end;
@@ -425,7 +451,7 @@ const SoundControl = styled.div<SoundProps>`
     height: 100%;
     top: 0;
     left: 0;
-    transform: rotate(45deg) translate(0%, -50%);
+    transform: rotate(-45deg) translate(0%, -50%);
     border-bottom: solid 3px ${(props) => props.theme.red};
   }
 `;
@@ -433,7 +459,51 @@ const CameraControl = styled(SoundControl)<CameraProps>`
   background-image: url(${video.src});
   &::after {
     content: ${(props) => (props.camera ? `''` : null)};
-    transform: rotate(45deg) translate(0%, -40%);
+    transform: rotate(-45deg) translate(0%, -40%);
+  }
+`;
+const PhoneControl = styled(SoundControl)`
+  margin-right: auto;
+  background-image: url(${phone.src});
+  &::after {
+    content: "";
+    transform: rotate(-45deg) translate(0%, -40%);
+  }
+`;
+const VideoChatName = styled.h4`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  text-align: center;
+`;
+const Participants = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+`;
+interface ParticipentProps {
+  length: number;
+}
+const Participant = styled.li<ParticipentProps>`
+  height: auto;
+  width: ${(props) => {
+    if (props.length === 1) {
+      return "100%";
+    } else if (props.length === 2) {
+      return "50%";
+    } else {
+      return "32%";
+    }
+  }};
+  @media screen and (max-width: 576px) {
+    width: ${(props) => {
+      if (props.length === 1) {
+        return "100%";
+      } else {
+        return "48%";
+      }
+    }};
+  }
+  @media screen and (max-width: 480px) {
+    width: 100%;
   }
 `;
 
@@ -482,8 +552,6 @@ function LiveChat({ id }: { id: string }) {
       return await getMemberData(pid);
     });
     const newParticipants = (await Promise.all(requests)) as MemberInfo[];
-
-    console.log(newParticipants);
     otherParticipant.current = participants;
     setParticipants(newParticipants);
     allVideoStream.current = videoStreams;
@@ -540,6 +608,15 @@ function LiveChat({ id }: { id: string }) {
     <>
       {openChat ? (
         <VideosBox>
+          <Participants>
+            {participants &&
+              participants.map((participant: MemberInfo) => (
+                <Participant length={participants.length} key={participant.uid}>
+                  <VideoConponent srcObject={videoStreams[participant.uid!]} />
+                  <VideoChatName>{participant.name}</VideoChatName>
+                </Participant>
+              ))}
+          </Participants>
           <MyVideoBox>
             <MyLocalVideo
               key="myvideo"
@@ -549,6 +626,12 @@ function LiveChat({ id }: { id: string }) {
               playsInline
             />
             <VideoControls>
+              <PhoneControl
+                onClick={() => {
+                  setOpenChat(false);
+                  hanUp();
+                }}
+              />
               <SoundControl
                 sound={sound}
                 onClick={() => {
@@ -564,25 +647,7 @@ function LiveChat({ id }: { id: string }) {
                 }}
               />
             </VideoControls>
-            <h1>{userInfo.name}</h1>
           </MyVideoBox>
-          <ul>
-            {participants &&
-              participants.map((participant: MemberInfo) => (
-                <li key={participant.uid}>
-                  <VideoConponent srcObject={videoStreams[participant.uid!]} />
-                  <p>{participant.name}</p>
-                </li>
-              ))}
-          </ul>
-          <BTN
-            onClick={() => {
-              setOpenChat(false);
-              hanUp();
-            }}
-          >
-            Hang UP!
-          </BTN>
         </VideosBox>
       ) : (
         ""
@@ -595,14 +660,16 @@ function LiveChat({ id }: { id: string }) {
             width={200}
             height={200}
           />
-          <BTN
+          <OpenChatBTN
             onClick={() => {
               setOpenChat(true);
               setupVideo();
+              setSound(false);
+              setCamera(false);
             }}
           >
             OPEN!
-          </BTN>
+          </OpenChatBTN>
         </OpenVideoBox>
       )}
     </>

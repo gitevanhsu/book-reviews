@@ -20,6 +20,10 @@ const ChatRoom = styled.div`
   border: 1px solid ${(props) => props.theme.greyBlue};
   padding: 10px;
   border-radius: 10px;
+  max-height: 460px;
+  @media screen and (max-width: 768px) {
+    width: 100%;
+  }
 `;
 const ChatContent = styled.div`
   max-height: 400px;
