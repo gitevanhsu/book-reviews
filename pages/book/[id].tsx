@@ -23,7 +23,7 @@ import Link from "next/link";
 import add from "../../public/img/add.svg";
 import inshelf from "../../public/img/bookshelf.svg";
 import chat from "../../public/img/chat.svg";
-interface StartProps {
+interface StarProps {
   rating: boolean;
 }
 const BookPage = styled.div`
@@ -38,7 +38,7 @@ const BookPageWrap = styled.div`
 `;
 const BookBox = styled.div`
   display: flex;
-  align-items: start;
+  align-items: star;
   position: relative;
   margin: 0 0 10px;
   @media screen and (max-width: 576px) {
@@ -68,7 +68,7 @@ interface TitleProps {
 }
 const ItemBox = styled.div<ItemBoxProps>`
   display: flex;
-  align-items: start;
+  align-items: star;
   margin-top: ${(props) => (props.hasSub ? "0px" : "15px")};
 `;
 const ItemTitle = styled.h2<TitleProps>`
@@ -129,7 +129,7 @@ const BookRating = styled.div`
   justify-content: center;
   margin-top: 15px;
 `;
-const BookRatingStart = styled.div`
+const BookRatingStar = styled.div`
   color: #000;
   display: flex;
   align-items: center;
@@ -140,7 +140,7 @@ const BookRatingNum = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
 
-const Start = styled.div<StartProps>`
+const Star = styled.div<StarProps>`
   display: inline-block;
   color: ${(props) => (props.rating ? "red" : "black")};
 `;
@@ -152,9 +152,9 @@ const Wrap = styled.div`
 const NoimgTitle = styled.h2`
   position: absolute;
   color: #fff;
-  font-size: 16px;
-  width: 128px;
-  height: 193px;
+  font-size: ${(props) => props.theme.fz * 2}px;
+  width: 220px;
+  height: 331px;
   overflow: hidden;
   padding: 20px 10px;
   text-align: center;
@@ -222,10 +222,10 @@ export function BookComponent({ data }: { data: BookInfo }) {
         />
         {data.ratingMember && data.ratingMember.length > 0 && data.ratingCount && (
           <BookRating>
-            <BookRatingStart>
+            <BookRatingStar>
               {[...Array(5)].map((_, index) => {
                 return (
-                  <Start
+                  <Star
                     key={index}
                     rating={
                       index <
@@ -233,7 +233,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
                     }
                   >
                     &#9733;
-                  </Start>
+                  </Star>
                 );
               })}
               <BookRatingNum>
@@ -242,7 +242,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
                 ) / 100}
               </BookRatingNum>
               ({data.ratingMember!.length})
-            </BookRatingStart>
+            </BookRatingStar>
           </BookRating>
         )}
         {data.categories && data.categories?.length > 0 && (

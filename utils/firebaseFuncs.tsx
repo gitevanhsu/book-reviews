@@ -173,7 +173,7 @@ export const loadBooks = async (
 ) => {
   const booksData: BookInfo[] = [];
   if (page === 0) {
-    const first = query(booksRef, limit(10));
+    const first = query(booksRef, limit(8));
     const documentSnapshots = await getDocs(first);
     documentSnapshots.forEach((doc) => {
       booksData.push(doc.data());
@@ -183,7 +183,7 @@ export const loadBooks = async (
 
     return { lastVisible, booksData };
   } else {
-    const next = query(booksRef, startAfter(pageRef), limit(10));
+    const next = query(booksRef, startAfter(pageRef), limit(8));
     const newDocs = await getDocs(next);
     newDocs.forEach((doc) => {
       booksData.push(doc.data());
