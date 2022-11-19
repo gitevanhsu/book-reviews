@@ -81,6 +81,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [chats, setChats] = useState<ChatMessage[]>();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const chatBox = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let unsub: Function;
@@ -116,9 +117,14 @@ export default function ChatRoomComponent({ id }: { id: string }) {
       }
     };
   }, [id]);
+
+  useEffect(() => {
+    if (chatBox.current) chatBox.current.scrollTo(999999, 999999);
+  });
+
   return (
     <ChatRoom>
-      <ChatContent>
+      <ChatContent ref={chatBox}>
         {chats ? (
           chats.map((chat) => {
             const chatDate = new Date(
@@ -185,7 +191,12 @@ export default function ChatRoomComponent({ id }: { id: string }) {
         <MessageInput ref={inputRef} />
         <SentMessageButton
           onClick={() => {
-            if (inputRef && inputRef.current && userInfo) {
+            if (
+              inputRef &&
+              inputRef.current &&
+              inputRef.current.value.trim() &&
+              userInfo
+            ) {
               sentMessage(id, userInfo, inputRef.current.value);
               inputRef.current.value = "";
             }

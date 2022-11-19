@@ -33,20 +33,21 @@ const GroupPage = styled.div`
 `;
 const GoToReviewBox = styled(Link)`
   display: inline-block;
-  display: flex;
-  align-items: center;
-  padding-bottom: 30px;
-  border-bottom: 1px solid ${(props) => props.theme.black};
+  margin-bottom: 30px;
 `;
 const GoToReview = styled.p`
+  vertical-align: middle;
+  display: inline-block;
   margin-left: 10px;
   color: #000;
   cursor: pointer;
 `;
 const GoToReviewImg = styled(Image)`
   border-radius: 5px;
+  vertical-align: middle;
 `;
 const VideoAndChatBox = styled.div`
+  border-top: 1px solid ${(props) => props.theme.black};
   padding: 0 10%;
   display: flex;
   justify-content: center;
