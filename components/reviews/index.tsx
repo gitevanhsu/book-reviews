@@ -32,9 +32,12 @@ import {
   collection,
   orderBy,
 } from "firebase/firestore";
-import { useRouter } from "next/router";
 import like from "../../public/img/like.svg";
 import liked from "../../public/img/liked.svg";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.bubble.css";
+import parse from "html-react-parser";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 interface RatingProps {
   index: number;
   hover: number;
@@ -47,20 +50,23 @@ const BookReviewsBox = styled.div`
 `;
 const BookReviewBox = styled.div`
   padding: 50px 0;
-
   border-bottom: 1px solid #bbb;
   padding-left: 50px;
   position: relative;
+  @media screen and (max-width: 576px) {
+    padding-left: 20px;
+  }
 `;
 const MemberData = styled.div`
   margin-left: 10px;
-  width: 80%;
+  width: 100%;
 `;
 
 const ReviewTitle = styled.h2`
   margin: 10px 0;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
-const ReviewContent = styled.p`
+const ReviewContent = styled.div`
   line-height: 22px;
 `;
 
@@ -69,7 +75,7 @@ const ShowReviewBtn = styled.button`
   position: relative;
   cursor: pointer;
   padding: 5px 50px;
-  color: #999;
+  color: ${(props) => props.theme.black};
   &::before {
     content: "";
     display: inline-block;
@@ -83,24 +89,30 @@ const ShowReviewBtn = styled.button`
 `;
 
 const LeaveRatingBox = styled.div`
+  padding: 20px 10px 0;
+
+  border-top: 1px solid ${(props) => props.theme.black};
   margin-bottom: 20px;
 `;
 const LeaveRatingButton = styled.button<RatingProps>`
   color: ${(props) =>
-    props.index <= (props.hover || props.rating) ? "#ffcc00" : "#999"};
-
+    props.index <= (props.hover || props.rating)
+      ? props.theme.red
+      : props.theme.black};
+  font-size: ${(props) => props.theme.fz * 1.5}px;
   background-color: transparent;
   border: none;
   outline: none;
   cursor: pointer;
 `;
 const LeaveRatingStar = styled.span``;
-const SentRatingButton = styled.button`
+const RemoveRatingButton = styled.button`
   cursor: pointer;
   margin: 0 30px;
   padding: 5px 10px;
-  border-radius: 30px;
-  background-color: #b3c7f3;
+  border-radius: 5px;
+  color: ${(props) => props.theme.white};
+  background-color: ${(props) => props.theme.red};
   & + & {
     margin: 0px;
   }
@@ -114,31 +126,104 @@ const ReviewMemberName = styled.h3`
   min-width: 100px;
   font-size: 16px;
   font-weight: 700;
-  color: #888;
+  color: ${(props) => props.theme.black};
+`;
+const SUbReviewMemberName = styled(ReviewMemberName)`
+  display: inline-block;
+  margin-left: 10px;
+  min-width: 50px;
 `;
 
 const SignMessage = styled.h2``;
 
-const MemberReview = styled.div`
-  border-bottom: 3px solid #eee;
+const MemberReviewBox = styled.div`
+  border-bottom: 1px solid ${(props) => props.theme.black};
   padding: 10px 10px;
+`;
+const MemberReviewNotice = styled.h3`
+  margin-bottom: 10px;
+  min-width: 100px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-weight: 700;
+  color: ${(props) => props.theme.black};
+`;
+const Title = styled.h3``;
+const TitleContent = styled.h3`
+  display: flex;
+  align-items: center;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-weight: 600;
+`;
+interface ContentProps {
+  showMore: boolean;
+}
+const Content = styled.div<ContentProps>`
+  width: 100%;
+  font-size: ${(props) => props.theme.fz * 1}px;
+  max-height: ${(props) => (props.showMore ? "auto" : "150px")};
+  overflow: hidden;
+`;
+const MemberReviewTitleBox = styled.div`
+  display: flex;
+  & > ${Title} {
+    min-width: 100px;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+    margin-top: 10px;
+    @media screen and (max-width: 576px) {
+      margin-bottom: 10px;
+    }
+  }
+  & > ${Content} {
+    margin: 10px 0;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+    @media screen and (max-width: 576px) {
+      font-size: ${(props) => props.theme.fz * 1}px;
+    }
+  }
+  & + & {
+    margin-top: 40px;
+  }
+`;
+
+const MemberReviewContentBox = styled.div`
+  display: flex;
+  margin-top: 15px;
+  & > ${Title} {
+    min-width: 100px;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+    margin-top: 20px;
+    @media screen and (max-width: 576px) {
+      margin-bottom: 10px;
+    }
+  }
+  & > ${Content} {
+    margin: 10px 0;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+    @media screen and (max-width: 576px) {
+      font-size: ${(props) => props.theme.fz * 1}px;
+    }
+  }
 `;
 const EditReviewButton = styled.button`
   cursor: pointer;
-  margin-top: 10px;
-  font-size: 16px;
+  margin: 10px 20px 10px 0;
+  font-size: ${(props) => props.theme.fz}px;
   padding: 5px 10px;
-  color: #444;
-  border: solid 1px #ccc;
-  border-radius: 10px;
-  background-color: #eee;
-  &:hover {
-    background-color: #444;
-    color: #eee;
-  }
+  border-radius: 5px;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.greyBlue};
+
   & + & {
     margin-left: 20px;
   }
+`;
+const SeeMoreBtn = styled.button`
+  font-size: ${(props) => props.theme.fz * 1}px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  cursor: pointer;
 `;
 const ShowSubReviewButton = styled(ShowReviewBtn)``;
 
@@ -158,20 +243,19 @@ const SubReviewLikes = styled.div`
   display: flex;
   align-items: center;
   padding: 5px 0;
-  margin-left: 25px;
+  margin-left: 35px;
 `;
-const SubReviewContent = styled.p`
-  margin: 10px 25px;
+const SubReviewContent = styled.div`
+  margin: 10px 36px;
 `;
-const SubReviewTime = styled.p`
+const SubReviewTime = styled.div`
   font-size: 12px;
   display: inline-block;
 `;
-const SubReviewInput = styled.input`
-  padding: 10px 10px;
+const SubReviewInput = styled(ReactQuill)`
   width: 100%;
   outline: none;
-  border: 1px solid #ccc;
+  border: 1px solid ${(props) => props.theme.black};
   border-radius: 5px;
 `;
 const LikeButton = styled.button`
@@ -182,15 +266,16 @@ const LikeButton = styled.button`
 const RatingReviewBox = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   height: 100%;
   padding: 50px 0;
+  margin-top: 50px;
   text-align: center;
   position: absolute;
   top: 0;
   left: 0;
 `;
-const RatingCount = styled.p`
+const RatingCount = styled.div`
   padding: 20px 0;
 `;
 const RatingReviewButtonUp = styled.div`
@@ -198,10 +283,14 @@ const RatingReviewButtonUp = styled.div`
   display: inline-block;
   height: 40px;
   width: 40px;
-  background-color: #ffcc00;
+  background-color: ${(props) => props.theme.greyBlue};
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   &:hover {
     opacity: 0.5;
+  }
+  @media screen and (max-width: 576px) {
+    height: 30px;
+    width: 30px;
   }
 `;
 const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
@@ -213,9 +302,10 @@ const Gotomember = styled(Link)`
   cursor: pointer;
 `;
 const SubMemberImg = styled(Image)`
+  display: inline-block;
   border-radius: 50%;
 `;
-const LikeCount = styled.p`
+const LikeCount = styled.div`
   display: inline-block;
   width: 20px;
 `;
@@ -223,29 +313,54 @@ const LeaveReviewBox = styled.div`
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  width: 860px;
+  width: 100%;
 `;
 const LeaveInputBox = styled.div`
-  width: 860px;
+  width: 100%;
   display: flex;
   align-items: start;
-  & + & {
-    margin-top: 10px;
+  margin: 10px 0;
+  & > ${ReviewContent} {
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+  }
+  @media screen and (max-width: 576px) {
+    flex-direction: column;
   }
 `;
 const LeaveReviewTitle = styled.h3`
   min-width: 100px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  margin-top: 10px;
+  @media screen and (max-width: 576px) {
+    margin-bottom: 10px;
+  }
 `;
-const LeaveReviewContent = styled.input`
+const LeaveReviewContentTitle = styled(ReactQuill)`
   width: 100%;
-  padding: 4px 10px;
+  border: 1px solid ${(props) => props.theme.black};
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  border-radius: 5px;
 `;
-const LeaveReviewTextContent = styled.textarea`
+const LeaveReviewTextContent = styled(ReactQuill)`
   padding: 4px 10px;
   width: 100%;
-  font-family: Arial;
   height: 100px;
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
 `;
+const EditTitle = styled(ReactQuill)`
+  width: 100%;
+  border: solid 1px ${(props) => props.theme.black};
+  border-radius: 5px;
+`;
+const EditContent = styled(ReactQuill)`
+  margin-top: 10px;
+  width: 100%;
+  height: 100px;
+  border: solid 1px ${(props) => props.theme.black};
+  border-radius: 5px;
+`;
+
 const SubmitReviewBtn = styled.button`
   margin-top: 10px;
   align-self: end;
@@ -254,11 +369,8 @@ const SubmitReviewBtn = styled.button`
   padding: 5px 10px;
   text-align: center;
   border-radius: 5px;
-  color: #444;
-  &:hover {
-    color: #fff;
-    background-color: #7382d4;
-  }
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.greyBlue};
 `;
 const ItemBox = styled.div`
   display: flex;
@@ -277,13 +389,21 @@ const MemberName = styled.h3`
   font-size: 16px;
   font-weight: 700;
   padding: 10px 0;
+  color: #000;
 `;
 const MainReviewTitle = styled.h3`
   font-size: 18px;
   font-weight: 700;
 `;
-const MainReviewContent = styled.p`
+const MainReviewContent = styled.div<ContentProps>`
+  margin: 10px 0;
+  max-height: ${(props) => (props.showMore ? "auto" : "100px")};
+  width: 100%;
   font-size: 16px;
+  overflow: hidden;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
 `;
 const MainReviewStar = styled.div`
   display: inline-block;
@@ -292,6 +412,10 @@ const MainReviewStar = styled.div`
 `;
 const MainReviewDate = styled.span`
   font-size: 8px;
+  @media screen and (max-width: 576px) {
+    display: block;
+    margin-bottom: 10px;
+  }
 `;
 export function LeaveRatingComponent({
   bookIsbn,
@@ -320,7 +444,10 @@ export function LeaveRatingComponent({
               index={index}
               hover={hover}
               rating={rating}
-              onClick={() => setRating(index)}
+              onClick={() => {
+                setRating(index);
+                userInfo.uid && bookRating(userInfo.uid, bookIsbn, index);
+              }}
               onMouseEnter={() => setHover(index)}
               onMouseLeave={() => setHover(rating)}
             >
@@ -328,67 +455,58 @@ export function LeaveRatingComponent({
             </LeaveRatingButton>
           );
         })}
-
-        <SentRatingButton
-          onClick={() => {
-            userInfo.uid && bookRating(userInfo.uid, bookIsbn, rating);
-          }}
-        >
-          Rate
-        </SentRatingButton>
-        <SentRatingButton
-          onClick={() => {
-            if (userInfo.uid) {
-              removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
-              setRating(0);
-              setHover(0);
-            }
-          }}
-        >
-          Remove
-        </SentRatingButton>
+        {rating > 0 && (
+          <RemoveRatingButton
+            onClick={() => {
+              if (userInfo.uid) {
+                removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
+                setRating(0);
+                setHover(0);
+              }
+            }}
+          >
+            Remove
+          </RemoveRatingButton>
+        )}
       </LeaveRatingBox>
     </>
   ) : (
     <LeaveRatingBox>
-      <SignMessage>登入才能留下評價喔！</SignMessage>
+      <SignMessage>加入會員分享你的想法！</SignMessage>
     </LeaveRatingBox>
   );
 }
 
 export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const contentInputRef = useRef<HTMLTextAreaElement>(null);
+  const [titlevalue, setTitleValue] = useState("");
+  const [contentvalue, setContentValue] = useState("");
 
   return userInfo.isSignIn ? (
     <LeaveReviewBox>
       <LeaveInputBox>
         <LeaveReviewTitle>Title</LeaveReviewTitle>
-        <LeaveReviewContent ref={titleInputRef} />
+        <LeaveReviewContentTitle
+          theme="bubble"
+          value={titlevalue}
+          onChange={setTitleValue}
+        />
       </LeaveInputBox>
       <LeaveInputBox>
         <LeaveReviewTitle>Content</LeaveReviewTitle>
-        <LeaveReviewTextContent ref={contentInputRef} />
+        <LeaveReviewTextContent
+          theme="bubble"
+          value={contentvalue}
+          onChange={setContentValue}
+        />
       </LeaveInputBox>
       <SubmitReviewBtn
         onClick={() => {
-          if (
-            titleInputRef &&
-            contentInputRef &&
-            titleInputRef.current &&
-            contentInputRef.current &&
-            userInfo.uid
-          )
-            addBookReview(
-              userInfo.uid,
-              bookIsbn,
-              titleInputRef.current.value,
-              contentInputRef.current.value
-            );
+          if (titlevalue && contentvalue && userInfo.uid)
+            addBookReview(userInfo.uid, bookIsbn, titlevalue, contentvalue);
         }}
       >
-        送出評論
+        Submit
       </SubmitReviewBtn>
     </LeaveReviewBox>
   ) : (
@@ -400,7 +518,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
   const [subReviews, setSubReviews] = useState<SubReview[]>();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [reviewValue, setReviewValue] = useState("");
   useEffect(() => {
     let unsubscribe: Function;
     const getSubReviewsData = async () => {
@@ -479,12 +597,12 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                     width={25}
                     height={25}
                   />
-                  <ReviewMemberName>
+                  <SUbReviewMemberName>
                     {subreview.memberData?.name}
-                  </ReviewMemberName>
+                  </SUbReviewMemberName>
                 </Gotomember>
                 <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
-                <SubReviewContent>{subreview.content}</SubReviewContent>
+                <SubReviewContent>{parse(subreview.content!)}</SubReviewContent>
                 <SubReviewLikes>
                   <LikeCount>{subreview.likeCount}</LikeCount>
                   <LikeButton
@@ -512,22 +630,25 @@ function SubReviewComponent({ review }: { review: BookReview }) {
           })}
       </SubReviewsBox>
       {userInfo.uid && (
-        <SubReviewInput
-          ref={inputRef}
-          placeholder="leave comment...."
-          onKeyDown={(e) => {
-            if (
-              e.code === "Enter" &&
-              inputRef &&
-              inputRef.current &&
-              userInfo.uid
-            ) {
-              sentSubReview(review, inputRef.current.value, userInfo.uid);
-              sentNotice(review, inputRef.current.value, userInfo.uid);
-              inputRef.current.value = "";
-            }
-          }}
-        />
+        <>
+          <SubReviewInput
+            theme="bubble"
+            value={reviewValue}
+            onChange={setReviewValue}
+            placeholder="leave comment...."
+          />
+          <SubmitReviewBtn
+            onClick={() => {
+              if (reviewValue && userInfo.uid) {
+                sentSubReview(review, reviewValue, userInfo.uid);
+                sentNotice(review, reviewValue, userInfo.uid);
+                setReviewValue("");
+              }
+            }}
+          >
+            Submit
+          </SubmitReviewBtn>
+        </>
       )}
     </>
   ) : (
@@ -543,37 +664,29 @@ function SubReviewComponent({ review }: { review: BookReview }) {
 
 function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
   const [isEdit, setIsEdit] = useState(false);
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const contentInputRef = useRef<HTMLTextAreaElement>(null);
-
+  const [titlevalue, setTitleValue] = useState(memberReview.title);
+  const [contentvalue, setContentValue] = useState(memberReview.content);
+  const [showMore, setShowMore] = useState(false);
   return isEdit ? (
-    <MemberReview>
-      <ReviewMemberName>Your review</ReviewMemberName>
-      <LeaveInputBox>
-        <LeaveReviewTitle>Title</LeaveReviewTitle>
-        <LeaveReviewContent
-          ref={titleInputRef}
-          defaultValue={memberReview.title}
-        />
-      </LeaveInputBox>
-      <LeaveInputBox>
+    <MemberReviewBox>
+      <MemberReviewNotice>Your review</MemberReviewNotice>
+      <MemberReviewTitleBox>
+        <Title>Title</Title>
+        <EditTitle theme="bubble" value={titlevalue} onChange={setTitleValue} />
+      </MemberReviewTitleBox>
+      <MemberReviewContentBox>
         <LeaveReviewTitle>Content</LeaveReviewTitle>
-        <LeaveReviewTextContent
-          ref={contentInputRef}
-          defaultValue={memberReview.content}
+        <EditContent
+          theme="bubble"
+          value={contentvalue}
+          onChange={setContentValue}
         />
-      </LeaveInputBox>
+      </MemberReviewContentBox>
       <EditReviewButton
         onClick={() => {
-          titleInputRef &&
-            contentInputRef &&
-            titleInputRef.current &&
-            contentInputRef.current &&
-            editReview(
-              memberReview,
-              titleInputRef.current.value,
-              contentInputRef.current.value
-            );
+          titlevalue &&
+            contentvalue &&
+            editReview(memberReview, titlevalue, contentvalue);
         }}
       >
         Submit
@@ -585,20 +698,16 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
       >
         Cancle
       </EditReviewButton>
-    </MemberReview>
+    </MemberReviewBox>
   ) : (
-    <MemberReview>
-      <ReviewMemberName>Your review</ReviewMemberName>
-      <LeaveInputBox>
-        <LeaveReviewTitle>Title</LeaveReviewTitle>
-        <ReviewTitle>{memberReview.title}</ReviewTitle>
-      </LeaveInputBox>
-      <LeaveInputBox>
-        <LeaveReviewTitle>Content</LeaveReviewTitle>
-        <ReviewContent>
-          {memberReview?.content?.substring(0, 250)} ......
-        </ReviewContent>
-      </LeaveInputBox>
+    <MemberReviewBox>
+      <MemberReviewNotice>Your review</MemberReviewNotice>
+      <MemberReviewTitleBox>
+        <TitleContent>{parse(memberReview.title!)}</TitleContent>
+      </MemberReviewTitleBox>
+      <MemberReviewContentBox>
+        <Content showMore={showMore}>{parse(memberReview?.content!)}</Content>
+      </MemberReviewContentBox>
       <EditReviewButton
         onClick={() => {
           setIsEdit(true);
@@ -606,7 +715,108 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
       >
         Edit
       </EditReviewButton>
-    </MemberReview>
+      <SeeMoreBtn
+        onClick={() => {
+          setShowMore((prev) => !prev);
+        }}
+      >
+        {showMore ? "Show less" : "Show more"}
+      </SeeMoreBtn>
+    </MemberReviewBox>
+  );
+}
+interface ReviewProps {
+  review: BookReview;
+  year: number;
+  month: number;
+  date: number;
+}
+function ReviewComponent({ review, year, month, date }: ReviewProps) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const [showMore, setShowMore] = useState(false);
+
+  return (
+    <BookReviewBox key={review.reviewId}>
+      <ReviewMemberBox>
+        <Gotomember
+          href={
+            review.memberId! === userInfo.uid!
+              ? "/profile"
+              : `/member/id:${review.memberId}`
+          }
+        >
+          <ReviewUserImage
+            src={
+              review.memberData && review.memberData.img
+                ? review.memberData.img
+                : male
+            }
+            alt={
+              review.memberData && review.memberData.name
+                ? review.memberData.name
+                : "user Img"
+            }
+            width={30}
+            height={30}
+          ></ReviewUserImage>
+        </Gotomember>
+        <MemberData>
+          <Gotomember
+            href={
+              review.memberId! === userInfo.uid!
+                ? "/profile"
+                : `/member/id:${review.memberId}`
+            }
+          >
+            <MemberName>
+              {review.memberData && review.memberData.name}
+            </MemberName>
+          </Gotomember>
+          <MainReviewStar>
+            <ReviewStar>&#9733;</ReviewStar>
+            {review.rating}
+          </MainReviewStar>
+          <MainReviewDate>{`${year}-${month}-${date}`}</MainReviewDate>
+          <ItemBox>
+            <MainReviewTitle>{parse(review.title!)}</MainReviewTitle>
+          </ItemBox>
+          <ItemBox>
+            <MainReviewContent showMore={showMore}>
+              {parse(review.content!)}
+            </MainReviewContent>
+          </ItemBox>
+          <SeeMoreBtn
+            onClick={() => {
+              setShowMore((prev) => !prev);
+            }}
+          >
+            {showMore ? "Show less" : "Show more"}
+          </SeeMoreBtn>
+        </MemberData>
+      </ReviewMemberBox>
+      <RatingReviewBox>
+        <RatingReviewButtonUp
+          onClick={() => {
+            if (userInfo.uid && review) {
+              upperReview(userInfo.uid, review);
+            } else {
+              alert("請先登入喔");
+            }
+          }}
+        ></RatingReviewButtonUp>
+        <RatingCount>{review.reviewRating}</RatingCount>
+        <RatingReviewButtonDown
+          onClick={() => {
+            if (userInfo.uid && review) {
+              lowerReview(userInfo.uid, review);
+            } else {
+              alert("請先登入喔");
+            }
+          }}
+        ></RatingReviewButtonDown>
+      </RatingReviewBox>
+      <SubReviewComponent review={review} />
+    </BookReviewBox>
   );
 }
 
@@ -614,14 +824,12 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [reviews, setReviews] = useState<BookReview[]>([]);
   const [memberReview, setMemberReview] = useState<BookReview>();
-  const router = useRouter();
 
   useEffect(() => {
     let unsubscribe: Function;
     const getReviewsData = async () => {
       const reviewQuery = query(
         reviewsRef,
-        // where("booksIsbn", "==", bookIsbn)
         where("reviewRating", ">", -999999),
         orderBy("reviewRating", "desc")
       );
@@ -629,7 +837,6 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
         setMemberReview(undefined);
         const reviewsArr: BookReview[] = [];
         const userIds: string[] = [];
-
         querySnapshot.forEach((review) => {
           review.data().booksIsbn === bookIsbn &&
             reviewsArr.push(review.data());
@@ -640,7 +847,6 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
           return docData.data();
         });
         const allMemberInfo = (await Promise.all(requests)) as DocumentData[];
-
         const newReviewsArr = reviewsArr.map((review) => {
           const userData = allMemberInfo.find(
             (member) => member.uid === review.memberId
@@ -678,78 +884,13 @@ export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
             const date = ReviewDate.getDate();
             if (review.title?.length === 0) return;
             return (
-              <BookReviewBox key={review.reviewId}>
-                <ReviewMemberBox>
-                  <Gotomember
-                    href={
-                      review.memberId! === userInfo.uid!
-                        ? "/profile"
-                        : `/member/id:${review.memberId}`
-                    }
-                  >
-                    <ReviewUserImage
-                      src={
-                        review.memberData && review.memberData.img
-                          ? review.memberData.img
-                          : male
-                      }
-                      alt={
-                        review.memberData && review.memberData.name
-                          ? review.memberData.name
-                          : "user Img"
-                      }
-                      width={30}
-                      height={30}
-                    ></ReviewUserImage>
-                  </Gotomember>
-                  <MemberData>
-                    <Gotomember
-                      href={
-                        review.memberId! === userInfo.uid!
-                          ? "/profile"
-                          : `/member/id:${review.memberId}`
-                      }
-                    >
-                      <MemberName>
-                        {review.memberData && review.memberData.name}
-                      </MemberName>
-                    </Gotomember>
-                    <MainReviewStar>
-                      <ReviewStar>&#9733;</ReviewStar>
-                      {review.rating}
-                    </MainReviewStar>
-                    <MainReviewDate>{`${year}-${month}-${date}`}</MainReviewDate>
-                    <ItemBox>
-                      <MainReviewTitle>{review.title}</MainReviewTitle>
-                    </ItemBox>
-                    <ItemBox>
-                      <MainReviewContent>{review.content}</MainReviewContent>
-                    </ItemBox>
-                  </MemberData>
-                </ReviewMemberBox>
-                <RatingReviewBox>
-                  <RatingReviewButtonUp
-                    onClick={() => {
-                      if (userInfo.uid && review) {
-                        upperReview(userInfo.uid, review);
-                      } else {
-                        alert("請先登入喔");
-                      }
-                    }}
-                  ></RatingReviewButtonUp>
-                  <RatingCount>{review.reviewRating}</RatingCount>
-                  <RatingReviewButtonDown
-                    onClick={() => {
-                      if (userInfo.uid && review) {
-                        lowerReview(userInfo.uid, review);
-                      } else {
-                        alert("請先登入喔");
-                      }
-                    }}
-                  ></RatingReviewButtonDown>
-                </RatingReviewBox>
-                <SubReviewComponent review={review} />
-              </BookReviewBox>
+              <ReviewComponent
+                key={review.reviewId}
+                review={review}
+                year={year}
+                month={month}
+                date={date}
+              />
             );
           })
         ) : (
