@@ -231,6 +231,7 @@ const ProfileLi = styled.li`
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
   border-top: 1px solid transparent;
   transition: 0.3s;
+  color: ${(props) => props.theme.black};
   & > ${ProfileLink} {
     display: flex;
     align-items: center;

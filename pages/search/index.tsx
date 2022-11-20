@@ -1,51 +1,96 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import styled from "styled-components";
 import searchImg from "public/img/search.png";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookInfo, db } from "../../utils/firebaseFuncs";
 import Link from "next/link";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
 import { useRouter } from "next/router";
 
-const Title = styled.h1``;
-const SearchBox = styled.div``;
-const SearchInput = styled.input``;
-const SearchBtton = styled.button`
-  border: solid 1px;
+const SearchPage = styled.main`
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background-color: ${(props) => props.theme.grey};
+`;
+const SearchPageWrap = styled.div`
+  padding: 50px 30px;
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+`;
+
+const BookImg = styled(Image)``;
+const Title = styled.h1`
+  width: 100%;
+  margin: 15px auto;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  color: ${(props) => props.theme.black};
+`;
+const SearchBox = styled.div`
+  display: flex;
+  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
+`;
+const SearchInput = styled.input`
+  border: none;
+  background-color: transparent;
+  width: 100%;
+  padding: 0 10px;
+  font-size: ${(props) => props.theme.fz * 2}px;
+  &:focus {
+    outline: none;
+  }
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+  }
+`;
+const SearchBtton = styled(Image)`
   cursor: pointer;
+`;
+const NoResult = styled.div`
+  margin-top: 20px;
 `;
 
 const Books = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
   display: flex;
   flex-wrap: wrap;
 `;
 const Book = styled.div`
   position: relative;
-  width: 25%;
+  width: 50%;
+  padding: 20px 20px;
+  border-bottom: 1px solid ${(props) => props.theme.black};
+  @media screen and (max-width: 576px) {
+    width: 100%;
+  }
 `;
-const BookTitle = styled.h2``;
-const BookSubTitle = styled.h3``;
-const BookIsbn = styled.p``;
-const BookPublisher = styled.p``;
-const BookPublishedDate = styled.p``;
-const BookTextSnippet = styled.p``;
-const BookAuthor = styled.h4``;
-const Categories = styled.p``;
-const ButtonBox = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 0 auto;
-  justify-content: center;
+const BookInfos = styled.div`
+  padding: 5px 0;
+  max-width: 200px;
+  margin: 10px auto;
 `;
-const PageButton = styled.button`
-  border: solid 1px;
-  padding: 10px 20px;
-  cursor: pointer;
+const BookTitle = styled.h2`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  height: ${(props) => props.theme.fz * 3 + 2}px;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: wrap;
+  margin-bottom: 10px;
 `;
-const PageNumber = styled.p`
-  margin: 0 10px;
+const BookAuthor = styled.h3`
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+  margin-bottom: 10px;
 `;
+const BookIsbn = styled.p`
+  font-size: ${(props) => props.theme.fz}px;
+`;
+
 const Move = styled.div`
   cursor: pointer;
   display: inline-block;
@@ -55,10 +100,10 @@ const Move = styled.div`
 `;
 const NoimgTitle = styled.h2`
   position: absolute;
-  color: #fff;
-  font-size: 16px;
-  width: 128px;
-  height: 193px;
+  color: ${(props) => props.theme.white};
+  font-size: ${(props) => props.theme.fz * 2}px;
+  width: 180px;
+  height: 271px;
   overflow: hidden;
   padding: 20px 10px;
   text-align: center;
@@ -71,8 +116,16 @@ const NoimgTitle = styled.h2`
 export default function Search() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
   const [books, setBooks] = useState<BookInfo[]>();
+  const booksRef = useRef<HTMLDivElement>(null);
+  const [serchValue, setSerchValue] = useState<string>("");
+  const noResultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (booksRef && booksRef.current) {
+      booksRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  });
 
   const bookSearcher = async (input: string) => {
     const result = await fetch(
@@ -124,59 +177,87 @@ export default function Search() {
     }
   };
   return (
-    <>
-      <Title>請輸入您想搜尋的書籍</Title>
-      <SearchBox>
-        <SearchInput ref={inputRef} />
-        <SearchBtton
-          onClick={() => {
-            inputRef &&
-              inputRef.current &&
-              bookSearcher(inputRef.current.value);
-          }}
-        >
-          搜尋
-        </SearchBtton>
-      </SearchBox>
-      {books && (
-        <Books>
-          {books.map((data) => {
-            return (
-              <Book key={data.isbn}>
-                <Move
-                  onClick={() => {
-                    move(data);
-                  }}
-                >
-                  <Image
-                    src={data.smallThumbnail ? data.smallThumbnail : bookcover}
-                    alt={`${data.title}`}
-                    width={128}
-                    height={193}
-                  />
-                </Move>
-                {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
-                <BookTitle>書名：{data.title}</BookTitle>
-                {data.subtitle && <BookSubTitle>{data.subtitle}</BookSubTitle>}
-                {data.authors &&
-                  data.authors?.map((author) => (
-                    <BookAuthor key={author}>作者:{author}</BookAuthor>
-                  ))}
-                {data.categories &&
-                  data.categories?.map((category) => (
-                    <Categories key={category}>分類：{category}</Categories>
-                  ))}
-                <BookPublisher>出版社：{data.publisher}</BookPublisher>
-                <BookPublishedDate>
-                  出版日期：{data.publishedDate}
-                </BookPublishedDate>
-                <BookIsbn>ISBN：{data.isbn}</BookIsbn>
-                <BookTextSnippet>簡介：{data.textSnippet}</BookTextSnippet>
-              </Book>
-            );
-          })}
-        </Books>
-      )}
-    </>
+    <SearchPage>
+      <SearchPageWrap>
+        <SearchBox>
+          <SearchInput
+            ref={inputRef}
+            placeholder="請輸入您想查詢的關鍵字......"
+            onKeyPress={(e) => {
+              if (
+                e.code === "Enter" &&
+                inputRef &&
+                inputRef.current &&
+                inputRef.current.value.trim()
+              ) {
+                bookSearcher(inputRef.current.value);
+                setSerchValue(inputRef.current.value);
+                inputRef.current.value = "";
+              }
+            }}
+          />
+          <SearchBtton
+            width={20}
+            height={20}
+            src={searchImg}
+            alt="search Image"
+            onClick={() => {
+              if (
+                inputRef &&
+                inputRef.current &&
+                inputRef.current.value.trim()
+              ) {
+                bookSearcher(inputRef.current.value);
+                setSerchValue(inputRef.current.value);
+                inputRef.current.value = "";
+              }
+            }}
+          />
+        </SearchBox>
+        {books && (
+          <Books ref={booksRef}>
+            <Title>查詢關鍵字: {serchValue}</Title>
+            <Title>查詢結果共 {books.length} 筆資料</Title>
+
+            {books.map((data) => {
+              return (
+                <Book key={data.isbn}>
+                  <Move
+                    onClick={() => {
+                      move(data);
+                    }}
+                  >
+                    <BookImg
+                      src={
+                        data.smallThumbnail ? data.smallThumbnail : bookcover
+                      }
+                      alt={`${data.title}`}
+                      width={180}
+                      height={271}
+                    />
+                    {!data.smallThumbnail && (
+                      <NoimgTitle>{data.title}</NoimgTitle>
+                    )}
+                  </Move>
+                  <BookInfos>
+                    <BookTitle>{data.title}</BookTitle>
+                    {data.authors && data.authors && (
+                      <BookAuthor>{data.authors[0]}</BookAuthor>
+                    )}
+                    <BookIsbn>ISBN：{data.isbn}</BookIsbn>
+                  </BookInfos>
+                </Book>
+              );
+            })}
+          </Books>
+        )}
+        {books && books.length === 0 && (
+          <NoResult ref={noResultRef}>
+            <Title>查無搜尋結果</Title>
+            <Title>請用其他關鍵字搜尋</Title>
+          </NoResult>
+        )}
+      </SearchPageWrap>
+    </SearchPage>
   );
 }
