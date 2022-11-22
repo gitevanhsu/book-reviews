@@ -25,7 +25,8 @@ import message from "../../public/img/message.svg";
 import acceptImg from "../../public/img/accept.svg";
 import rejectImg from "../../public/img/reject.svg";
 import linkImg from "../../public/img/new-link.svg";
-import menu from "../../public/img/menu.svg";
+import menu from "../../public/img/user.png";
+import bell from "/public/img/bell.png";
 
 const LogoImg = styled(Image)``;
 interface MesProps {
@@ -52,8 +53,8 @@ const MesBox = styled.div<MesProps>`
     line-height: 15px;
     width: 15px;
     height: 15px;
-    bottom: 3px;
-    right: -4px;
+    bottom: -5px;
+    right: -8px;
     border-radius: 50%;
   }
 `;
@@ -129,6 +130,10 @@ const NoticeBox = styled.div<MesBoxProps>`
 `;
 const MesImg = styled(Image)`
   cursor: pointer;
+  path {
+    fill: #f00;
+  }
+  transform: rotate(-2deg);
   &:hover ${NoticeBox} {
     right: -28px;
   }
@@ -252,7 +257,7 @@ const ProfileBox = styled.div`
   }
   &:hover ${ProfileLi} {
     height: 50px;
-    transition: 0.3s;
+    transition: 0.2s;
     opacity: 1;
   }
   @media screen and (max-width: 576px) {
@@ -262,7 +267,11 @@ const ProfileBox = styled.div`
 `;
 
 const ProfileImgWrap = styled.div``;
-const ProfileImgImage = styled(Image)``;
+const ProfileImgImage = styled(Image)`
+  height: 100%;
+  display: inline-block;
+  padding-top: 10px;
+`;
 function NoticeComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [notices, setNotice] = useState<NoticeData[]>([]);
@@ -335,10 +344,10 @@ function NoticeComponent() {
           />
           <MesBox mesCount={notices.length + friendRequest.length}>
             <MesImg
-              src={message}
+              src={bell}
               alt="Message"
-              width={40}
-              height={40}
+              width={30}
+              height={30}
               onClick={() => {
                 setOpenMsg((prev) => !prev);
               }}
@@ -472,7 +481,7 @@ function MemberComponent() {
   return (
     <ProfileBox>
       <ProfileImgWrap>
-        <ProfileImgImage src={male} width={40} height={40} alt="MemberAvatar" />
+        <ProfileImgImage src={menu} width={32} height={32} alt="MemberAvatar" />
         <ProfileUl>
           <ProfileLi>
             <ProfileLink href="/profile">
@@ -547,7 +556,7 @@ function MobileSlideComponent() {
 
   return (
     <MobileMenuBox isSignin={userInfo.isSignIn ? "250px" : "200px"}>
-      <MobileMenuImg src={menu} alt="mobile icon" width={30} height={30} />
+      <MobileMenuImg src={menu} alt="mobile icon" width={32} height={32} />
       <MobileUl>
         <MobileLi>
           <PageLink href="/">Home</PageLink>

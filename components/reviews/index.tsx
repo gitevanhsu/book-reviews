@@ -104,6 +104,7 @@ const LeaveRatingButton = styled.button<RatingProps>`
   border: none;
   outline: none;
   cursor: pointer;
+  margin-left: 5px;
 `;
 const LeaveRatingStar = styled.span``;
 const RemoveRatingButton = styled.button`

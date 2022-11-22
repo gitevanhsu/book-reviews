@@ -186,7 +186,7 @@ export default function SignupComponent() {
             onChange={avatarSelector}
           />
           <UserAvatar src={male} alt="maleAvatar" width={50} height={50} />
-        </Label>{" "}
+        </Label>
         <Label>
           <InputContent
             type="radio"

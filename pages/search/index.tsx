@@ -20,10 +20,12 @@ const SearchPageWrap = styled.div`
   text-align: center;
 `;
 
-const BookImg = styled(Image)``;
+const BookImg = styled(Image)`
+  box-shadow: 0px 0px 15px ${(props) => props.theme.black};
+`;
 const Title = styled.h1`
   width: 100%;
-  margin: 15px auto;
+  margin: 15px auto;ㄉ
   font-size: ${(props) => props.theme.fz * 1.5}px;
   color: ${(props) => props.theme.black};
 `;

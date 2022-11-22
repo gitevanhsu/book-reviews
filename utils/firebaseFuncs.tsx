@@ -768,11 +768,13 @@ export const editMemberInfo = async (
   userinfo: MemberInfo,
   newName: string,
   newIntro: string,
+  avatar: string,
   dispatch: Function
 ) => {
   const newUserInfo: MemberInfo = produce(userinfo, (draft) => {
     draft.name = newName;
     draft.intro = newIntro;
+    draft.img = avatar;
   });
   newUserInfo.uid &&
     (await setDoc(doc(db, "members", newUserInfo.uid), newUserInfo));

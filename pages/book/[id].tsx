@@ -59,6 +59,7 @@ const BookDetail = styled.div`
   border: solid 1px ${(props) => props.theme.greyBlue};
   padding: 10px 20px;
   border-radius: 10px;
+  margin-left: 50px;
 `;
 interface ItemBoxProps {
   hasSub?: boolean;
@@ -143,6 +144,9 @@ const BookRatingNum = styled.p`
 const Star = styled.div<StarProps>`
   display: inline-block;
   color: ${(props) => (props.rating ? "red" : "black")};
+  & + & {
+    margin-left: 5px;
+  }
 `;
 const Wrap = styled.div`
   display: flex;
