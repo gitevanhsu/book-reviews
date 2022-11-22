@@ -780,3 +780,13 @@ export const editMemberInfo = async (
     (await setDoc(doc(db, "members", newUserInfo.uid), newUserInfo));
   dispatch(userSignIn(newUserInfo));
 };
+
+export const friendStateChecker = async (memberuid: string, myuid: string) => {
+  const result1 = await getDoc(doc(db, "friends_requests", memberuid + myuid));
+  const result2 = await getDoc(doc(db, "friends_requests", myuid + memberuid));
+  if (result1.data()) {
+    return "replay" + (result1.data() as FriendRequest).state;
+  } else if (result2.data()) {
+    return "wait" + (result2.data() as FriendRequest).state;
+  }
+};

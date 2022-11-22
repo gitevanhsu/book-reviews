@@ -2,7 +2,9 @@ import styled from "styled-components";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import {
+  acceptFriendRequest,
   BookInfo,
+  friendStateChecker,
   getBookDatas,
   getMemberData,
   MemberInfo,
@@ -76,6 +78,27 @@ const NoimgTitle = styled.p`
   left: 0;
   pointer-events: none;
 `;
+
+const FriendRequestBox = styled.div`
+  padding: 5px 10px;
+  border: solid 1px;
+`;
+const AcceptRequest = styled.button`
+  padding: 5px 10px;
+  border: solid 1px;
+  cursor: pointer;
+`;
+const ReplyRequest = styled.button`
+  padding: 5px 10px;
+  border: solid 1px;
+  cursor: pointer;
+`;
+const OtherRequest = styled.div`
+  display: inline-block;
+  padding: 5px 10px;
+  border: solid 1px;
+`;
+
 export default function MemberPageComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [member, setMember] = useState<MemberInfo>({});
@@ -84,11 +107,24 @@ export default function MemberPageComponent() {
   const [books, setBooks] = useState<BookInfo[]>([]);
   const [reading, setReading] = useState<BookInfo[]>([]);
   const [finish, setFinish] = useState<BookInfo[]>([]);
+  const [friendState, setFriendState] = useState<string>("");
+  const [isFriend, setIsFriend] = useState<boolean>(false);
+
   useEffect(() => {
     const memberData = async () => {
       if (typeof id === "string") {
         const data = (await getMemberData(id.replace("id:", ""))) as MemberInfo;
         setMember(data);
+        if (data && userInfo) {
+          const state = await friendStateChecker(data.uid!, userInfo.uid!);
+          if (state) {
+            if (state.includes("accept")) {
+              setIsFriend(true);
+            } else if (state.includes("pending")) {
+              setFriendState(state);
+            }
+          }
+        }
       }
     };
     const getBooks = async () => {
@@ -106,9 +142,11 @@ export default function MemberPageComponent() {
         }
       }
     };
+
     getBooks();
     memberData();
-  }, [id]);
+    console.log("effect!");
+  }, [id, userInfo]);
 
   return (
     <>
@@ -122,21 +160,30 @@ export default function MemberPageComponent() {
       <p>{member.name}</p>
       <p>{member.email}</p>
       <p>{member.intro ? member.intro : "這個人沒有填寫自我介紹 :("}</p>
-      {userInfo.uid &&
-      member.friends &&
-      member.friends.includes(userInfo.uid) ? (
-        <Friend>Friend</Friend>
-      ) : (
-        <AddFriendButton
-          onClick={() => {
-            if (userInfo.uid && member.uid) {
-              sentFriendRequest(userInfo.uid, member.uid);
-            }
-          }}
-        >
-          Add Friend
-        </AddFriendButton>
-      )}
+      <FriendRequestBox>
+        {friendState ? (
+          friendState.includes("wait") ? (
+            <OtherRequest>等待對方回覆</OtherRequest>
+          ) : (
+            <AcceptRequest
+              onClick={() => {
+                if (member.uid && userInfo.uid) {
+                  acceptFriendRequest(userInfo.uid, member.uid);
+                  setIsFriend(true);
+                  setFriendState("");
+                }
+              }}
+            >
+              同意對方邀請
+            </AcceptRequest>
+          )
+        ) : isFriend ? (
+          <OtherRequest>Is Friend</OtherRequest>
+        ) : (
+          <OtherRequest>Not Friend</OtherRequest>
+        )}
+      </FriendRequestBox>
+
       <BookShelfs>
         <BookShelf>
           <ShelfTitle>已收藏</ShelfTitle>
