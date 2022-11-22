@@ -452,14 +452,13 @@ const MobileBookShelfs = styled(BookShelfs)`
   flex-direction: column;
   & > ${BookShelf} {
     width: 100%;
+    height: 300px;
+    margin-bottom: 40px;
   }
   & ${ShelfTitle} {
     font-size: ${(props) => props.theme.fz * 1}px;
   }
-  & ${BookShelf} {
-    height: 300px;
-    margin-bottom: 40px;
-  }
+
   & ${Books} {
     min-height: 250px;
   }
