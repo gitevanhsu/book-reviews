@@ -37,7 +37,8 @@ import female2 from "/public/img/reading-female2.png";
 import books from "/public/img/book-stack.png";
 import kid from "/public/img/reading-kid.png";
 import pen from "/public/img/pen.svg";
-import signOut from "/public//img/sign-out.svg";
+import signOut from "/public/img/sign-out.svg";
+import people from "/public/img/people.svg";
 import produce from "immer";
 
 const InputTitle = styled.p`
@@ -383,28 +384,6 @@ const UserIntro = styled.p`
   }
 `;
 const Label = styled.label``;
-
-const UserInfoBox = styled.div`
-  position: relative;
-  margin: 0 auto;
-  width: 60%;
-  display: flex;
-  margin-bottom: 50px;
-  align-items: center;
-  & > ${UserAvatar} {
-    width: 100px;
-    height: 100px;
-    @media screen and (max-width: 768px) {
-      margin-bottom: 20px;
-    }
-  }
-  @media screen and (max-width: 992px) {
-    width: 80%;
-  }
-  @media screen and (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
 const ButtonBox = styled.div`
   margin-left: auto;
   @media screen and (max-width: 768px) {
@@ -413,9 +392,40 @@ const ButtonBox = styled.div`
     display: flex;
   }
 `;
-
 const BtnImg = styled(Image)`
   margin-right: 10px;
+`;
+const UserInfoBox = styled.div`
+  position: relative;
+  margin: 0 auto;
+  width: 60%;
+  display: flex;
+  margin-bottom: 50px;
+  align-items: center;
+  @media screen and (max-width: 992px) {
+    width: 80%;
+  }
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
+  & > ${UserAvatar} {
+    width: 100px;
+    height: 100px;
+    @media screen and (max-width: 768px) {
+      margin-bottom: 20px;
+    }
+  }
+  & > ${ButtonBox}>${SubmitButton} {
+    @media screen and (max-width: 480px) {
+      padding: 5px 5px;
+      margin: 0 5px;
+    }
+  }
+  & > ${ButtonBox}>${SubmitButton}>${BtnImg} {
+    @media screen and (max-width: 480px) {
+      display: none;
+    }
+  }
 `;
 
 interface MobileProps {
@@ -977,8 +987,9 @@ function BookShelfComponent() {
 
 export default function Profile() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [edit, setEdit] = useState(false);
   const dispatch = useDispatch();
+  const [edit, setEdit] = useState(false);
+  const [showFriend, setShowFriend] = useState(false);
   const editNameRef = useRef<HTMLInputElement>(null);
   const editIntroRef = useRef<HTMLTextAreaElement>(null);
 
@@ -991,10 +1002,11 @@ export default function Profile() {
   return (
     <ProfilePage>
       <ProfilePageWrap>
-        {edit && (
+        {(edit || showFriend) && (
           <Overlay
             onClick={() => {
               setEdit(false);
+              setShowFriend(false);
             }}
           />
         )}
@@ -1023,6 +1035,14 @@ export default function Profile() {
                 >
                   <BtnImg src={pen} alt="edit" width={20} height={20} />
                   編輯資訊
+                </SubmitButton>
+                <SubmitButton
+                  onClick={() => {
+                    setShowFriend(true);
+                  }}
+                >
+                  <BtnImg src={people} alt="friends" width={20} height={20} />
+                  好友列表
                 </SubmitButton>
                 <SubmitButton
                   onClick={() => {
@@ -1218,7 +1238,9 @@ export default function Profile() {
                 </EditBox>
               )}
             </UserInfoBox>
-            <FriendsListComponent />
+            {showFriend && (
+              <FriendsListComponent setShowFriend={setShowFriend} />
+            )}
             <BookShelfComponent />
           </>
         ) : (
