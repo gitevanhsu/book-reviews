@@ -40,10 +40,6 @@ import pen from "/public/img/pen.svg";
 import signOut from "/public//img/sign-out.svg";
 import produce from "immer";
 
-const InputArea = styled.div``;
-const Inputbox = styled.div`
-  text-align: center;
-`;
 const InputTitle = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   padding: 20px 0;
@@ -64,14 +60,96 @@ const InputContent = styled.input`
     outline: 2px solid ${(props) => props.theme.red};
   }
 `;
-
+const Inputbox = styled.div`
+  text-align: center;
+  margin: 0 auto;
+  & > br {
+    display: none;
+  }
+  @media screen and (max-width: 768px) {
+    & > br {
+      display: block;
+    }
+  }
+  @media screen and (max-width: 480px) {
+    & > br {
+      display: none;
+    }
+  }
+`;
+const SignArea = styled.div`
+  & > ${Inputbox} {
+    display: flex;
+    width: 400px;
+    margin: 0 auto;
+    margin-bottom: 30px;
+    align-items: center;
+    justify-content: center;
+    @media screen and (max-width: 480px) {
+      width: 250px;
+    }
+    & > ${InputTitle} {
+      font-size: ${(props) => props.theme.fz * 2}px;
+      padding: 0;
+      width: 150px;
+      @media screen and (max-width: 480px) {
+        width: 100px;
+        font-size: ${(props) => props.theme.fz * 1.2}px;
+      }
+    }
+    & > ${InputContent} {
+      padding: 5px 10px;
+      border: none;
+      outline: none;
+      background-color: transparent;
+      border-bottom: 2px solid ${(props) => props.theme.greyBlue};
+      font-size: ${(props) => props.theme.fz * 1.5}px;
+      @media screen and (max-width: 480px) {
+        font-size: ${(props) => props.theme.fz * 1}px;
+        width: 180px;
+      }
+    }
+  }
+`;
 const Overlay = styled.div`
   position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   background-color: #00000050;
+  z-index: 5;
+`;
+const SubmitButton = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin: 10px 0;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
+  @media screen and (max-width: 768px) {
+    & + & {
+      margin-left: 20px;
+    }
+  }
+`;
+const SignInBtnBox = styled.div`
+  display: flex;
+  justify-content: center;
+  & > ${SubmitButton} {
+    margin: 10px;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+    padding: 10px 20px;
+    @media screen and (max-width: 480px) {
+      font-size: ${(props) => props.theme.fz * 1.2}px;
+      padding: 5px 10px;
+    }
+  }
 `;
 
 function SigninComponent() {
@@ -90,7 +168,7 @@ function SigninComponent() {
   };
   return (
     <>
-      <InputArea>
+      <SignArea>
         <Inputbox>
           <InputTitle>Email: </InputTitle>
           <InputContent
@@ -107,13 +185,15 @@ function SigninComponent() {
             type="password"
           ></InputContent>
         </Inputbox>
+      </SignArea>
+      <SignInBtnBox>
         <SubmitButton onClick={signin}>登入</SubmitButton>
         <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
-      </InputArea>
+      </SignInBtnBox>
       {showSignup && (
         <Portal>
           <Overlay onClick={() => setSignUp(false)} />
-          <SignupComponent />
+          <SignupComponent setSignUp={setSignUp} />
         </Portal>
       )}
     </>
@@ -206,10 +286,13 @@ const UserAvatar = styled(Image)`
 `;
 const ProfilePage = styled.main`
   width: 100vw;
-  height: calc(100vh - 60px);
+  height: 100%;
+  min-height: calc(100vh - 60px);
   position: relative;
+  background-color: ${(props) => props.theme.white};
 `;
 const ProfilePageWrap = styled.div`
+  height: 100%;
   padding: 50px 30px;
   max-width: 1280px;
   margin: 0 auto;
@@ -225,13 +308,29 @@ const EditBox = styled.div`
   transform: translate(-50%);
   text-align: center;
   z-index: 5;
+  & ${UserAvatar} {
+    @media screen and (max-width: 768px) {
+      width: 45px;
+      height: 45px;
+    }
+  }
 `;
 
 const EditBoxDetail = styled.div`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.2}px;
+  }
+  @media screen and (max-width: 480px) {
+    & > input,
+    & > textarea {
+      width: 100%;
+    }
+  }
 `;
 const EditTitle = styled.h4`
   margin: 10px 0;
@@ -245,24 +344,7 @@ const IntroTextarea = styled.textarea`
   width: 300px;
   height: 100px;
 `;
-const SubmitButton = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 20px;
-  margin: 10px 0;
-  color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
-  &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
-  }
-  @media screen and (max-width: 768px) {
-    & + & {
-      margin-left: 20px;
-    }
-  }
-`;
+
 const EditButtonBox = styled.div`
   display: flex;
   justify-content: center;
@@ -334,17 +416,6 @@ const ButtonBox = styled.div`
 
 const BtnImg = styled(Image)`
   margin-right: 10px;
-`;
-
-const OverLay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #000;
-  z-index: 4;
-  opacity: 0.5;
 `;
 
 interface MobileProps {
@@ -921,7 +992,7 @@ export default function Profile() {
     <ProfilePage>
       <ProfilePageWrap>
         {edit && (
-          <OverLay
+          <Overlay
             onClick={() => {
               setEdit(false);
             }}
@@ -999,6 +1070,7 @@ export default function Profile() {
                       />
                       <UserAvatar src={female} alt="femaleAvatar" />
                     </Label>
+                    <br />
                     <Label>
                       <InputContent
                         type="radio"
@@ -1146,7 +1218,6 @@ export default function Profile() {
                 </EditBox>
               )}
             </UserInfoBox>
-
             <FriendsListComponent />
             <BookShelfComponent />
           </>
