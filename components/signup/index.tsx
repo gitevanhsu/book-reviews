@@ -1,27 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import styled from "styled-components";
-import {
-  emailSignUp,
-  emailSignIn,
-  signout,
-  BookInfo,
-  getBookDatas,
-  removeBook,
-  db,
-  MemberInfo,
-  updateBooks,
-  getMemberData,
-} from "../../utils/firebaseFuncs";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
-import { useDispatch } from "react-redux";
-import { userSignOut } from "../../slices/userInfoSlice";
-import FriendsListComponent from "../../components/friendList";
-import bookcover from "/public/img/bookcover.jpeg";
-import x from "/public/img/VectorX.png";
-import { createPortal } from "react-dom";
+import { emailSignUp } from "../../utils/firebaseFuncs";
 import male from "/public/img/reading-male.png";
 import male2 from "/public/img/reading-male2.png";
 import female from "/public/img/reading-female.png";
@@ -29,18 +9,43 @@ import female2 from "/public/img/reading-female2.png";
 import books from "/public/img/book-stack.png";
 import kid from "/public/img/reading-kid.png";
 
-const InputArea = styled.div`
-  position: relative;
+const SignUpArea = styled.div`
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   display: inline-block;
   padding: 10px 20px;
-  border: solid 1px;
-  z-index: 1;
-  background-color: #fff;
+  z-index: 6;
+  width: 480px;
+  background-color: ${(props) => props.theme.grey};
+  box-shadow: 0px 0px 5px ${(props) => props.theme.black};
+  border-radius: 20px;
+  @media screen and (max-width: 576px) {
+    width: 280px;
+  }
 `;
-const Inputbox = styled.div``;
-const InputTitle = styled.p``;
+const Inputbox = styled.div`
+  margin: 10px 0;
+`;
+const InputTitle = styled.h4`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
 const InputContent = styled.input`
+  padding: 5px 10px;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.white};
+  @media screen (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz}px;
+    margin-top: 5px;
+  }
   &[type="radio"] {
     position: absolute;
     opacity: 0;
@@ -49,27 +54,51 @@ const InputContent = styled.input`
   }
   &[type="radio"] + img {
     cursor: pointer;
-    outline: 4px solid #333;
+    outline: 2px solid ${(props) => props.theme.grey};
+    margin: 10px 10px;
   }
   &[type="radio"]:checked + img {
-    outline: 4px solid #f00;
+    outline: 2px solid ${(props) => props.theme.red};
+  }
+`;
+const InputTextArea = styled.textarea`
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.white};
+  padding: 5px 10px;
+  width: 100%;
+  height: 80px;
+  margin-top: 10px;
+  @media screen (max-width: 576px) {
+    height: 50px;
   }
 `;
 const SubmitButton = styled.button`
   padding: 10px 20px;
-  border: solid 1px;
   cursor: pointer;
+  background-color: ${(props) => props.theme.yellow};
+  border-radius: 20px;
+  & + & {
+    margin-left: 10px;
+  }
+  @media screen (max-width: 576px) {
+    padding: 5px 10px;
+  }
 `;
 const Label = styled.label``;
 const UserAvatar = styled(Image)`
   border-radius: 50%;
 `;
 
-export default function SignupComponent() {
+export default function SignupComponent({
+  setSignUp,
+}: {
+  setSignUp: Function;
+}) {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const introRef = useRef<HTMLInputElement>(null);
+  const introRef = useRef<HTMLTextAreaElement>(null);
   const [avatar, setAvatar] = useState("books");
 
   const isRadioSelect = (value: string): boolean => avatar === value;
@@ -146,7 +175,7 @@ export default function SignupComponent() {
   };
 
   return (
-    <InputArea>
+    <SignUpArea>
       <Inputbox>
         <InputTitle>Name: </InputTitle>
         <InputContent key="signUpName" ref={nameRef} type="text"></InputContent>
@@ -169,11 +198,7 @@ export default function SignupComponent() {
       </Inputbox>
       <Inputbox>
         <InputTitle>自我介紹: </InputTitle>
-        <InputContent
-          key="signUpIntro"
-          ref={introRef}
-          type="text"
-        ></InputContent>
+        <InputTextArea key="signUpIntro" ref={introRef}></InputTextArea>
       </Inputbox>
       <Inputbox>
         <InputTitle>選擇您喜歡的頭像</InputTitle>
@@ -186,7 +211,7 @@ export default function SignupComponent() {
             onChange={avatarSelector}
           />
           <UserAvatar src={male} alt="maleAvatar" width={50} height={50} />
-        </Label>{" "}
+        </Label>
         <Label>
           <InputContent
             type="radio"
@@ -250,6 +275,13 @@ export default function SignupComponent() {
       >
         註冊
       </SubmitButton>
-    </InputArea>
+      <SubmitButton
+        onClick={() => {
+          setSignUp(false);
+        }}
+      >
+        關閉
+      </SubmitButton>
+    </SignUpArea>
   );
 }
