@@ -7,6 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
 import { useRouter } from "next/router";
+import produce from "immer";
+import remove from "/public/img/hp-books.png";
 
 const SearchPage = styled.main`
   width: 100%;
@@ -114,6 +116,49 @@ const NoimgTitle = styled.h2`
   left: 0;
   pointer-events: none;
 `;
+const DefaultTitle = styled(Title)`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  margin: 30px 0;
+`;
+const HistoryTitle = styled.p`
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+`;
+const HistoryBox = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  padding: 5px 10px;
+  margin-top: 0px;
+  & > ${HistoryTitle} {
+    margin: 10px 0;
+    font-size: ${(props) => props.theme.fz * 1.2}px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: start;
+    width: 100%;
+  }
+`;
+const History = styled.div`
+  display: flex;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 10px;
+  background-color: ${(props) => props.theme.yellow};
+  align-items: center;
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
+  & + & {
+    margin-left: 10px;
+  }
+`;
+
+const HistoryRemove = styled(Image)`
+  width: 20px;
+  height: 20px;
+  padding: 2px;
+  border-radius: 5px;
+  margin-left: 10px;
+`;
 
 export default function Search() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +168,7 @@ export default function Search() {
   const booksRef = useRef<HTMLDivElement>(null);
   const [serchValue, setSerchValue] = useState<string>("");
   const noResultRef = useRef<HTMLDivElement>(null);
+  const [histories, sethistories] = useState<string[]>([]);
 
   useEffect(() => {
     const getbooks = async () => {
@@ -130,13 +176,18 @@ export default function Search() {
       setDefaultbooks(result);
     };
     getbooks();
+    const localData = localStorage.getItem("keyWord");
+    if (localData) {
+      const keywords = (JSON.parse(localData) as string[]) || [];
+      sethistories(keywords);
+    }
   }, []);
 
   useEffect(() => {
     if (booksRef && booksRef.current) {
       booksRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  });
+  }, [books]);
 
   const bookSearcher = async (input: string) => {
     const result = await fetch(
@@ -187,6 +238,26 @@ export default function Search() {
       }
     }
   };
+  const saveKeyword = (value: string) => {
+    const localData = localStorage.getItem("keyWord");
+    if (localData) {
+      const keywords = (JSON.parse(localData) as string[]) || [];
+      if (keywords.includes(value)) return;
+      const newKeywords = produce(keywords, (draft) => {
+        draft.unshift(value);
+        if (draft.length > 5) draft.splice(5, draft.length - 1);
+      });
+      localStorage.setItem("keyWord", JSON.stringify(newKeywords));
+      sethistories(newKeywords);
+    } else {
+      const keywords: string[] = [];
+      const newKeywords = produce(keywords, (draft) => {
+        draft.push(value);
+      });
+      localStorage.setItem("keyWord", JSON.stringify(newKeywords));
+      sethistories(newKeywords);
+    }
+  };
   return (
     <SearchPage>
       <SearchPageWrap>
@@ -203,6 +274,7 @@ export default function Search() {
               ) {
                 bookSearcher(inputRef.current.value);
                 setSerchValue(inputRef.current.value);
+                saveKeyword(inputRef.current.value);
                 inputRef.current.value = "";
               }
             }}
@@ -220,11 +292,28 @@ export default function Search() {
               ) {
                 bookSearcher(inputRef.current.value);
                 setSerchValue(inputRef.current.value);
+                saveKeyword(inputRef.current.value);
                 inputRef.current.value = "";
               }
             }}
           />
         </SearchBox>
+        <HistoryBox>
+          {histories.length > 0 && <HistoryTitle>搜尋紀錄</HistoryTitle>}
+          {histories &&
+            histories.map((history) => (
+              <History
+                key={history}
+                onClick={() => {
+                  bookSearcher(history);
+                  setSerchValue(history);
+                }}
+              >
+                <HistoryTitle>{history}</HistoryTitle>
+                <HistoryRemove src={remove} alt="Remove Btn" />
+              </History>
+            ))}
+        </HistoryBox>
         {books ? (
           <Books ref={booksRef}>
             <Title>查詢關鍵字: {serchValue}</Title>
@@ -262,6 +351,7 @@ export default function Search() {
           </Books>
         ) : (
           <Books>
+            <DefaultTitle>這些書也不錯喔！</DefaultTitle>
             {defaultbooks?.map((data) => (
               <Book key={data.isbn}>
                 <Move
