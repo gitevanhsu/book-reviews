@@ -2,7 +2,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import styled from "styled-components";
 import searchImg from "public/img/search.png";
 import { useEffect, useRef, useState } from "react";
-import { BookInfo, db } from "../../utils/firebaseFuncs";
+import { BookInfo, db, getRandomBooks } from "../../utils/firebaseFuncs";
 import Link from "next/link";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
@@ -119,9 +119,18 @@ export default function Search() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [books, setBooks] = useState<BookInfo[]>();
+  const [defaultbooks, setDefaultbooks] = useState<BookInfo[]>();
   const booksRef = useRef<HTMLDivElement>(null);
   const [serchValue, setSerchValue] = useState<string>("");
   const noResultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const getbooks = async () => {
+      const result = await getRandomBooks();
+      setDefaultbooks(result);
+    };
+    getbooks();
+  }, []);
 
   useEffect(() => {
     if (booksRef && booksRef.current) {
@@ -216,11 +225,10 @@ export default function Search() {
             }}
           />
         </SearchBox>
-        {books && (
+        {books ? (
           <Books ref={booksRef}>
             <Title>查詢關鍵字: {serchValue}</Title>
             <Title>查詢結果共 {books.length} 筆資料</Title>
-
             {books.map((data) => {
               return (
                 <Book key={data.isbn}>
@@ -251,6 +259,35 @@ export default function Search() {
                 </Book>
               );
             })}
+          </Books>
+        ) : (
+          <Books>
+            {defaultbooks?.map((data) => (
+              <Book key={data.isbn}>
+                <Move
+                  onClick={() => {
+                    move(data);
+                  }}
+                >
+                  <BookImg
+                    src={data.smallThumbnail ? data.smallThumbnail : bookcover}
+                    alt={`${data.title}`}
+                    width={180}
+                    height={271}
+                  />
+                  {!data.smallThumbnail && (
+                    <NoimgTitle>{data.title}</NoimgTitle>
+                  )}
+                </Move>
+                <BookInfos>
+                  <BookTitle>{data.title}</BookTitle>
+                  {data.authors && data.authors && (
+                    <BookAuthor>{data.authors[0]}</BookAuthor>
+                  )}
+                  <BookIsbn>ISBN：{data.isbn}</BookIsbn>
+                </BookInfos>
+              </Book>
+            ))}
           </Books>
         )}
         {books && books.length === 0 && (
