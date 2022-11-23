@@ -5,6 +5,7 @@ import {
   doc,
   DocumentData,
   increment,
+  orderBy,
   QueryDocumentSnapshot,
   setDoc,
   Timestamp,
@@ -166,7 +167,7 @@ export const addBooksData = async (bookIsbn: string) => {
     }
   }
 };
-// addBooksData("9789860659795");
+
 export const loadBooks = async (
   page: number,
   pageRef: QueryDocumentSnapshot<DocumentData> | undefined
@@ -789,4 +790,21 @@ export const friendStateChecker = async (memberuid: string, myuid: string) => {
   } else if (result2.data()) {
     return "wait" + (result2.data() as FriendRequest).state;
   }
+};
+
+export const getRandomBooks = async () => {
+  const tagarr = [
+    "ratingCount",
+    "reviewCount",
+    "publisher",
+    "publishedDate",
+    "isbn",
+    "subtitle",
+  ];
+  const number = Math.floor(Math.random() * (tagarr.length - 1));
+  const booksQuery = query(booksRef, orderBy(tagarr[number]), limit(4));
+  const booksData = await getDocs(booksQuery);
+  const books = booksData.docs.map((book) => book.data());
+
+  return books;
 };

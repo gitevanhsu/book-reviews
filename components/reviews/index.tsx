@@ -135,7 +135,9 @@ const SUbReviewMemberName = styled(ReviewMemberName)`
   min-width: 50px;
 `;
 
-const SignMessage = styled.h2``;
+const SignMessage = styled.h2`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+`;
 
 const MemberReviewBox = styled.div`
   border-bottom: 1px solid ${(props) => props.theme.black};
@@ -418,6 +420,49 @@ const MainReviewDate = styled.span`
     margin-bottom: 10px;
   }
 `;
+const RemoveOverlay = styled.div`
+  background-color: #000;
+  opacity: 0.5;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+`;
+const RemoveAlertBox = styled.div`
+  z-index: 5;
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translatex(-50%);
+  width: 300px;
+  height: 200px;
+  background-color: ${(props) => props.theme.white};
+  border-radius: 20px;
+  text-align: center;
+`;
+const RemoveAlert = styled.p`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  margin: 50px 0;
+`;
+const RemoveBtn = styled.button`
+  padding: 5px 10px;
+  border: 1px solid ${(props) => props.theme.grey};
+  border-radius: 10px;
+  background-color: ${(props) => props.theme.yellow};
+  cursor: pointer;
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
+  & + & {
+    margin-left: 30px;
+    &:hover {
+      background-color: ${(props) => props.theme.red};
+    }
+  }
+`;
+
 export function LeaveRatingComponent({
   bookIsbn,
   memberReview,
@@ -428,6 +473,7 @@ export function LeaveRatingComponent({
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
+  const [deleteAlert, setDeleteAlert] = useState(false);
 
   useEffect(() => {
     memberReview?.rating && setRating(+memberReview.rating);
@@ -456,18 +502,48 @@ export function LeaveRatingComponent({
             </LeaveRatingButton>
           );
         })}
+        {deleteAlert && (
+          <>
+            <RemoveOverlay />
+            <RemoveAlertBox>
+              <RemoveAlert>評價跟留言會一起被刪除喔！</RemoveAlert>
+              <RemoveBtn
+                onClick={() => {
+                  setDeleteAlert(false);
+                }}
+              >
+                取消
+              </RemoveBtn>
+              <RemoveBtn
+                onClick={() => {
+                  if (userInfo.uid) {
+                    removeBookRating(
+                      userInfo.uid,
+                      bookIsbn,
+                      rating,
+                      memberReview
+                    );
+                    setRating(0);
+                    setHover(0);
+                  }
+                  setDeleteAlert(false);
+                }}
+              >
+                刪除
+              </RemoveBtn>
+            </RemoveAlertBox>
+          </>
+        )}
         {rating > 0 && (
-          <RemoveRatingButton
-            onClick={() => {
-              if (userInfo.uid) {
-                removeBookRating(userInfo.uid, bookIsbn, rating, memberReview);
-                setRating(0);
-                setHover(0);
-              }
-            }}
-          >
-            Remove
-          </RemoveRatingButton>
+          <>
+            <RemoveRatingButton
+              onClick={() => {
+                setDeleteAlert(true);
+              }}
+            >
+              Remove
+            </RemoveRatingButton>
+          </>
         )}
       </LeaveRatingBox>
     </>

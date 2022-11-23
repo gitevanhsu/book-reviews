@@ -127,8 +127,14 @@ const AcceptRequest = styled.button`
   display: flex;
   align-items: center;
   padding: 5px 10px;
-  border: solid 1px;
+  border: solid 1px ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
+  border-radius: 20px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
 `;
 const SentRequest = styled.button`
   display: flex;

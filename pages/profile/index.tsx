@@ -40,6 +40,7 @@ import pen from "/public/img/pen.svg";
 import signOut from "/public/img/sign-out.svg";
 import people from "/public/img/people.svg";
 import produce from "immer";
+import library from "/public/img/library.jpg";
 
 const InputTitle = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
@@ -79,6 +80,7 @@ const Inputbox = styled.div`
   }
 `;
 const SignArea = styled.div`
+  margin-top: 50px;
   & > ${Inputbox} {
     display: flex;
     width: 400px;
@@ -116,9 +118,10 @@ const Overlay = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100%;
-  background-color: #00000050;
+  width: 100%;
+  height: 200%;
+  background-color: #000000;
+  opacity: 0.5;
   z-index: 5;
 `;
 const SubmitButton = styled.div`
@@ -151,6 +154,19 @@ const SignInBtnBox = styled.div`
       padding: 5px 10px;
     }
   }
+`;
+
+const QuoteArea = styled.div`
+  width: 100%;
+  padding: 100px 0;
+`;
+const QuoteImg = styled(Image)`
+  position: absolute;
+  left: 0;
+  opacity: 0.7;
+
+  width: 100%;
+  height: auto;
 `;
 
 function SigninComponent() {
@@ -191,6 +207,9 @@ function SigninComponent() {
         <SubmitButton onClick={signin}>登入</SubmitButton>
         <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
       </SignInBtnBox>
+      <QuoteArea>
+        <QuoteImg src={library} alt="Library" />
+      </QuoteArea>
       {showSignup && (
         <Portal>
           <Overlay onClick={() => setSignUp(false)} />
@@ -286,7 +305,7 @@ const UserAvatar = styled(Image)`
   border-radius: 50%;
 `;
 const ProfilePage = styled.main`
-  width: 100vw;
+  width: 100%;
   height: 100%;
   min-height: calc(100vh - 60px);
   position: relative;

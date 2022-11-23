@@ -26,8 +26,12 @@ const ChatRoom = styled.div`
   }
 `;
 const ChatContent = styled.div`
+  padding: 10px 10px;
   max-height: 400px;
   overflow: auto;
+  ::-webkit-scrollbar {
+    display: none;
+  }
 `;
 const Member = styled.div`
   display: flex;
@@ -37,37 +41,31 @@ const Member = styled.div`
 const MemberName = styled.h3`
   font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
-const MemberImg = styled(Image)``;
+const MemberImg = styled(Image)`
+  margin-right: 5px;
+`;
 const MemberContent = styled.p`
   display: inline-block;
   font-size: ${(props) => props.theme.fz * 1.5}px;
   padding-left: 30px;
   min-width: 100px;
   white-space: pre-wrap;
+  letter-spacing: 1px;
 `;
 const InputBox = styled.div`
+  margin-top: 10px;
   width: 100%;
   display: flex;
   align-items: center;
 `;
-const MessageInput = styled.textarea`
+const MessageInput = styled.input`
   width: 100%;
   border-radius: 5px;
   padding: 5px 10px;
-  ::-webkit-scrollbar {
-    display: none;
-  }
-`;
-const SentMessageButton = styled.button`
-  cursor: pointer;
-  width: 50px;
-  padding: 5px 5px;
-  margin-left: 10px;
-  border: 1px solid ${(props) => props.theme.black};
-  border-radius: 5px;
 `;
 const ChatDate = styled.p`
   padding-left: 30px;
+  margin-top: 10px;
 `;
 const MemberChat = styled.div`
   display: flex;
@@ -84,7 +82,7 @@ const MyChat = styled(MemberChat)`
 export default function ChatRoomComponent({ id }: { id: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [chats, setChats] = useState<ChatMessage[]>();
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const chatBox = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -192,10 +190,11 @@ export default function ChatRoomComponent({ id }: { id: string }) {
         )}
       </ChatContent>
       <InputBox>
-        <MessageInput ref={inputRef} />
-        <SentMessageButton
-          onClick={() => {
+        <MessageInput
+          ref={inputRef}
+          onKeyPress={(e) => {
             if (
+              e.code === "Enter" &&
               inputRef &&
               inputRef.current &&
               inputRef.current.value.trim() &&
@@ -205,9 +204,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
               inputRef.current.value = "";
             }
           }}
-        >
-          送出
-        </SentMessageButton>
+        />
       </InputBox>
     </ChatRoom>
   );
