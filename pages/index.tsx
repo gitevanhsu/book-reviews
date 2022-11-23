@@ -4,9 +4,11 @@ import Link from "next/link";
 import styled from "styled-components";
 import { BookInfo, getBooks } from "../utils/firebaseFuncs";
 import bookcover from "/public/img/bookcover.jpeg";
-import Portal from "../components/portal";
-import SignupComponent from "../components/signup";
 import bookImg from "../public/img/book.jpg";
+import books from "/public/img/hp-books.png";
+import friends from "/public/img/hp-friend.png";
+import rating from "/public/img/hp-reiew-rating.png";
+import bookshelf from "/public/img/hp-bookshelf.png";
 
 const HomeWelcome = styled.div`
   height: 60vh;
@@ -176,6 +178,79 @@ const NoimgTitle = styled.h2`
   white-space: pre-wrap;
   pointer-events: none;
 `;
+
+const FeatureMain = styled.div`
+  width: 100%;
+  padding: 20px 20px;
+  background-color: ${(props) => props.theme.grey};
+`;
+const FeatureWrap = styled.div`
+  margin: 0 auto;
+  max-width: 1280px;
+  display: flex;
+  flex-wrap: wrap;
+`;
+const FeatureBox = styled.div`
+  letter-spacing: 2px;
+  padding: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 25%;
+  @media screen and (max-width: 768px) {
+    width: 50%;
+  }
+  @media screen and (max-width: 480px) {
+    width: 100%;
+  }
+`;
+const FeatureImg = styled(Image)`
+  width: 60px;
+  height: 60px;
+`;
+const FeatureTitle = styled.h2`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  border-bottom: 4px solid ${(props) => props.theme.greyBlue};
+  margin: 40px 0;
+  font-weight: 600;
+`;
+const FeatureContent = styled.p`
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+`;
+
+function FeatureComponent() {
+  return (
+    <FeatureMain>
+      <FeatureWrap>
+        <FeatureBox>
+          <FeatureImg src={books} alt="Books" />
+          <FeatureTitle>各樣書籍</FeatureTitle>
+          <FeatureContent>種類多樣的書籍資料庫 ，遇見優質書籍。</FeatureContent>
+        </FeatureBox>
+        <FeatureBox>
+          <FeatureImg src={rating} alt="rating" />
+          <FeatureTitle>優質評論</FeatureTitle>
+          <FeatureContent>
+            按讚優質評論， 讓好的評論被更多人看到。
+          </FeatureContent>
+        </FeatureBox>
+        <FeatureBox>
+          <FeatureImg src={bookshelf} alt="bookshelf" />
+          <FeatureTitle>分享書櫃</FeatureTitle>
+          <FeatureContent>
+            建立自己的書櫃，分享自己最喜歡的書籍。
+          </FeatureContent>
+        </FeatureBox>
+        <FeatureBox>
+          <FeatureImg src={friends} alt="friends" />
+          <FeatureTitle>以書會友</FeatureTitle>
+          <FeatureContent>加入專屬討論區，認識志同道合的朋友。</FeatureContent>
+        </FeatureBox>
+      </FeatureWrap>
+    </FeatureMain>
+  );
+}
+
 export default function Home() {
   const [books, setBooks] = useState<BookInfo[]>();
   const [page, setPage] = useState<number>(0);
@@ -204,6 +279,7 @@ export default function Home() {
           </Texts> */}
         </WelcomeText>
       </HomeWelcome>
+      <FeatureComponent />
       <HomeMain>
         <PageTitle>Pick up the one you like!</PageTitle>
         <BooksWrap>
