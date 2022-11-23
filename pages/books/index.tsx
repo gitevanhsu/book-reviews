@@ -5,7 +5,7 @@ import styled from "styled-components";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { loadBooks, BookInfo } from "../../utils/firebaseFuncs";
 import bookcover from "/public/img/bookcover.jpeg";
-import next from "/public/img/next-icon.svg";
+import { GetServerSideProps } from "next";
 
 const BooksPage = styled.div`
   padding: 50px 30px;
@@ -129,11 +129,18 @@ function BookComponent({ data }: { data: BookInfo }) {
   );
 }
 
-export default function BooksComponent() {
-  const [bookDatas, setBookDatas] = useState<BookInfo[]>([]);
+export default function BooksComponent({
+  firstBook,
+}: {
+  firstBook: BookInfo[];
+}) {
+  const [bookDatas, setBookDatas] = useState<BookInfo[]>(firstBook);
   const [page, setPage] = useState<number>(0);
   const pageRef = useRef<QueryDocumentSnapshot<DocumentData>>();
   useEffect(() => {
+    loadBooks(page, pageRef.current).then(({ lastVisible }) => {
+      pageRef.current = lastVisible;
+    });
     if (page + 1 > bookDatas.length / 8) {
       loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
         setBookDatas([...bookDatas, ...booksData]);
@@ -176,3 +183,11 @@ export default function BooksComponent() {
     </BooksPage>
   );
 }
+export const getStaticProps: GetServerSideProps = async () => {
+  const result = await loadBooks(0, undefined);
+  return {
+    props: {
+      firstBook: result.booksData,
+    },
+  };
+};
