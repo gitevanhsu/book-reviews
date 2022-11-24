@@ -3,12 +3,12 @@ import styled from "styled-components";
 import searchImg from "public/img/search.png";
 import { useEffect, useRef, useState } from "react";
 import { BookInfo, db, getRandomBooks } from "../../utils/firebaseFuncs";
-import Link from "next/link";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
 import { useRouter } from "next/router";
 import produce from "immer";
 import remove from "/public/img/hp-books.png";
+import { GetStaticProps, GetServerSideProps } from "next";
 
 const SearchPage = styled.main`
   width: 100%;
@@ -160,22 +160,16 @@ const HistoryRemove = styled(Image)`
   margin-left: 10px;
 `;
 
-export default function Search() {
+export default function Search({ defaultBooks }: { defaultBooks: BookInfo[] }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [books, setBooks] = useState<BookInfo[]>();
-  const [defaultbooks, setDefaultbooks] = useState<BookInfo[]>();
   const booksRef = useRef<HTMLDivElement>(null);
   const [serchValue, setSerchValue] = useState<string>("");
   const noResultRef = useRef<HTMLDivElement>(null);
   const [histories, sethistories] = useState<string[]>([]);
 
   useEffect(() => {
-    const getbooks = async () => {
-      const result = await getRandomBooks();
-      setDefaultbooks(result);
-    };
-    getbooks();
     const localData = localStorage.getItem("keyWord");
     if (localData) {
       const keywords = (JSON.parse(localData) as string[]) || [];
@@ -352,7 +346,7 @@ export default function Search() {
         ) : (
           <Books>
             <DefaultTitle>這些書也不錯喔！</DefaultTitle>
-            {defaultbooks?.map((data) => (
+            {defaultBooks?.map((data) => (
               <Book key={data.isbn}>
                 <Move
                   onClick={() => {
@@ -390,3 +384,11 @@ export default function Search() {
     </SearchPage>
   );
 }
+export const getStaticProps: GetStaticProps = async () => {
+  const defaultBooks = await getRandomBooks();
+  return {
+    props: {
+      defaultBooks,
+    },
+  };
+};

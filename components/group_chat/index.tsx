@@ -7,12 +7,15 @@ import {
   getMemberData,
   sentMessage,
   ChatMessage,
+  getFirstChat,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
 import male from "/public/img/reading-male.png";
 import { useSelector } from "react-redux";
 import { onSnapshot, query, collection } from "firebase/firestore";
+import { GetServerSideProps } from "next/types";
+import { ParsedUrlQuery } from "querystring";
 const ChatRoom = styled.div`
   width: 600px;
   margin-top: 20px;
@@ -28,6 +31,7 @@ const ChatRoom = styled.div`
 const ChatContent = styled.div`
   padding: 10px 10px;
   max-height: 400px;
+  min-height: 400px;
   overflow: auto;
   ::-webkit-scrollbar {
     display: none;
@@ -79,9 +83,15 @@ const MyChat = styled(MemberChat)`
   margin-left: auto;
 `;
 
-export default function ChatRoomComponent({ id }: { id: string }) {
+export default function ChatRoomComponent({
+  id,
+  chatdata,
+}: {
+  id: string;
+  chatdata: ChatMessage[];
+}) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [chats, setChats] = useState<ChatMessage[]>();
+  const [chats, setChats] = useState<ChatMessage[]>(chatdata);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatBox = useRef<HTMLDivElement>(null);
 
@@ -112,7 +122,7 @@ export default function ChatRoomComponent({ id }: { id: string }) {
         }
       );
     }
-
+    console.log("effect");
     return () => {
       if (unsub) {
         unsub();
@@ -138,23 +148,6 @@ export default function ChatRoomComponent({ id }: { id: string }) {
             if (chat.memberData?.uid === userInfo.uid) {
               return (
                 <MyChat key={chat.messageId}>
-                  {/* <Member>
-                  <MemberName>{chat.memberData?.name}</MemberName>
-                  <MemberImg
-                    src={
-                      chat.memberData && chat.memberData.img
-                        ? chat.memberData.img
-                        : male
-                    }
-                    alt={
-                      chat.memberData && chat.memberData.name
-                        ? chat.memberData.name
-                        : "user Img"
-                    }
-                    width={25}
-                    height={25}
-                  />
-                </Member> */}
                   <MemberContent>{chat.content}</MemberContent>
                   <ChatDate>{`${year}-${month}-${date}`}</ChatDate>
                 </MyChat>

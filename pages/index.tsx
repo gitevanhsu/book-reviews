@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
@@ -9,6 +9,7 @@ import books from "/public/img/hp-books.png";
 import friends from "/public/img/hp-friend.png";
 import rating from "/public/img/hp-reiew-rating.png";
 import bookshelf from "/public/img/hp-bookshelf.png";
+import { GetServerSideProps } from "next";
 
 const HomeWelcome = styled.div`
   height: 60vh;
@@ -145,10 +146,6 @@ const Buttonleft = styled(ButtonRight)<ColorProps>`
     props.arrcolor ? props.theme.grey : props.theme.greyBlue};
   clip-path: polygon(67% 0, 0 50%, 67% 100%);
 `;
-const BookInfoTitle = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1}px;
-  font-weight: 700;
-`;
 const BookTitle = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
   white-space: pre-wrap;
@@ -251,17 +248,11 @@ function FeatureComponent() {
   );
 }
 
-export default function Home() {
-  const [books, setBooks] = useState<BookInfo[]>();
+interface HomeProps {
+  books: BookInfo[];
+}
+export default function Home({ books }: HomeProps) {
   const [page, setPage] = useState<number>(0);
-
-  useEffect(() => {
-    const homepageBooks = async () => {
-      const result = await getBooks();
-      setBooks(result);
-    };
-    homepageBooks();
-  }, []);
   return (
     <>
       <HomeWelcome>
@@ -334,3 +325,12 @@ export default function Home() {
     </>
   );
 }
+
+export const getStaticProps: GetServerSideProps = async () => {
+  const result = await getBooks();
+  return {
+    props: {
+      books: result,
+    },
+  };
+};

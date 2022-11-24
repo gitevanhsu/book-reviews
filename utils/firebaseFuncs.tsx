@@ -5,6 +5,7 @@ import {
   doc,
   DocumentData,
   increment,
+  onSnapshot,
   orderBy,
   QueryDocumentSnapshot,
   setDoc,
@@ -170,7 +171,7 @@ export const addBooksData = async (bookIsbn: string) => {
 
 export const loadBooks = async (
   page: number,
-  pageRef: QueryDocumentSnapshot<DocumentData> | undefined
+  pageRef: DocumentData | undefined
 ) => {
   const booksData: BookInfo[] = [];
   if (page === 0) {
@@ -181,7 +182,6 @@ export const loadBooks = async (
     });
     const lastVisible =
       documentSnapshots.docs[documentSnapshots.docs.length - 1];
-
     return { lastVisible, booksData };
   } else {
     const next = query(booksRef, startAfter(pageRef), limit(8));
@@ -761,7 +761,6 @@ export const sentNotice = async (
 };
 
 export const removeNotice = async (notice: NoticeData) => {
-  const docData = await getDoc(doc(db, "notices", notice.noticeid));
   await deleteDoc(doc(db, "notices", notice.noticeid));
 };
 
@@ -807,4 +806,39 @@ export const getRandomBooks = async () => {
   const books = booksData.docs.map((book) => book.data());
 
   return books;
+};
+
+export const getFirstBook = async (bookIsbn: string) => {
+  const result = await getDoc(doc(db, "books", bookIsbn));
+  return result.data();
+};
+
+export const getFirstChat = async (bookIsbn: string) => {
+  const querySnapshot = await getDocs(
+    collection(db, `books/${bookIsbn}/chat_room`)
+  );
+  const chatData = querySnapshot.docs.map((doc) => doc.data());
+  return chatData;
+};
+
+export const getFirstReview = async (bookIsbn: string) => {
+  const reviewQuery = query(
+    reviewsRef,
+    where("reviewRating", ">", -999999),
+    orderBy("reviewRating", "desc")
+  );
+  const querySnapshot = await getDocs(reviewQuery);
+  const firstReview = querySnapshot.docs
+    .map((doc) => doc.data())
+    .filter((review) => review.booksIsbn === bookIsbn);
+  return firstReview;
+};
+
+export const getFirstBooks = async () => {
+  const documentSnapshots = await getDocs(query(booksRef, limit(8)));
+  const booksData = documentSnapshots.docs.map((doc) => doc.data());
+  return { booksData };
+};
+export const getBookRef = async (lastIsbn: string) => {
+  return await getDoc(doc(db, "books", lastIsbn));
 };

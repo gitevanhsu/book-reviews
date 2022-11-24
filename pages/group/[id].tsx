@@ -4,6 +4,9 @@ import {
   BookInfo,
   getMemberData,
   MemberInfo,
+  getFirstBook,
+  getFirstChat,
+  ChatMessage,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
 import {
@@ -25,6 +28,18 @@ import videoChat from "../../public/img/video-call.svg";
 import microPhone from "../../public/img/microphone.svg";
 import video from "../../public/img/video.svg";
 import phone from "../../public/img/phone.svg";
+import {
+  getDatabase,
+  ref,
+  child,
+  onValue,
+  update,
+  onDisconnect,
+  remove,
+} from "firebase/database";
+import { rtcFireSession, RTCFireSession } from "../../utils/service";
+import { GetServerSideProps } from "next/types";
+import { ParsedUrlQuery } from "querystring";
 
 const GroupPage = styled.div`
   width: 100%;
@@ -89,11 +104,15 @@ const VideoAndChatBox = styled.div`
 
 // const RoomNumberInput = styled.input``;
 
-export default function Group() {
-  const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [bookData, setBookData] = useState<BookInfo>({});
-  const router = useRouter();
-  const { id } = router.query;
+export default function Group({
+  firstData,
+  firstChat,
+}: {
+  firstData: BookInfo;
+  firstChat: string;
+}) {
+  // const userInfo = useSelector((state: RootState) => state.userInfo);
+
   // const [showVideo, setShoeVideo] = useState<boolean>(false);
   // const localVideoRef = useRef<HTMLVideoElement>(null);
   // const remotoVideoRef = useRef<HTMLVideoElement>(null);
@@ -104,17 +123,6 @@ export default function Group() {
   // const webcamAnswerButton = useRef<HTMLButtonElement>(null);
   // const webcamHangupButton = useRef<HTMLButtonElement>(null);
   // const pcRef = useRef<RTCPeerConnection>();
-
-  useEffect(() => {
-    if (typeof id === "string") {
-      getBookInfo(id.replace("id:", "")).then(
-        (data: BookInfo | undefined) => data && setBookData(data)
-      );
-    }
-    // if (!userInfo.isSignIn) {
-    //   router.push("/profile");
-    // }
-  }, [id, !userInfo.isSignIn]);
   // useEffect(() => {
   //   if (!localVideoRef.current) return;
   //   const localRemove = localVideoRef.current;
@@ -286,17 +294,16 @@ export default function Group() {
   //     setShoeVideo(false);
   //   }
   // };
+  const chatdata = JSON.parse(firstChat) as ChatMessage[];
 
   return (
     <GroupPage>
       <GroupPageWrap>
-        <BookComponent data={bookData} />
-        {typeof id === "string" && (
-          <GoToReviewBox href={`/book/id:${id.replace("id:", "")}`}>
-            <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
-            <GoToReview>Review Page</GoToReview>
-          </GoToReviewBox>
-        )}
+        <BookComponent data={firstData} />
+        <GoToReviewBox href={`/book/id:${firstData.isbn}`}>
+          <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
+          <GoToReview>Review Page</GoToReview>
+        </GoToReviewBox>
         {/* <VideoBox>
         {showVideo && (
           <>
@@ -357,26 +364,17 @@ export default function Group() {
         </StartButton>
       )} */}
         <VideoAndChatBox>
-          {typeof id === "string" && <LiveChat id={id.replace("id:", "")} />}
-          {typeof id === "string" && (
-            <ChatRoomComponent id={id.replace("id:", "")} />
+          {typeof firstData.isbn === "string" && (
+            <LiveChat id={firstData.isbn} />
+          )}
+          {typeof firstData.isbn === "string" && (
+            <ChatRoomComponent id={firstData.isbn} chatdata={chatdata} />
           )}
         </VideoAndChatBox>
       </GroupPageWrap>
     </GroupPage>
   );
 }
-
-import {
-  getDatabase,
-  ref,
-  child,
-  onValue,
-  update,
-  onDisconnect,
-  remove,
-} from "firebase/database";
-import { rtcFireSession, RTCFireSession } from "../../utils/service";
 
 const PlayVideo = styled.video`
   width: 100%;
@@ -675,3 +673,13 @@ function LiveChat({ id }: { id: string }) {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const url = (params as ParsedUrlQuery).id as string;
+  const bookIsbn = url.split("id:")[1];
+  const firstData = await getFirstBook(bookIsbn);
+  const firstChat = await getFirstChat(bookIsbn);
+  return {
+    props: { firstData, firstChat: JSON.stringify(firstChat) },
+  };
+};
