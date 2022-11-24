@@ -7,6 +7,9 @@ import {
   db,
   addToshelf,
   MemberInfo,
+  getFirstBook,
+  getFirstChat,
+  getFirstReview,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -23,6 +26,8 @@ import Link from "next/link";
 import add from "../../public/img/add.svg";
 import inshelf from "../../public/img/bookshelf.svg";
 import chat from "../../public/img/chat.svg";
+import { GetServerSideProps } from "next";
+import { ParsedUrlQuery } from "querystring";
 interface StarProps {
   rating: boolean;
 }
@@ -315,49 +320,54 @@ export function BookComponent({ data }: { data: BookInfo }) {
   );
 }
 
-export default function Post() {
+export default function Post({
+  firstData,
+  firstReview,
+}: {
+  firstData: BookInfo;
+  firstReview: string;
+}) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [bookData, setBookData] = useState<BookInfo>({});
+  const [bookData, setBookData] = useState<BookInfo>(firstData);
   const [memberReviews, setMemberReviews] = useState<BookReview>({});
   const [inShelf, setInShelf] = useState<boolean>(false);
-  const router = useRouter();
-  const { id } = router.query;
   const dispatch = useDispatch();
   useEffect(() => {
     let unsub1: Function;
-    if (typeof id === "string") {
-      unsub1 = onSnapshot(
-        doc(db, "books", `${id.replace("id:", "")}`),
-        (doc) => {
-          const bookData = doc.data() as BookInfo;
-          setBookData(bookData);
-        }
-      );
+    if (typeof firstData.isbn === "string") {
+      unsub1 = onSnapshot(doc(db, "books", `${firstData.isbn}`), (doc) => {
+        const bookData = doc.data() as BookInfo;
+        setBookData(bookData);
+      });
     }
     let unsub2: Function;
     if (userInfo.uid) {
       unsub2 = onSnapshot(doc(db, "members", userInfo.uid!), (doc) => {
         const userData = doc.data() as MemberInfo;
         if (
-          typeof id === "string" &&
-          (userData.books?.includes(id.replace("id:", "")) ||
-            userData.reading?.includes(id.replace("id:", "")) ||
-            userData.finish?.includes(id.replace("id:", "")))
+          typeof firstData.isbn === "string" &&
+          (userData.books?.includes(firstData.isbn) ||
+            userData.reading?.includes(firstData.isbn) ||
+            userData.finish?.includes(firstData.isbn))
         ) {
           setInShelf(true);
         }
       });
 
-      if (userInfo.isSignIn && userInfo.uid && typeof id === "string") {
-        getMemberReviews(userInfo.uid, id.replace("id:", "")).then((res) => {
+      if (
+        userInfo.isSignIn &&
+        userInfo.uid &&
+        typeof firstData.isbn === "string"
+      ) {
+        getMemberReviews(userInfo.uid, firstData.isbn).then((res) => {
           setMemberReviews(res);
         });
       }
       if (
-        typeof id === "string" &&
-        (userInfo.books?.includes(id.replace("id:", "")) ||
-          userInfo.reading?.includes(id.replace("id:", "")) ||
-          userInfo.finish?.includes(id.replace("id:", "")))
+        typeof firstData.isbn === "string" &&
+        (userInfo.books?.includes(firstData.isbn) ||
+          userInfo.reading?.includes(firstData.isbn) ||
+          userInfo.finish?.includes(firstData.isbn))
       ) {
         setInShelf(true);
       }
@@ -366,7 +376,7 @@ export default function Post() {
       if (unsub1) unsub1();
       if (unsub2) unsub2();
     };
-  }, [dispatch, id, userInfo]);
+  }, [dispatch, firstData.isbn, userInfo]);
 
   return (
     <BookPage>
@@ -382,8 +392,12 @@ export default function Post() {
             ) : (
               <AddToShelf
                 onClick={() => {
-                  if (typeof id === "string" && userInfo && userInfo.uid)
-                    addToshelf(id.replace("id:", ""), userInfo.uid);
+                  if (
+                    typeof firstData.isbn === "string" &&
+                    userInfo &&
+                    userInfo.uid
+                  )
+                    addToshelf(firstData.isbn, userInfo.uid);
                 }}
               >
                 {inShelf || (
@@ -392,9 +406,9 @@ export default function Post() {
                 <P>加入書櫃</P>
               </AddToShelf>
             ))}
-          {userInfo.isSignIn && typeof id === "string" && (
+          {userInfo.isSignIn && typeof firstData.isbn === "string" && (
             <ToChatWrap>
-              <ChatLink href={`/group/id:${id.replace("id:", "")}`}>
+              <ChatLink href={`/group/id:${firstData.isbn}`}>
                 <ToChatRoom src={chat} alt="add" width={20} height={20} />
                 <P>進入會員討論區</P>
               </ChatLink>
@@ -403,13 +417,23 @@ export default function Post() {
         </Wrap>
         <LeaveRatingComponent
           memberReview={memberReviews}
-          bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+          bookIsbn={typeof firstData.isbn === "string" ? firstData.isbn : ""}
         />
 
         <ReviewsComponent
-          bookIsbn={typeof id === "string" ? id.replace("id:", "") : ""}
+          bookIsbn={typeof firstData.isbn === "string" ? firstData.isbn : ""}
+          firstReview={JSON.parse(firstReview)}
         />
       </BookPageWrap>
     </BookPage>
   );
 }
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const url = (params as ParsedUrlQuery).id as string;
+  const bookIsbn = url.split("id:")[1];
+  const firstData = await getFirstBook(bookIsbn);
+  const firstReview = await getFirstReview(bookIsbn);
+  return {
+    props: { firstData, firstReview: JSON.stringify(firstReview) },
+  };
+};

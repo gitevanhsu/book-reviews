@@ -897,9 +897,15 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
   );
 }
 
-export function ReviewsComponent({ bookIsbn }: { bookIsbn: string }) {
+export function ReviewsComponent({
+  bookIsbn,
+  firstReview,
+}: {
+  bookIsbn: string;
+  firstReview: BookReview[];
+}) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [reviews, setReviews] = useState<BookReview[]>([]);
+  const [reviews, setReviews] = useState<BookReview[]>(firstReview);
   const [memberReview, setMemberReview] = useState<BookReview>();
 
   useEffect(() => {
