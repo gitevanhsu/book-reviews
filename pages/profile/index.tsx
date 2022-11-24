@@ -508,6 +508,20 @@ const MoveBook = styled.div`
     margin-top: 2px;
   }
 `;
+const ShelfIcon = styled.div`
+  display: inline-block;
+  margin-right: 5px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  line-height: 20px;
+  font-weight: 900;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  border-radius: 5px;
+  color: #fff;
+`;
+
 function MobileBookShelfComponent({
   userInfo,
   books,
@@ -538,7 +552,9 @@ function MobileBookShelfComponent({
     <>
       <MobileBookShelfs>
         <BookShelf>
-          <ShelfTitle>Collection</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>C</ShelfIcon>Collection
+          </ShelfTitle>
           <Books>
             {books?.map((book, index) => (
               <Book key={book.isbn}>
@@ -593,7 +609,9 @@ function MobileBookShelfComponent({
           </Books>
         </BookShelf>
         <BookShelf>
-          <ShelfTitle>Reading</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>R</ShelfIcon>Reading
+          </ShelfTitle>
           <Books>
             {reading?.map((book, index) => (
               <Book key={book.isbn}>
@@ -648,7 +666,9 @@ function MobileBookShelfComponent({
           </Books>
         </BookShelf>
         <BookShelf>
-          <ShelfTitle>Finish</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>F</ShelfIcon>Finish
+          </ShelfTitle>
           <Books>
             {finish?.map((book, index) => (
               <Book key={book.isbn}>
@@ -767,7 +787,9 @@ function BookShelfComponent() {
       <DragDropContext onDragEnd={onDragEnd}>
         <BookShelfs>
           <BookShelf>
-            <ShelfTitle>Collection</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>C</ShelfIcon>Collection
+            </ShelfTitle>
             <Droppable droppableId="books">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
@@ -841,7 +863,9 @@ function BookShelfComponent() {
             </Droppable>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Reading</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>R</ShelfIcon>Reading
+            </ShelfTitle>
             <Droppable droppableId="reading">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
@@ -915,7 +939,9 @@ function BookShelfComponent() {
             </Droppable>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Finish</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>F</ShelfIcon>Finish
+            </ShelfTitle>
             <Droppable droppableId="finish">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
