@@ -54,12 +54,12 @@ const InputContent = styled.input`
     height: 0;
   }
   &[type="radio"] + img {
-    margin: 0 15px;
+    margin: 10px 15px;
     cursor: pointer;
-    outline: 2px solid ${(props) => props.theme.grey};
+    outline: 4px solid ${(props) => props.theme.grey};
   }
   &[type="radio"]:checked + img {
-    outline: 2px solid ${(props) => props.theme.red};
+    outline: 4px solid ${(props) => props.theme.red};
   }
 `;
 const Inputbox = styled.div`
@@ -222,7 +222,7 @@ function SigninComponent() {
 const BookShelfs = styled.div`
   display: flex;
   justify-content: space-around;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     display: none;
   }
 `;
@@ -230,6 +230,7 @@ const BookShelf = styled.div`
   display: inline-block;
   width: 30%;
   border: solid 5px ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -263,6 +264,15 @@ const Book = styled.div`
   border-bottom: 5px double #875303;
   padding-bottom: 1px;
   margin-bottom: 10px;
+  transition: 0.3s;
+  &:hover {
+    transform: scale(1.1);
+  }
+  @media screen and (max-width: 992px) {
+    &:hover {
+      transform: scale(1);
+    }
+  }
 `;
 const BookImg = styled(Image)`
   box-shadow: 0px 0px 5px ${(props) => props.theme.black};
@@ -270,7 +280,9 @@ const BookImg = styled(Image)`
 const BookLink = styled(Link)`
   display: inline-block;
 `;
-const BookTitle = styled.h3``;
+const BookTitle = styled.h3`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+`;
 const BookData = styled.div`
   margin: 0 10px;
 `;
@@ -290,7 +302,7 @@ const NoimgTitle = styled.p`
   pointer-events: none;
 `;
 const RemoveBtn = styled(Image)`
-  background-color: ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
   padding: 3px;
   margin-left: auto;
   cursor: pointer;
@@ -359,8 +371,10 @@ const EditTitle = styled.h4`
 
 const TitleInput = styled.input`
   width: 300px;
+  padding: 5px 10px;
 `;
 const IntroTextarea = styled.textarea`
+  padding: 5px 10px;
   width: 300px;
   height: 100px;
 `;
@@ -374,7 +388,7 @@ const EditButtonBox = styled.div`
 `;
 
 const UserDetail = styled.div`
-  margin-left: 30px;
+  margin: 0 auto;
 `;
 const UserName = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
@@ -389,7 +403,7 @@ const UserIntro = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   letter-spacing: 2px;
   white-space: pre-wrap;
-  width: 300px;
+  width: 100%;
   border-top: 1px solid ${(props) => props.theme.grey};
   margin-top: 10px;
   padding-top: 10px;
@@ -475,14 +489,14 @@ const MobileBookShelfs = styled(BookShelfs)`
     margin-bottom: 40px;
   }
   & ${ShelfTitle} {
-    font-size: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
   }
 
   & ${Books} {
     min-height: 250px;
   }
 
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     display: flex;
   }
 `;
@@ -497,7 +511,7 @@ const MoveBook = styled.div`
   text-align: center;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
   border-radius: 5px;
   color: #fff;
   cursor: pointer;
@@ -554,7 +568,7 @@ function MobileBookShelfComponent({
       <MobileBookShelfs>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>C</ShelfIcon>Collection
+            <ShelfIcon>C</ShelfIcon>Collection / 收藏
           </ShelfTitle>
           <Books>
             {books?.map((book, index) => (
@@ -611,7 +625,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>R</ShelfIcon>Reading
+            <ShelfIcon>R</ShelfIcon>Reading / 閱讀
           </ShelfTitle>
           <Books>
             {reading?.map((book, index) => (
@@ -668,7 +682,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>F</ShelfIcon>Finish
+            <ShelfIcon>F</ShelfIcon>Finish / 完成
           </ShelfTitle>
           <Books>
             {finish?.map((book, index) => (
@@ -789,7 +803,7 @@ function BookShelfComponent() {
         <BookShelfs>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>C</ShelfIcon>Collection
+              <ShelfIcon>C</ShelfIcon>Collection / 收藏
             </ShelfTitle>
             <Droppable droppableId="books">
               {(provided) => (
@@ -865,7 +879,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>R</ShelfIcon>Reading
+              <ShelfIcon>R</ShelfIcon>Reading / 閱讀
             </ShelfTitle>
             <Droppable droppableId="reading">
               {(provided) => (
@@ -941,7 +955,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>F</ShelfIcon>Finish
+              <ShelfIcon>F</ShelfIcon>Finish / 完成
             </ShelfTitle>
             <Droppable droppableId="finish">
               {(provided) => (

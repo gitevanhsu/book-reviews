@@ -43,6 +43,8 @@ const BookShelf = styled.div`
   display: inline-block;
   width: 30%;
   border: solid 5px ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
+  /* box-shadow: 0px 0px 5px ${(props) => props.theme.black}; */
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -91,7 +93,9 @@ const BookImg = styled(Image)`
 const BookLink = styled(Link)`
   display: inline-block;
 `;
-const BookTitle = styled.h3``;
+const BookTitle = styled.h3`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+`;
 const BookData = styled.div`
   margin: 0 10px;
 `;
@@ -333,7 +337,7 @@ export default function MemberPageComponent() {
 
         <BookShelfs>
           <BookShelf>
-            <ShelfTitle>已收藏</ShelfTitle>
+            <ShelfTitle>Collection / 收藏</ShelfTitle>
             <Books>
               {books?.map(
                 (book) =>
@@ -356,10 +360,10 @@ export default function MemberPageComponent() {
                         {!book.smallThumbnail && (
                           <NoimgTitle>{book.title}</NoimgTitle>
                         )}
-                        <BookTitle>書名：{book.title}</BookTitle>
+                        <BookTitle>{book.title}</BookTitle>
                         <br />
                         {book.authors!.length > 0 && (
-                          <BookAuthor>作者：{book.authors![0]}</BookAuthor>
+                          <BookAuthor>{book.authors![0]}</BookAuthor>
                         )}
                       </BookData>
                     </Book>
@@ -368,7 +372,7 @@ export default function MemberPageComponent() {
             </Books>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>閱讀中</ShelfTitle>
+            <ShelfTitle>Reading / 閱讀</ShelfTitle>
             <Books>
               {reading?.map(
                 (book) =>
@@ -391,10 +395,10 @@ export default function MemberPageComponent() {
                         {!book.smallThumbnail && (
                           <NoimgTitle>{book.title}</NoimgTitle>
                         )}
-                        <BookTitle>書名：{book.title}</BookTitle>
+                        <BookTitle>{book.title}</BookTitle>
                         <br />
                         {book.authors!.length > 0 && (
-                          <BookAuthor>作者：{book.authors![0]}</BookAuthor>
+                          <BookAuthor>{book.authors![0]}</BookAuthor>
                         )}
                       </BookData>
                     </Book>
@@ -403,7 +407,7 @@ export default function MemberPageComponent() {
             </Books>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>已閱讀</ShelfTitle>
+            <ShelfTitle>Finish / 完成</ShelfTitle>
             <Books>
               {finish?.map(
                 (book) =>
@@ -426,10 +430,10 @@ export default function MemberPageComponent() {
                         {!book.smallThumbnail && (
                           <NoimgTitle>{book.title}</NoimgTitle>
                         )}
-                        <BookTitle>書名：{book.title}</BookTitle>
+                        <BookTitle>{book.title}</BookTitle>
                         <br />
                         {book.authors!.length > 0 && (
-                          <BookAuthor>作者：{book.authors![0]}</BookAuthor>
+                          <BookAuthor>{book.authors![0]}</BookAuthor>
                         )}
                       </BookData>
                     </Book>
