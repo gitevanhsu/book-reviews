@@ -27,9 +27,12 @@ const BookImg = styled(Image)`
 `;
 const Title = styled.h1`
   width: 100%;
-  margin: 15px auto;ㄉ
+  margin: 25px auto 5px;
   font-size: ${(props) => props.theme.fz * 1.5}px;
   color: ${(props) => props.theme.black};
+  & + & {
+    margin: 5px auto 25px;
+  }
 `;
 const SearchBox = styled.div`
   display: flex;
@@ -72,9 +75,9 @@ const Book = styled.div`
   }
 `;
 const BookInfos = styled.div`
-  padding: 5px 0;
+  padding: 10px 0;
   max-width: 200px;
-  margin: 10px auto;
+  margin: 30px auto;
 `;
 const BookTitle = styled.h2`
   font-size: ${(props) => props.theme.fz * 1.5}px;
@@ -89,7 +92,10 @@ const BookTitle = styled.h2`
 `;
 const BookAuthor = styled.h3`
   font-size: ${(props) => props.theme.fz * 1.2}px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 const BookIsbn = styled.p`
   font-size: ${(props) => props.theme.fz}px;

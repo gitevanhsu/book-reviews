@@ -46,7 +46,7 @@ const MesBox = styled.div<MesProps>`
       props.mesCount !== 0 ? `'` + `${props.mesCount}` + `'` : null};
     font-size: ${(props) => props.theme.fz}px;
     display: inline-block;
-    background-color: #f00;
+    background-color: ${(props) => props.theme.red};
     color: ${(props) => props.theme.white};
     position: absolute;
     text-align: center;
@@ -122,17 +122,14 @@ const NoticeBox = styled.div<MesBoxProps>`
   width: ${(props) => (props.isOpen ? "300px" : "0px")};
   overflow: hidden;
   z-index: 10;
-  background: #ffe;
+  background-color: ${(props) => props.theme.white};
+  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
   padding: ${(props) => (props.isOpen ? "5px 20px" : "0px")};
   transition: 0.2s;
   border-radius: 10px;
-  box-shadow: 5px 5px 10px #bbb;
 `;
 const MesImg = styled(Image)`
   cursor: pointer;
-  path {
-    fill: #f00;
-  }
   transform: rotate(-2deg);
   &:hover ${NoticeBox} {
     right: -28px;
@@ -165,15 +162,21 @@ const ResImgs = styled.div`
   justify-items: end;
 `;
 const ResImg1 = styled(Image)`
-  background-color: #acff7f;
+  background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
   border-radius: 5px;
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
 `;
 const ResImg2 = styled(ResImg1)`
-  background-color: #ff7f7f;
+  background-color: ${(props) => props.theme.red};
+  &:hover {
+    background-color: ${(props) => props.theme.red};
+  }
 `;
 const ResImg3 = styled(ResImg1)`
-  background-color: #7fdfff;
+  background-color: ${(props) => props.theme.yellow};
 `;
 const Notices = styled.div`
   max-height: 200px;
@@ -214,9 +217,11 @@ const OverLay = styled.div<OverLayProps>`
   opacity: 0.3;
 `;
 const ProfileUl = styled.ul`
-  border-top: 1px solid transparent;
-  background-color: ${(props) => props.theme.greyGreen};
+  border-top: 1px solid ${(props) => props.theme.greyGreen};
+  background-color: ${(props) => props.theme.white};
   position: absolute;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
   top: 100%;
   right: 0;
   width: 150px;
@@ -234,9 +239,13 @@ const ProfileLi = styled.li`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   opacity: 0;
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
-  border-top: 1px solid transparent;
+
   transition: 0.3s;
   color: ${(props) => props.theme.black};
+  border-top: 1px solid ${(props) => props.theme.greyGreen};
+  &:hover {
+    background-color: ${(props) => props.theme.yellow};
+  }
   & > ${ProfileLink} {
     display: flex;
     align-items: center;
@@ -476,7 +485,6 @@ function NoticeComponent() {
 function MemberComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
-  const router = useRouter();
 
   return (
     <ProfileBox>
@@ -510,7 +518,9 @@ interface MobileMenuBoxProps {
 }
 
 const MobileUl = styled.ul`
-  background-color: ${(props) => props.theme.greyGreen};
+  background-color: ${(props) => props.theme.white};
+  border-top: 1px solid ${(props) => props.theme.greyGreen};
+  border-radius: 0 0 10px 10px;
   position: absolute;
   top: 100%;
   right: -10px;
@@ -530,6 +540,7 @@ const MobileMenuBox = styled.div<MobileMenuBoxProps>`
   &:hover ${MobileUl} {
     height: ${(props) => props.isSignin};
     transition: 0.3s;
+    box-shadow: 5px 5px 5px ${(props) => props.theme.black};
   }
   @media screen and (max-width: 576px) {
     display: flex;
@@ -544,6 +555,9 @@ const MobileLi = styled.li`
   padding: 0 10px;
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
   font-size: ${(props) => props.theme.fz * 1.5}px;
+  &:hover {
+    background-color: ${(props) => props.theme.yellow};
+  }
   & > ${PageLink} {
     color: ${(props) => props.theme.black};
   }
