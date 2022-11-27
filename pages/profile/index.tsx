@@ -208,7 +208,7 @@ function SigninComponent() {
         <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
       </SignInBtnBox>
       <QuoteArea>
-        <QuoteImg src={library} alt="Library" />
+        <QuoteImg src={library} alt="Library" priority />
       </QuoteArea>
       {showSignup && (
         <Portal>
