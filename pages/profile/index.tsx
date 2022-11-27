@@ -510,6 +510,7 @@ const MoveBook = styled.div`
 `;
 const ShelfIcon = styled.div`
   display: inline-block;
+  padding-left: 2px;
   margin-right: 5px;
   font-size: ${(props) => props.theme.fz * 1.5}px;
   line-height: 20px;
@@ -923,7 +924,7 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "reading"
                                     );
                                   }
                                 }}
@@ -999,7 +1000,7 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "finish"
                                     );
                                   }
                                 }}

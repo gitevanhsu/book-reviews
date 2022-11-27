@@ -614,7 +614,7 @@ export function HeaderComponent() {
   return (
     <Header>
       <Link href="/">
-        <LogoImg src={logo} alt="logo" width={70} height={70} />
+        <LogoImg src={logo} alt="logo" width={70} height={70} priority />
       </Link>
       <Ul>
         <Li nowpath={path === "/"}>

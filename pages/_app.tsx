@@ -25,6 +25,9 @@ const theme = {
 // 768
 // 576
 // 480
+import initAuth from "../initAuth"; // the module you created above
+
+initAuth();
 
 export default function App({ Component, pageProps }: AppProps) {
   resetServerContext();
