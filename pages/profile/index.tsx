@@ -244,6 +244,7 @@ const BookShelf = styled.div`
 const ShelfTitle = styled.h2`
   text-align: center;
   position: sticky;
+  width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
@@ -266,7 +267,7 @@ const Book = styled.div`
   margin-bottom: 10px;
   transition: 0.3s;
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
   @media screen and (max-width: 992px) {
     &:hover {
@@ -302,7 +303,7 @@ const NoimgTitle = styled.p`
   pointer-events: none;
 `;
 const RemoveBtn = styled(Image)`
-  background-color: ${(props) => props.theme.yellow2};
+  background-color: transparent
   padding: 3px;
   margin-left: auto;
   cursor: pointer;

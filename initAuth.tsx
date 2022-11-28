@@ -14,15 +14,15 @@ const initAuth = () => {
       console.error(err);
     },
     // firebaseAuthEmulatorHost: "localhost:3000",
-    // firebaseAdminInitConfig: {
-    //   credential: {
-    //     projectId: process.env.NEXT_PUBLIC_PROJECTID!,
-    //     clientEmail: process.env.FIREBASE_ADMIN_CONFIG_CLIENT_EMAIL!,
-    //     // The private key must not be accessible on the client side.
-    //     privateKey: process.env.FIREBASE_ADMIN_CONFIG_PRIVATE_KEY!,
-    //   },
-    //   databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL!,
-    // },
+    firebaseAdminInitConfig: {
+      credential: {
+        projectId: process.env.NEXT_PUBLIC_PROJECTID!,
+        clientEmail: process.env.FIREBASE_ADMIN_CONFIG_CLIENT_EMAIL!,
+        // The private key must not be accessible on the client side.
+        privateKey: process.env.FIREBASE_ADMIN_CONFIG_PRIVATE_KEY!,
+      },
+      databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL!,
+    },
     // Use application default credentials (takes precedence over firebaseAdminInitConfig if set)
     // useFirebaseAdminDefaultCredential: true,
     firebaseClientInitConfig: {

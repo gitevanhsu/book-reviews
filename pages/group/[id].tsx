@@ -68,7 +68,7 @@ const GoToReviewImg = styled(Image)`
 `;
 const VideoAndChatBox = styled.div`
   width: 100%;
-  border-top: 1px solid ${(props) => props.theme.black};
+  border-top: 1px solid ${(props) => props.theme.grey};
   display: flex;
   justify-content: space-between;
   @media screen and (max-width: 768px) {
@@ -382,12 +382,15 @@ const PlayVideo = styled.video`
   background-color: ${(props) => props.theme.grey};
 `;
 const OpenChatBTN = styled.button`
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.yellow};
   color: ${(props) => props.theme.black};
   border-radius: 10px;
   font-size: ${(props) => props.theme.fz}px;
   cursor: pointer;
   padding: 10px 20px;
+  &:hover {
+    background-color: ${(props) => props.theme.greyBlue};
+  }
 `;
 const MyVideoBox = styled.div`
   margin-top: 30px;

@@ -48,20 +48,6 @@ const BookReviewsBox = styled.div`
   width: 100%;
   border-radius: 10px;
 `;
-const BookReviewBox = styled.div`
-  padding: 50px 0;
-  border-bottom: 1px solid #bbb;
-  padding-left: 50px;
-  position: relative;
-  @media screen and (max-width: 576px) {
-    padding-left: 20px;
-  }
-`;
-const MemberData = styled.div`
-  margin-left: 10px;
-  width: 100%;
-`;
-
 const ReviewTitle = styled.h2`
   margin: 10px 0;
   font-size: ${(props) => props.theme.fz * 1.5}px;
@@ -84,14 +70,14 @@ const ShowReviewBtn = styled.button`
     left: 10px;
     width: 30px;
     transform: translateY(-50%);
-    border-top: solid 2px #999;
+    border-top: solid 2px ${(props) => props.theme.grey};
   }
 `;
 
 const LeaveRatingBox = styled.div`
   padding: 20px 10px 0;
 
-  border-top: 1px solid ${(props) => props.theme.black};
+  border-top: 1px solid ${(props) => props.theme.grey};
   margin-bottom: 20px;
 `;
 const LeaveRatingButton = styled.button<RatingProps>`
@@ -117,11 +103,11 @@ const RemoveRatingButton = styled.button`
   & + & {
     margin: 0px;
   }
+  @media screen and (max-width: 480px) {
+    margin: 0 10px;
+  }
 `;
 
-const ReviewMemberBox = styled.div`
-  display: flex;
-`;
 const ReviewMemberName = styled.h3`
   margin-bottom: 10px;
   min-width: 100px;
@@ -220,17 +206,15 @@ const EditReviewButton = styled.button`
     margin-left: 20px;
   }
 `;
-const SeeMoreBtn = styled.button`
-  font-size: ${(props) => props.theme.fz * 1}px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
-  cursor: pointer;
+const ShowSubReviewButton = styled(ShowReviewBtn)`
+  margin-left: 50px;
+  @media screen and (max-width: 576px) {
+    margin-left: 0px;
+  }
 `;
-const ShowSubReviewButton = styled(ShowReviewBtn)``;
 
 const SubReviewsBox = styled.div`
+  margin-left: 50px;
   max-height: 200px;
   overflow: auto;
   ::-webkit-scrollbar {
@@ -266,40 +250,6 @@ const LikeButton = styled.button`
   cursor: pointer;
 `;
 
-const RatingReviewBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  height: 100%;
-  padding: 50px 0;
-  margin-top: 50px;
-  text-align: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-`;
-const RatingCount = styled.div`
-  padding: 20px 0;
-`;
-const RatingReviewButtonUp = styled.div`
-  cursor: pointer;
-  display: inline-block;
-  height: 40px;
-  width: 40px;
-  background-color: ${(props) => props.theme.greyBlue};
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  &:hover {
-    opacity: 0.5;
-  }
-  @media screen and (max-width: 576px) {
-    height: 30px;
-    width: 30px;
-  }
-`;
-const RatingReviewButtonDown = styled(RatingReviewButtonUp)`
-  clip-path: polygon(0 0, 50% 100%, 100% 0);
-`;
-
 const Gotomember = styled(Link)`
   display: inline-block;
   cursor: pointer;
@@ -313,10 +263,11 @@ const LikeCount = styled.div`
   width: 20px;
 `;
 const LeaveReviewBox = styled.div`
-  margin-bottom: 20px;
+  padding-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: 100%;
+  border-bottom: 1px solid ${(props) => props.theme.grey};
 `;
 const LeaveInputBox = styled.div`
   width: 100%;
@@ -368,57 +319,12 @@ const SubmitReviewBtn = styled.button`
   margin-top: 10px;
   align-self: end;
   cursor: pointer;
-  border: solid 1px #ccc;
+  border: solid 1px ${(props) => props.theme.grey};
   padding: 5px 10px;
   text-align: center;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.greyBlue};
-`;
-const ItemBox = styled.div`
-  display: flex;
-  align-content: center;
-  & + & {
-    margin-top: 5px;
-  }
-`;
-const ReviewStar = styled.span`
-  color: #ff0000;
-`;
-const ReviewUserImage = styled(Image)`
-  border-radius: 50%;
-`;
-const MemberName = styled.h3`
-  font-size: 16px;
-  font-weight: 700;
-  padding: 10px 0;
-  color: #000;
-`;
-const MainReviewTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 700;
-`;
-const MainReviewContent = styled.div<ContentProps>`
-  margin: 10px 0;
-  max-height: ${(props) => (props.showMore ? "auto" : "100px")};
-  width: 100%;
-  font-size: 16px;
-  overflow: hidden;
-  @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
-  }
-`;
-const MainReviewStar = styled.div`
-  display: inline-block;
-  margin: 0 20px;
-  font-size: 8px;
-`;
-const MainReviewDate = styled.span`
-  font-size: 8px;
-  @media screen and (max-width: 576px) {
-    display: block;
-    margin-bottom: 10px;
-  }
 `;
 const RemoveOverlay = styled.div`
   background-color: #000;
@@ -504,7 +410,11 @@ export function LeaveRatingComponent({
         })}
         {deleteAlert && (
           <>
-            <RemoveOverlay />
+            <RemoveOverlay
+              onClick={() => {
+                setDeleteAlert(false);
+              }}
+            />
             <RemoveAlertBox>
               <RemoveAlert>評價跟留言會一起被刪除喔！</RemoveAlert>
               <RemoveBtn
@@ -808,92 +718,202 @@ interface ReviewProps {
   month: number;
   date: number;
 }
+
+const BookReviewWrap = styled.div`
+  width: 100%;
+  padding: 15px 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid ${(props) => props.theme.grey};
+`;
+const BookReviewHead = styled.div`
+  display: flex;
+  align-items: center;
+`;
+const BookReviewMemberWrap = styled.div``;
+const BookReviewMemberImgWrap = styled.div``;
+const BookReviewMemberImg = styled(Image)`
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  @media screen and (max-width: 576px) {
+    width: 50px;
+    height: 50px;
+  }
+  @media screen and (max-width: 480px) {
+    width: 30px;
+    height: 30px;
+  }
+`;
+const BookReviewMemberLink = styled(Link)`
+  padding: 0 10px;
+`;
+const BookReviewMemberName = styled.p`
+  display: inline-block;
+  margin-right: 20px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz * 1.2}px;
+  }
+`;
+const BookReviewMemberRate = styled.div`
+  display: inline-block;
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+  margin-right: 20px;
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
+const BookReviewMemberRateStart = styled.span`
+  display: inline-block;
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+  color: ${(props) => props.theme.red};
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
+const BookReviewMemberDate = styled.div`
+  display: inline-block;
+`;
+const BookReviewTitle = styled.div`
+  font-size: ${(props) => props.theme.fz * 2}px;
+  margin-top: 30px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+  }
+`;
+interface BookReviewContentProps {
+  showMore: boolean;
+}
+const BookReviewContent = styled.div<BookReviewContentProps>`
+  max-height: ${(props) => (props.showMore ? "auto" : "150px")};
+  overflow: hidden;
+  padding: 20px 0 0 50px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.2}px;
+    padding-left: 30px;
+  }
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
+const BookReviewRatingWrap = styled.div`
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+const BookReviewRatingUpper = styled.div`
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  cursor: pointer;
+  display: inline-block;
+  height: 30px;
+  width: 30px;
+  background-color: ${(props) => props.theme.greyBlue};
+`;
+const BookReviewRatingLower = styled(BookReviewRatingUpper)`
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+`;
+const BookReviewRatingNumber = styled.p`
+  padding: 10px 0;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+`;
+const SeeMoreBtn = styled.button`
+  font-size: ${(props) => props.theme.fz * 1}px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  cursor: pointer;
+  margin-left: 50px;
+  margin-top: 20px;
+  @media screen and (max-width: 576px) {
+    margin-left: 30px;
+  }
+`;
+
 function ReviewComponent({ review, year, month, date }: ReviewProps) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showMore, setShowMore] = useState(false);
 
   return (
-    <BookReviewBox key={review.reviewId}>
-      <ReviewMemberBox>
-        <Gotomember
-          href={
-            review.memberId! === userInfo.uid!
-              ? "/profile"
-              : `/member/id:${review.memberId}`
-          }
-        >
-          <ReviewUserImage
-            src={
-              review.memberData && review.memberData.img
-                ? review.memberData.img
-                : male
-            }
-            alt={
-              review.memberData && review.memberData.name
-                ? review.memberData.name
-                : "user Img"
-            }
-            width={30}
-            height={30}
-          ></ReviewUserImage>
-        </Gotomember>
-        <MemberData>
-          <Gotomember
-            href={
-              review.memberId! === userInfo.uid!
-                ? "/profile"
-                : `/member/id:${review.memberId}`
-            }
-          >
-            <MemberName>
+    <>
+      <BookReviewWrap key={review.reviewId}>
+        <BookReviewHead>
+          <BookReviewRatingWrap>
+            <BookReviewRatingUpper
+              onClick={() => {
+                if (userInfo.uid && review) {
+                  upperReview(userInfo.uid, review);
+                } else {
+                  alert("請先登入喔");
+                }
+              }}
+            />
+            <BookReviewRatingNumber>
+              {review.reviewRating}
+            </BookReviewRatingNumber>
+            <BookReviewRatingLower
+              onClick={() => {
+                if (userInfo.uid && review) {
+                  lowerReview(userInfo.uid, review);
+                } else {
+                  alert("請先登入喔");
+                }
+              }}
+            />
+          </BookReviewRatingWrap>
+          <BookReviewMemberImgWrap>
+            <BookReviewMemberLink
+              href={
+                review.memberId! === userInfo.uid!
+                  ? "/profile"
+                  : `/member/id:${review.memberId}`
+              }
+            >
+              <BookReviewMemberImg
+                src={
+                  review.memberData && review.memberData.img
+                    ? review.memberData.img
+                    : male
+                }
+                alt={
+                  review.memberData && review.memberData.name
+                    ? review.memberData.name
+                    : "user Img"
+                }
+                width={80}
+                height={80}
+              />
+            </BookReviewMemberLink>
+          </BookReviewMemberImgWrap>
+          <BookReviewMemberWrap>
+            <BookReviewMemberName>
               {review.memberData && review.memberData.name}
-            </MemberName>
-          </Gotomember>
-          <MainReviewStar>
-            <ReviewStar>&#9733;</ReviewStar>
-            {review.rating}
-          </MainReviewStar>
-          <MainReviewDate>{`${year}-${month}-${date}`}</MainReviewDate>
-          <ItemBox>
-            <MainReviewTitle>{parse(review.title!)}</MainReviewTitle>
-          </ItemBox>
-          <ItemBox>
-            <MainReviewContent showMore={showMore}>
-              {parse(review.content!)}
-            </MainReviewContent>
-          </ItemBox>
-          <SeeMoreBtn
-            onClick={() => {
-              setShowMore((prev) => !prev);
-            }}
-          >
-            {showMore ? "Show less" : "Show more"}
-          </SeeMoreBtn>
-        </MemberData>
-      </ReviewMemberBox>
-      <RatingReviewBox>
-        <RatingReviewButtonUp
+            </BookReviewMemberName>
+            <BookReviewMemberRate>
+              <BookReviewMemberRateStart>&#9733;</BookReviewMemberRateStart>
+              {review.rating}
+            </BookReviewMemberRate>
+            <BookReviewMemberDate>
+              {`${year}-${month}-${date}`}
+            </BookReviewMemberDate>
+            <BookReviewTitle>{parse(review.title!)}</BookReviewTitle>
+          </BookReviewMemberWrap>
+        </BookReviewHead>
+        <BookReviewContent showMore={showMore}>
+          {parse(review.content!)}
+        </BookReviewContent>
+        <SeeMoreBtn
           onClick={() => {
-            if (userInfo.uid && review) {
-              upperReview(userInfo.uid, review);
-            } else {
-              alert("請先登入喔");
-            }
+            setShowMore((prev) => !prev);
           }}
-        ></RatingReviewButtonUp>
-        <RatingCount>{review.reviewRating}</RatingCount>
-        <RatingReviewButtonDown
-          onClick={() => {
-            if (userInfo.uid && review) {
-              lowerReview(userInfo.uid, review);
-            } else {
-              alert("請先登入喔");
-            }
-          }}
-        ></RatingReviewButtonDown>
-      </RatingReviewBox>
-      <SubReviewComponent review={review} />
-    </BookReviewBox>
+        >
+          {showMore ? "Show less" : "Show more"}
+        </SeeMoreBtn>
+        <SubReviewComponent review={review} />
+      </BookReviewWrap>
+    </>
   );
 }
 
