@@ -31,18 +31,26 @@ const BookData = styled.div`
   }
 `;
 const BookTitle = styled.h2`
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   font-size: ${(props) => props.theme.fz * 1.5}px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 const BookAuthor = styled.h4`
-  margin-bottom: 10px;
-  font-size: ${(props) => props.theme.fz}px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: ${(props) => props.theme.fz * 1.2}px;
 `;
 const BookTextSnippet = styled.p`
   display: inline-block;
-  width: 200px;
+  padding: 0 40px;
   font-size: ${(props) => props.theme.fz}px;
   line-height: ${(props) => props.theme.fz * 1.2}px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 `;
 const ButtonBox = styled.div`
   display: flex;
@@ -94,7 +102,7 @@ const BookImg = styled(Image)`
   box-shadow: 0px 0px 15px ${(props) => props.theme.black}; ;
 `;
 const BookDetail = styled.div`
-  margin: 10px auto;
+  margin: 40px auto 0;
   max-width: 280px;
 `;
 
@@ -159,7 +167,7 @@ export default function BooksComponent({
         pageRef.current = lastVisible;
       });
     }
-  }, [page]);
+  }, [bookDatas, page]);
 
   return (
     <BooksPage>

@@ -13,9 +13,9 @@ const theme = {
   greyGreen: "#DAE5D0",
   yellow: "#F9EBC8",
   white: "#F5F5F5",
-  lightWhite: "#F6F6F6",
   grey: "#EEE",
   black: "#393E46",
+  yellow2: "#ffefc6",
   fz: "12",
 };
 
@@ -25,6 +25,9 @@ const theme = {
 // 768
 // 576
 // 480
+import initAuth from "../initAuth"; // the module you created above
+
+initAuth();
 
 export default function App({ Component, pageProps }: AppProps) {
   resetServerContext();

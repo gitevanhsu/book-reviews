@@ -24,6 +24,7 @@ const ChatRoom = styled.div`
   padding: 10px;
   border-radius: 10px;
   max-height: 460px;
+  box-shadow: 0px 0px 3px ${(props) => props.theme.black};
   @media screen and (max-width: 768px) {
     width: 100%;
   }

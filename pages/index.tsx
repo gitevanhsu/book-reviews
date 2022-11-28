@@ -12,7 +12,7 @@ import bookshelf from "/public/img/hp-bookshelf.png";
 import { GetServerSideProps } from "next";
 
 const HomeWelcome = styled.div`
-  height: 60vh;
+  height: 55vh;
   background-color: ${(props) => props.theme.grey};
   overflow: hidden;
   position: relative;
@@ -38,8 +38,8 @@ const WelcomeText = styled.div`
 `;
 
 const HomeMain = styled.main`
-  background-color: ${(props) => props.theme.lightWhite};
-  padding: 120px 0;
+  background-color: ${(props) => props.theme.grey};
+  padding: 50px 0 100px;
 `;
 
 const Texts = styled.div`
@@ -69,7 +69,7 @@ const Person = styled.p`
 
 const PageTitle = styled.h1`
   font-size: ${(props) => props.theme.fz * 3}px;
-  padding: 20px 0;
+  padding-bottom: 50px;
   text-align: center;
   @media screen and (max-width: 480px) {
     font-size: ${(props) => props.theme.fz * 2}px;
@@ -149,14 +149,16 @@ const Buttonleft = styled(ButtonRight)<ColorProps>`
 const BookTitle = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
   white-space: pre-wrap;
-  margin-top: 20px;
+  margin-top: 30px;
   margin-bottom: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const BookAuthor = styled.p`
   font-size: ${(props) => props.theme.fz * 1}px;
   white-space: pre-wrap;
-  margin-top: 20px;
   margin-bottom: 10px;
 `;
 const NoimgTitle = styled.h2`
@@ -179,16 +181,16 @@ const NoimgTitle = styled.h2`
 const FeatureMain = styled.div`
   width: 100%;
   padding: 20px 20px;
-  background-color: ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.white};
 `;
 const FeatureWrap = styled.div`
-  margin: 0 auto;
+  margin: 20px auto;
   max-width: 1280px;
   display: flex;
   flex-wrap: wrap;
 `;
 const FeatureBox = styled.div`
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   padding: 20px 20px;
   display: flex;
   flex-direction: column;
@@ -208,11 +210,11 @@ const FeatureImg = styled(Image)`
 const FeatureTitle = styled.h2`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   border-bottom: 4px solid ${(props) => props.theme.greyBlue};
-  margin: 40px 0;
+  margin: 50px 0 15px;
   font-weight: 600;
 `;
 const FeatureContent = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz * 1}px;
 `;
 
 function FeatureComponent() {
@@ -256,7 +258,7 @@ export default function Home({ books }: HomeProps) {
   return (
     <>
       <HomeWelcome>
-        <WelcomeImage src={bookImg} alt="book" />
+        <WelcomeImage src={bookImg} alt="book" priority />
         <WelcomeText>
           <Texts>
             <Quote>

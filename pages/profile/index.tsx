@@ -54,12 +54,12 @@ const InputContent = styled.input`
     height: 0;
   }
   &[type="radio"] + img {
-    margin: 0 15px;
+    margin: 10px 15px;
     cursor: pointer;
-    outline: 2px solid ${(props) => props.theme.grey};
+    outline: 4px solid ${(props) => props.theme.grey};
   }
   &[type="radio"]:checked + img {
-    outline: 2px solid ${(props) => props.theme.red};
+    outline: 4px solid ${(props) => props.theme.red};
   }
 `;
 const Inputbox = styled.div`
@@ -208,7 +208,7 @@ function SigninComponent() {
         <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
       </SignInBtnBox>
       <QuoteArea>
-        <QuoteImg src={library} alt="Library" />
+        <QuoteImg src={library} alt="Library" priority />
       </QuoteArea>
       {showSignup && (
         <Portal>
@@ -222,7 +222,7 @@ function SigninComponent() {
 const BookShelfs = styled.div`
   display: flex;
   justify-content: space-around;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     display: none;
   }
 `;
@@ -230,6 +230,7 @@ const BookShelf = styled.div`
   display: inline-block;
   width: 30%;
   border: solid 5px ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -243,6 +244,7 @@ const BookShelf = styled.div`
 const ShelfTitle = styled.h2`
   text-align: center;
   position: sticky;
+  width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
@@ -263,6 +265,15 @@ const Book = styled.div`
   border-bottom: 5px double #875303;
   padding-bottom: 1px;
   margin-bottom: 10px;
+  transition: 0.3s;
+  &:hover {
+    transform: scale(1.05);
+  }
+  @media screen and (max-width: 992px) {
+    &:hover {
+      transform: scale(1);
+    }
+  }
 `;
 const BookImg = styled(Image)`
   box-shadow: 0px 0px 5px ${(props) => props.theme.black};
@@ -270,7 +281,9 @@ const BookImg = styled(Image)`
 const BookLink = styled(Link)`
   display: inline-block;
 `;
-const BookTitle = styled.h3``;
+const BookTitle = styled.h3`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+`;
 const BookData = styled.div`
   margin: 0 10px;
 `;
@@ -290,7 +303,7 @@ const NoimgTitle = styled.p`
   pointer-events: none;
 `;
 const RemoveBtn = styled(Image)`
-  background-color: ${(props) => props.theme.grey};
+  background-color: transparent
   padding: 3px;
   margin-left: auto;
   cursor: pointer;
@@ -359,8 +372,10 @@ const EditTitle = styled.h4`
 
 const TitleInput = styled.input`
   width: 300px;
+  padding: 5px 10px;
 `;
 const IntroTextarea = styled.textarea`
+  padding: 5px 10px;
   width: 300px;
   height: 100px;
 `;
@@ -374,7 +389,7 @@ const EditButtonBox = styled.div`
 `;
 
 const UserDetail = styled.div`
-  margin-left: 30px;
+  margin: 0 auto;
 `;
 const UserName = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
@@ -389,7 +404,7 @@ const UserIntro = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   letter-spacing: 2px;
   white-space: pre-wrap;
-  width: 300px;
+  width: 100%;
   border-top: 1px solid ${(props) => props.theme.grey};
   margin-top: 10px;
   padding-top: 10px;
@@ -475,14 +490,14 @@ const MobileBookShelfs = styled(BookShelfs)`
     margin-bottom: 40px;
   }
   & ${ShelfTitle} {
-    font-size: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz * 1.5}px;
   }
 
   & ${Books} {
     min-height: 250px;
   }
 
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     display: flex;
   }
 `;
@@ -497,7 +512,7 @@ const MoveBook = styled.div`
   text-align: center;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.theme.grey};
+  background-color: ${(props) => props.theme.yellow2};
   border-radius: 5px;
   color: #fff;
   cursor: pointer;
@@ -508,6 +523,21 @@ const MoveBook = styled.div`
     margin-top: 2px;
   }
 `;
+const ShelfIcon = styled.div`
+  display: inline-block;
+  padding-left: 2px;
+  margin-right: 5px;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  line-height: 20px;
+  font-weight: 900;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  border-radius: 5px;
+  color: #fff;
+`;
+
 function MobileBookShelfComponent({
   userInfo,
   books,
@@ -538,7 +568,9 @@ function MobileBookShelfComponent({
     <>
       <MobileBookShelfs>
         <BookShelf>
-          <ShelfTitle>Collection</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>C</ShelfIcon>Collection / 收藏
+          </ShelfTitle>
           <Books>
             {books?.map((book, index) => (
               <Book key={book.isbn}>
@@ -593,7 +625,9 @@ function MobileBookShelfComponent({
           </Books>
         </BookShelf>
         <BookShelf>
-          <ShelfTitle>Reading</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+          </ShelfTitle>
           <Books>
             {reading?.map((book, index) => (
               <Book key={book.isbn}>
@@ -648,7 +682,9 @@ function MobileBookShelfComponent({
           </Books>
         </BookShelf>
         <BookShelf>
-          <ShelfTitle>Finish</ShelfTitle>
+          <ShelfTitle>
+            <ShelfIcon>F</ShelfIcon>Finish / 完成
+          </ShelfTitle>
           <Books>
             {finish?.map((book, index) => (
               <Book key={book.isbn}>
@@ -767,7 +803,9 @@ function BookShelfComponent() {
       <DragDropContext onDragEnd={onDragEnd}>
         <BookShelfs>
           <BookShelf>
-            <ShelfTitle>Collection</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>C</ShelfIcon>Collection / 收藏
+            </ShelfTitle>
             <Droppable droppableId="books">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
@@ -841,7 +879,9 @@ function BookShelfComponent() {
             </Droppable>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Reading</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+            </ShelfTitle>
             <Droppable droppableId="reading">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
@@ -899,7 +939,7 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "reading"
                                     );
                                   }
                                 }}
@@ -915,7 +955,9 @@ function BookShelfComponent() {
             </Droppable>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Finish</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>F</ShelfIcon>Finish / 完成
+            </ShelfTitle>
             <Droppable droppableId="finish">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
@@ -973,7 +1015,7 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "finish"
                                     );
                                   }
                                 }}

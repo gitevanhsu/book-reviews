@@ -65,6 +65,7 @@ const BookDetail = styled.div`
   padding: 10px 20px;
   border-radius: 10px;
   margin-left: 50px;
+  box-shadow: 0px 0px 5px ${(props) => props.theme.greyBlue};
 `;
 interface ItemBoxProps {
   hasSub?: boolean;
