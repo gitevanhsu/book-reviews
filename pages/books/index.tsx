@@ -167,7 +167,7 @@ export default function BooksComponent({
         pageRef.current = lastVisible;
       });
     }
-  }, [page]);
+  }, [bookDatas, page]);
 
   return (
     <BooksPage>

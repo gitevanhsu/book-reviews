@@ -9,7 +9,7 @@ import {
 } from "next-firebase-auth";
 import { GetServerSideProps } from "next";
 
-const Demo = ({}) => {
+const Demo = () => {
   const AuthUser = useAuthUser();
   return (
     <div>
@@ -23,13 +23,13 @@ const Demo = ({}) => {
 
 // export default withAuthUser()(Demo);
 
-export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({
+export const getServerSideProps: GetServerSideProps = withAuthUserSSR({
   // whenUnauthed: AuthAction.REDIRECT_TO_LOGIN,
 })(async ({ AuthUser }) => {
   console.log(AuthUser);
   // const token = await AuthUser.getIdToken();
-  const token = AuthUser.getIdToken();
-  console.log();
+  const token = AuthUser.getIdToken(true);
+
   return {
     props: {},
   };
