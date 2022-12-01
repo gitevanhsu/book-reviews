@@ -13,7 +13,6 @@ const initAuth = () => {
     onLogoutRequestError: (err) => {
       console.error(err);
     },
-    // firebaseAuthEmulatorHost: "localhost:3000",
     firebaseAdminInitConfig: {
       credential: {
         projectId: process.env.NEXT_PUBLIC_PROJECTID!,
@@ -23,8 +22,6 @@ const initAuth = () => {
       },
       databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL!,
     },
-    // Use application default credentials (takes precedence over firebaseAdminInitConfig if set)
-    // useFirebaseAdminDefaultCredential: true,
     firebaseClientInitConfig: {
       apiKey: process.env.NEXT_PUBLIC_API_KEY!, // required
       authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN!,
@@ -32,12 +29,10 @@ const initAuth = () => {
       projectId: process.env.NEXT_PUBLIC_PROJECTID!,
     },
     cookies: {
-      name: "Book-Reviews", // required
-      // Keys are required unless you set `signed` to `false`.
-      // The keys cannot be accessible on the client side.
+      name: "BookReviews", // required
       keys: [
-        process.env.COOKIE_SECRET_CURRENT,
-        process.env.COOKIE_SECRET_PREVIOUS,
+        process.env.COOKIE_SECRET_CURRENT!,
+        process.env.COOKIE_SECRET_PREVIOUS!,
       ],
       httpOnly: true,
       maxAge: 12 * 60 * 60 * 24 * 1000, // twelve days

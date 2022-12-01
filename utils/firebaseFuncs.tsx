@@ -5,9 +5,7 @@ import {
   doc,
   DocumentData,
   increment,
-  onSnapshot,
   orderBy,
-  QueryDocumentSnapshot,
   setDoc,
   Timestamp,
 } from "firebase/firestore";
@@ -29,6 +27,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { userSignIn } from "../slices/userInfoSlice";
+import Swal from "sweetalert2";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -131,7 +130,6 @@ export interface NoticeData {
 
 export const addBooksData = async (bookIsbn: string) => {
   if (bookIsbn.length !== 13) {
-    console.log("wrong ISBN");
     return;
   } else {
     const bookRes = await fetch(
@@ -159,13 +157,7 @@ export const addBooksData = async (bookIsbn: string) => {
         reviewCount: 0,
       };
       await setDoc(doc(db, "books", bookIsbn), bookInfo);
-      console.log("sucess!");
-    } catch (ERR) {
-      console.log("ERR");
-      console.log(
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${bookIsbn}`
-      );
-    }
+    } catch (e) {}
   }
 };
 
@@ -175,7 +167,7 @@ export const loadBooks = async (
 ) => {
   const booksData: BookInfo[] = [];
   if (page === 0) {
-    const first = query(booksRef, limit(8));
+    const first = query(booksRef, limit(16));
     const documentSnapshots = await getDocs(first);
     documentSnapshots.forEach((doc) => {
       booksData.push(doc.data());
@@ -184,7 +176,7 @@ export const loadBooks = async (
       documentSnapshots.docs[documentSnapshots.docs.length - 1];
     return { lastVisible, booksData };
   } else {
-    const next = query(booksRef, startAfter(pageRef), limit(8));
+    const next = query(booksRef, startAfter(pageRef), limit(16));
     const newDocs = await getDocs(next);
     newDocs.forEach((doc) => {
       booksData.push(doc.data());
@@ -227,13 +219,33 @@ export const emailSignUp = async (
       finish: [],
     };
     await setDoc(doc(db, "members", user.uid), userData);
+    Swal.fire({
+      icon: "success",
+      title: "註冊成功！",
+      timer: 1000,
+      showConfirmButton: false,
+    });
+
     return userData;
   } catch (error) {
     if (error) {
       const errorMessage = (error as Error).message;
-      errorMessage == "Firebase: Error (auth/email-already-in-use)." &&
-        alert("已有帳號，請直接登入。");
-      console.log(errorMessage);
+      if (errorMessage == "Firebase: Error (auth/email-already-in-use).") {
+        Swal.fire({
+          title: "已有帳號，請直接登入。",
+          icon: "warning",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+      } else if (errorMessage === "Firebase: Error (auth/invalid-email).") {
+        Swal.fire({
+          title: "Email 格式錯誤",
+          icon: "warning",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+      } else {
+      }
     }
   }
 };
@@ -248,21 +260,33 @@ export const emailSignIn = async (email: string, password: string) => {
     const user = userCredential.user;
   } catch (error) {
     const errorMessage = (error as Error).message;
-    console.log(errorMessage);
+
     if (errorMessage === "Firebase: Error (auth/wrong-password).") {
-      alert("密碼錯誤請重新輸入。");
-    }
-    if (errorMessage === "Firebase: Error (auth/user-not-found).") {
-      alert("尚未有帳號，歡迎註冊喔！");
+      Swal.fire({
+        title: "帳號或密碼錯誤請重新輸入。",
+        icon: "warning",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+    } else if (errorMessage === "Firebase: Error (auth/user-not-found).") {
+      Swal.fire({
+        title: "帳號或密碼錯誤請重新輸入。",
+        icon: "warning",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+    } else if (errorMessage === "Firebase: Error (auth/invalid-email).") {
+      Swal.fire({
+        title: "請輸入正確 Email 格式",
+        icon: "warning",
+      });
     }
   }
 };
 
 export const signout = () => {
   signOut(auth)
-    .then(() => {
-      console.log("Sign-out successful.");
-    })
+    .then(() => {})
     .catch((error) => {});
 };
 
@@ -314,7 +338,12 @@ export const getMemberReviews = async (uid: string, isbn: string) => {
 
 export const bookRating = async (uid: string, isbn: string, rating: number) => {
   if (rating === 0) {
-    alert("您尚未評價喔！");
+    Swal.fire({
+      title: "請先留下 ★ 評價喔！",
+      icon: "warning",
+      timer: 1000,
+      showConfirmButton: false,
+    });
     return;
   }
   const docData = await getDoc(doc(db, "books", isbn));
@@ -405,11 +434,12 @@ export const addBookReview = async (
   const bookData = docData.data();
   const memberReviewData = (await getMemberReviews(uid, isbn)) as BookReview;
   if (!memberReviewData) {
-    alert("請先留下評價喔！");
-    return;
-  }
-  if (!title || !content) {
-    alert("請補充內容");
+    Swal.fire({
+      title: "請先留下 ★ 評價喔！",
+      icon: "warning",
+      timer: 1000,
+      showConfirmButton: false,
+    });
     return;
   }
   if (memberReviewData && bookData) {
@@ -420,7 +450,12 @@ export const addBookReview = async (
       newReviewData
     );
     await setDoc(doc(db, "books", bookData.isbn), { ...bookData });
-  } else {
+    Swal.fire({
+      title: "感謝您的評論！",
+      icon: "success",
+      timer: 1000,
+      showConfirmButton: false,
+    });
   }
 };
 
@@ -470,7 +505,12 @@ export const sentSubReview = async (
   uid: string
 ) => {
   if (input.trim().length === 0) {
-    alert("請輸入內容");
+    Swal.fire({
+      title: "請先留下 ★ 評價喔！",
+      icon: "warning",
+      timer: 1000,
+      showConfirmButton: false,
+    });
     return;
   }
   const newSubReviewRef = doc(
@@ -545,7 +585,6 @@ export const likeSubReview = async (
 };
 
 export const upperReview = async (uid: string, review: BookReview) => {
-  console.log("UPPER!");
   const reviewId = review.reviewId;
   const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
   const reviewData = reviewDoc.data() as BookReview;
@@ -566,7 +605,6 @@ export const upperReview = async (uid: string, review: BookReview) => {
     ));
 };
 export const lowerReview = async (uid: string, review: BookReview) => {
-  console.log("LOWER!");
   const reviewId = review.reviewId;
   const reviewDoc = await getDoc(doc(db, "book_reviews", reviewId!));
   const reviewData = reviewDoc.data() as BookReview;
@@ -604,7 +642,12 @@ export const sentFriendRequest = async (
   );
 
   if (requestDataArr[0] && requestDataArr[0].state === "pending") {
-    alert("請等待對方接受。");
+    Swal.fire({
+      title: "請等待對方回應喔",
+      icon: "warning",
+      timer: 1000,
+      showConfirmButton: false,
+    });
   } else if (
     querySnapshot.empty ||
     (requestDataArr[0] && requestDataArr[0].state === "reject")
@@ -618,7 +661,12 @@ export const sentFriendRequest = async (
       doc(db, "friends_requests", invitorUid + receiverUid),
       request
     );
-    alert("成功送出邀請。");
+    Swal.fire({
+      title: "成功送出邀請",
+      icon: "success",
+      timer: 1000,
+      showConfirmButton: false,
+    });
   }
 };
 
@@ -677,7 +725,7 @@ export const sentMessage = async (
 };
 
 export const getBooks = async () => {
-  const books = query(booksRef, limit(30));
+  const books = query(booksRef, orderBy("ratingCount", "desc"), limit(30));
   const booksSnapshots = await getDocs(books);
   return booksSnapshots.docs.map((doc) => doc.data());
 };
@@ -746,7 +794,7 @@ export const sentNotice = async (
   input: string,
   uid: string
 ) => {
-  const url = `http://localhost:3000/book/id:${review.booksIsbn}`;
+  const url = `/book/id:${review.booksIsbn}`;
   const reciver = review.memberId;
   if (reciver === uid) return;
   const noticeData = {
@@ -792,15 +840,8 @@ export const friendStateChecker = async (memberuid: string, myuid: string) => {
 };
 
 export const getRandomBooks = async () => {
-  const tagarr = [
-    "ratingCount",
-    "reviewCount",
-    "publisher",
-    "publishedDate",
-    "isbn",
-    "subtitle",
-  ];
-  const number = Math.floor(Math.random() * (tagarr.length - 1));
+  const tagarr = ["ratingCount", "raviewCount", "isbn", "subtitle"];
+  const number = Math.floor(Math.random() * tagarr.length);
   const booksQuery = query(booksRef, orderBy(tagarr[number]), limit(4));
   const booksData = await getDocs(booksQuery);
   const books = booksData.docs.map((book) => book.data());
@@ -835,7 +876,7 @@ export const getFirstReview = async (bookIsbn: string) => {
 };
 
 export const getFirstBooks = async () => {
-  const documentSnapshots = await getDocs(query(booksRef, limit(8)));
+  const documentSnapshots = await getDocs(query(booksRef, limit(16)));
   const booksData = documentSnapshots.docs.map((doc) => doc.data());
   return { booksData };
 };

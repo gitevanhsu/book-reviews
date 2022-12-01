@@ -3,17 +3,16 @@ import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
 import {
-  emailSignUp,
   emailSignIn,
   signout,
   BookInfo,
   getBookDatas,
   removeBook,
-  db,
   MemberInfo,
   updateBooks,
   getMemberData,
   editMemberInfo,
+  emailSignUp,
 } from "../../utils/firebaseFuncs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -28,8 +27,6 @@ import {
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
-import SignupComponent from "../../components/signup";
-import Portal from "../../components/portal";
 import male from "/public/img/reading-male.png";
 import male2 from "/public/img/reading-male2.png";
 import female from "/public/img/reading-female.png";
@@ -41,6 +38,7 @@ import signOut from "/public/img/sign-out.svg";
 import people from "/public/img/people.svg";
 import produce from "immer";
 import library from "/public/img/library.jpg";
+import Swal from "sweetalert2";
 
 const InputTitle = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
@@ -169,53 +167,352 @@ const QuoteImg = styled(Image)`
   height: auto;
 `;
 
+const SignUpArea = styled.div`
+  margin: 0 auto;
+  text-align: center;
+  padding: 10px 20px;
+  z-index: 6;
+  width: 480px;
+  background-color: ${(props) => props.theme.white};
+  @media screen and (max-width: 576px) {
+    width: 280px;
+  }
+`;
+const SignupInputbox = styled.div`
+  margin: 10px 0;
+`;
+const SignupInputTitle = styled.h4`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+  }
+`;
+const SignupInputContent = styled.input`
+  padding: 5px 10px;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.white};
+  @media screen (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz}px;
+    margin-top: 5px;
+  }
+  &[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  &[type="radio"] + img {
+    cursor: pointer;
+    outline: 2px solid ${(props) => props.theme.grey};
+    margin: 10px 10px;
+  }
+  &[type="radio"]:checked + img {
+    outline: 2px solid ${(props) => props.theme.red};
+  }
+`;
+const SignupInputTextArea = styled.textarea`
+  font-family: Arial;
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.white};
+  padding: 5px 10px;
+  width: 100%;
+  height: 80px;
+  margin-top: 10px;
+  @media screen (max-width: 576px) {
+    height: 50px;
+  }
+`;
+const SignupSubmitButton = styled.button`
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: ${(props) => props.theme.yellow};
+  border-radius: 20px;
+  & + & {
+    margin-left: 10px;
+  }
+  @media screen (max-width: 576px) {
+    padding: 5px 10px;
+  }
+`;
+const SignupLabel = styled.label``;
+const SignupUserAvatar = styled(Image)`
+  border-radius: 50%;
+`;
+function SignupComponent({ setSignUp }: { setSignUp: Function }) {
+  const signupNameRef = useRef<HTMLInputElement>(null);
+  const signupEmailRef = useRef<HTMLInputElement>(null);
+  const signPasswordRef = useRef<HTMLInputElement>(null);
+  const signupIntroRef = useRef<HTMLTextAreaElement>(null);
+  const [avatar, setAvatar] = useState("books");
+
+  const isRadioSelect = (value: string): boolean => avatar === value;
+  const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
+    setAvatar(e.currentTarget.value);
+  const signup = () => {
+    if (
+      signupNameRef.current &&
+      signupEmailRef.current &&
+      signPasswordRef.current &&
+      signupIntroRef.current
+    ) {
+      const name = signupNameRef.current.value;
+      const email = signupEmailRef.current.value;
+      const password = signPasswordRef.current.value;
+      const intro = signupIntroRef.current.value;
+      if (
+        password.trim().length < 6 ||
+        name.trim().length === 0 ||
+        email.trim().length === 0
+      ) {
+        Swal.fire({
+          icon: "warning",
+          title: "請輸入正確資訊",
+          text: "密碼至少六個字喔",
+        });
+      } else if (avatar === "books") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "male") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male.png?alt=media&token=4966e0d4-b850-4c33-a3eb-88f2a9d9238b";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "male2") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male2.png?alt=media&token=225beacb-0954-4f29-849e-1cdaa4fb359b";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "female") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female.png?alt=media&token=cd1fbeef-0d9e-4d34-9217-0c0921e24bd6";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "female2") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female2.png?alt=media&token=26bba03e-f92f-4068-b2ba-8dfc56313553";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "kid") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-kid.png?alt=media&token=6ad7ec20-5fc7-4076-8972-52ca4c6b3bfa";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "books") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        emailSignUp(name, email, password, intro, img);
+      }
+
+      signupNameRef.current.value = "";
+      signupEmailRef.current.value = "";
+      signPasswordRef.current.value = "";
+      signupIntroRef.current.value = "";
+    }
+  };
+
+  return (
+    <SignUpArea>
+      <SignupInputbox>
+        <SignupInputTitle>Name: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpName"
+          ref={signupNameRef}
+          type="text"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>Email: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpEmail"
+          ref={signupEmailRef}
+          type="email"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>Password: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpPassword"
+          ref={signPasswordRef}
+          type="password"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>自我介紹: </SignupInputTitle>
+        <SignupInputTextArea
+          key="signUpIntro"
+          ref={signupIntroRef}
+        ></SignupInputTextArea>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>選擇您喜歡的頭像</SignupInputTitle>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="male"
+            checked={isRadioSelect("male")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={male}
+            alt="maleAvatar"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="male2"
+            checked={isRadioSelect("male2")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={male2}
+            alt="maleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="female"
+            checked={isRadioSelect("female")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={female}
+            alt="femaleAvatar"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="female2"
+            checked={isRadioSelect("female2")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={female2}
+            alt="femaleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="kid"
+            checked={isRadioSelect("kid")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={kid}
+            alt="femaleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="books"
+            checked={isRadioSelect("books")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar src={books} alt="upload" width={50} height={50} />
+        </SignupLabel>
+      </SignupInputbox>
+      <SignupSubmitButton
+        onClick={() => {
+          signup();
+        }}
+      >
+        註冊
+      </SignupSubmitButton>
+      <SignupSubmitButton
+        onClick={() => {
+          setSignUp(false);
+        }}
+      >
+        關閉
+      </SignupSubmitButton>
+    </SignUpArea>
+  );
+}
+
 function SigninComponent() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [showSignup, setSignUp] = useState(false);
   const signin = () => {
-    if (emailRef.current && passwordRef.current) {
+    if (
+      emailRef.current &&
+      passwordRef.current &&
+      (emailRef.current.value.trim().length === 0 ||
+        passwordRef.current.value.trim().length < 6)
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "請輸入正確 email & password",
+        text: "密碼至少六個字喔",
+      });
+    } else if (emailRef.current && passwordRef.current) {
       const email = emailRef.current.value;
       const password = passwordRef.current.value;
 
       email && password && emailSignIn(email, password);
       emailRef.current.value = "";
       passwordRef.current.value = "";
+      Swal.fire({
+        icon: "success",
+        title: "登入成功！",
+        timer: 1000,
+        showConfirmButton: false,
+      });
     }
   };
   return (
     <>
-      <SignArea>
-        <Inputbox>
-          <InputTitle>Email: </InputTitle>
-          <InputContent
-            key="signInEmail"
-            ref={emailRef}
-            type="email"
-          ></InputContent>
-        </Inputbox>
-        <Inputbox>
-          <InputTitle>Password: </InputTitle>
-          <InputContent
-            key="signInPassword"
-            ref={passwordRef}
-            type="password"
-          ></InputContent>
-        </Inputbox>
-      </SignArea>
-      <SignInBtnBox>
-        <SubmitButton onClick={signin}>登入</SubmitButton>
-        <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
-      </SignInBtnBox>
+      {showSignup ? (
+        <SignupComponent setSignUp={setSignUp} />
+      ) : (
+        <>
+          <SignArea>
+            <Inputbox>
+              <InputTitle>Email: </InputTitle>
+              <InputContent
+                key="signInEmail"
+                ref={emailRef}
+                type="email"
+              ></InputContent>
+            </Inputbox>
+            <Inputbox>
+              <InputTitle>Password: </InputTitle>
+              <InputContent
+                key="signInPassword"
+                ref={passwordRef}
+                type="password"
+              ></InputContent>
+            </Inputbox>
+          </SignArea>
+          <SignInBtnBox>
+            <SubmitButton onClick={signin}>登入</SubmitButton>
+            <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
+          </SignInBtnBox>
+        </>
+      )}
       <QuoteArea>
         <QuoteImg src={library} alt="Library" priority />
       </QuoteArea>
-      {showSignup && (
-        <Portal>
-          <Overlay onClick={() => setSignUp(false)} />
-          <SignupComponent setSignUp={setSignUp} />
-        </Portal>
-      )}
     </>
   );
 }
@@ -235,7 +532,7 @@ const BookShelf = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: start;
-  height: 520px;
+  height: 500px;
   overflow: auto;
   ::-webkit-scrollbar {
     display: none;
@@ -247,23 +544,23 @@ const ShelfTitle = styled.h2`
   width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
+  background-color: #ecbe48;
   font-size: ${(props) => props.theme.fz * 1.5}px;
   letter-spacing: 2px;
   padding: 10px;
   z-index: 1;
-  box-shadow: 2px 0px 5px ${(props) => props.theme.black};
+  /* box-shadow: 2px 0px 5px ${(props) => props.theme.black}; */
 `;
 const Books = styled.div`
-  min-height: 450px;
+  min-height: 400px;
   padding: 15px 15px;
 `;
 const Book = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 5px double #875303;
-  padding-bottom: 1px;
+  border-bottom: 1px solid #efc991;
+  padding-bottom: 5px;
   margin-bottom: 10px;
   transition: 0.3s;
   &:hover {
@@ -277,6 +574,7 @@ const Book = styled.div`
 `;
 const BookImg = styled(Image)`
   box-shadow: 0px 0px 5px ${(props) => props.theme.black};
+  margin-right: 10px;
 `;
 const BookLink = styled(Link)`
   display: inline-block;
@@ -285,7 +583,7 @@ const BookTitle = styled.h3`
   font-size: ${(props) => props.theme.fz * 1.5}px;
 `;
 const BookData = styled.div`
-  margin: 0 10px;
+  /* margin: 0 10px; */
 `;
 const BookAuthor = styled.h4``;
 const NoimgTitle = styled.p`
@@ -318,6 +616,7 @@ const UserAvatar = styled(Image)`
   border-radius: 50%;
 `;
 const ProfilePage = styled.main`
+  overflow: hidden;
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 60px);
@@ -389,12 +688,15 @@ const EditButtonBox = styled.div`
 `;
 
 const UserDetail = styled.div`
-  margin: 0 auto;
+  width: 100%;
+  max-width: 500px;
+  margin-left: 40px;
 `;
 const UserName = styled.h2`
   font-size: ${(props) => props.theme.fz * 2}px;
   margin-bottom: 10px;
   letter-spacing: 2px;
+  word-wrap: break-word;
   @media screen and (max-width: 480px) {
     font-size: ${(props) => props.theme.fz * 1.5}px;
   }
@@ -404,6 +706,7 @@ const UserIntro = styled.p`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   letter-spacing: 2px;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
   width: 100%;
   border-top: 1px solid ${(props) => props.theme.grey};
   margin-top: 10px;
@@ -419,7 +722,7 @@ const UserIntro = styled.p`
 `;
 const Label = styled.label``;
 const ButtonBox = styled.div`
-  margin-left: auto;
+  margin-left: 50px;
   @media screen and (max-width: 768px) {
     margin-top: 20px;
     margin-left: 0;
@@ -432,8 +735,9 @@ const BtnImg = styled(Image)`
 const UserInfoBox = styled.div`
   position: relative;
   margin: 0 auto;
-  width: 60%;
+  width: 90%;
   display: flex;
+
   margin-bottom: 50px;
   align-items: center;
   @media screen and (max-width: 992px) {
@@ -594,7 +898,20 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <RemoveBtn
+                    src={x}
+                    alt="delete"
+                    width={20}
+                    height={20}
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setBooks((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "books");
+                      }
+                    }}
+                  />
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -651,7 +968,20 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <RemoveBtn
+                    src={x}
+                    alt="delete"
+                    width={20}
+                    height={20}
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setReading((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "reading");
+                      }
+                    }}
+                  />
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -708,7 +1038,20 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <RemoveBtn
+                    src={x}
+                    alt="delete"
+                    width={20}
+                    height={20}
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setFinish((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "finish");
+                      }
+                    }}
+                  />
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -752,7 +1095,7 @@ function BookShelfComponent() {
     const getBooks = async () => {
       if (userInfo.uid) {
         const memberData = (await getMemberData(userInfo.uid)) as MemberInfo;
-        if (memberData.books && memberData.reading && memberData.finish) {
+        if (memberData?.books && memberData?.reading && memberData?.finish) {
           const booksDatas = await getBookDatas(memberData.books);
           booksDatas.length && setBooks(booksDatas as BookInfo[]);
           const readingDatas = await getBookDatas(memberData.reading);
@@ -1106,10 +1449,34 @@ export default function Profile() {
                 </SubmitButton>
                 <SubmitButton
                   onClick={() => {
-                    signout();
-                    dispatch(
-                      userSignOut({ uid: "", name: "", email: "", intro: "" })
-                    );
+                    Swal.fire({
+                      title: "確定登出嗎？",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#3085d6",
+                      cancelButtonColor: "#d33",
+                      confirmButtonText: "確認登出",
+                      cancelButtonText: "取消",
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        Swal.fire({
+                          icon: "success",
+                          title: "登出成功！",
+                          text: "成功刪除評價 / 評論。",
+                          showConfirmButton: false,
+                          timer: 1500,
+                        });
+                        signout();
+                        dispatch(
+                          userSignOut({
+                            uid: "",
+                            name: "",
+                            email: "",
+                            intro: "",
+                          })
+                        );
+                      }
+                    });
                   }}
                 >
                   <BtnImg src={signOut} alt="sign out" width={20} height={20} />
@@ -1201,7 +1568,7 @@ export default function Profile() {
                         setEdit(false);
                       }}
                     >
-                      Cancle
+                      Cancel
                     </SubmitButton>
                     <SubmitButton
                       onClick={() => {

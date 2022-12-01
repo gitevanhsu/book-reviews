@@ -37,6 +37,9 @@ import liked from "../../public/img/liked.svg";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.bubble.css";
 import parse from "html-react-parser";
+import Swal from "sweetalert2";
+import { useRouter } from "next/router";
+
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 interface RatingProps {
   index: number;
@@ -98,8 +101,11 @@ const RemoveRatingButton = styled.button`
   margin: 0 30px;
   padding: 5px 10px;
   border-radius: 5px;
-  color: ${(props) => props.theme.white};
-  background-color: ${(props) => props.theme.red};
+  background-color: ${(props) => props.theme.yellow};
+  &:hover {
+    color: ${(props) => props.theme.white};
+    background-color: ${(props) => props.theme.red};
+  }
   & + & {
     margin: 0px;
   }
@@ -115,10 +121,14 @@ const ReviewMemberName = styled.h3`
   font-weight: 700;
   color: ${(props) => props.theme.black};
 `;
-const SUbReviewMemberName = styled(ReviewMemberName)`
+const SubReviewMemberName = styled(ReviewMemberName)`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
   display: inline-block;
   margin-left: 10px;
   min-width: 50px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.5}px;
+  }
 `;
 
 const SignMessage = styled.h2`
@@ -233,7 +243,11 @@ const SubReviewLikes = styled.div`
   margin-left: 35px;
 `;
 const SubReviewContent = styled.div`
+  font-size: ${(props) => props.theme.fz * 1.5}px;
   margin: 10px 36px;
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz * 1.2}px;
+  }
 `;
 const SubReviewTime = styled.div`
   font-size: 12px;
@@ -296,7 +310,6 @@ const LeaveReviewContentTitle = styled(ReactQuill)`
   border-radius: 5px;
 `;
 const LeaveReviewTextContent = styled(ReactQuill)`
-  padding: 4px 10px;
   width: 100%;
   height: 100px;
   border: 1px solid ${(props) => props.theme.black};
@@ -326,46 +339,15 @@ const SubmitReviewBtn = styled.button`
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.greyBlue};
 `;
-const RemoveOverlay = styled.div`
-  background-color: #000;
-  opacity: 0.5;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 5;
-`;
-const RemoveAlertBox = styled.div`
-  z-index: 5;
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translatex(-50%);
-  width: 300px;
-  height: 200px;
-  background-color: ${(props) => props.theme.white};
-  border-radius: 20px;
-  text-align: center;
-`;
-const RemoveAlert = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  margin: 50px 0;
-`;
-const RemoveBtn = styled.button`
-  padding: 5px 10px;
-  border: 1px solid ${(props) => props.theme.grey};
-  border-radius: 10px;
-  background-color: ${(props) => props.theme.yellow};
-  cursor: pointer;
-  &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
-  }
-  & + & {
+
+const ToLogin = styled(Link)`
+  margin-left: 50px;
+  @media screen and (max-width: 576px) {
     margin-left: 30px;
-    &:hover {
-      background-color: ${(props) => props.theme.red};
-    }
+  }
+  & > ${SubmitReviewBtn} {
+    background-color: transparent;
+    border: none;
   }
 `;
 
@@ -379,7 +361,6 @@ export function LeaveRatingComponent({
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
-  const [deleteAlert, setDeleteAlert] = useState(false);
 
   useEffect(() => {
     memberReview?.rating && setRating(+memberReview.rating);
@@ -408,50 +389,44 @@ export function LeaveRatingComponent({
             </LeaveRatingButton>
           );
         })}
-        {deleteAlert && (
-          <>
-            <RemoveOverlay
-              onClick={() => {
-                setDeleteAlert(false);
-              }}
-            />
-            <RemoveAlertBox>
-              <RemoveAlert>評價跟留言會一起被刪除喔！</RemoveAlert>
-              <RemoveBtn
-                onClick={() => {
-                  setDeleteAlert(false);
-                }}
-              >
-                取消
-              </RemoveBtn>
-              <RemoveBtn
-                onClick={() => {
-                  if (userInfo.uid) {
-                    removeBookRating(
-                      userInfo.uid,
-                      bookIsbn,
-                      rating,
-                      memberReview
-                    );
-                    setRating(0);
-                    setHover(0);
-                  }
-                  setDeleteAlert(false);
-                }}
-              >
-                刪除
-              </RemoveBtn>
-            </RemoveAlertBox>
-          </>
-        )}
+
         {rating > 0 && (
           <>
             <RemoveRatingButton
               onClick={() => {
-                setDeleteAlert(true);
+                Swal.fire({
+                  title: "確定要刪除嗎？",
+                  text: "評價 / 評論會一起刪除喔！",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#3085d6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "確認刪除",
+                  cancelButtonText: "取消",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "刪除成功！",
+                      text: "成功刪除評價 / 評論。",
+                      showConfirmButton: false,
+                      timer: 1500,
+                    });
+                    if (userInfo.uid) {
+                      removeBookRating(
+                        userInfo.uid,
+                        bookIsbn,
+                        rating,
+                        memberReview
+                      );
+                      setRating(0);
+                      setHover(0);
+                    }
+                  }
+                });
               }}
             >
-              Remove
+              刪除評論
             </RemoveRatingButton>
           </>
         )}
@@ -489,8 +464,25 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
       </LeaveInputBox>
       <SubmitReviewBtn
         onClick={() => {
-          if (titlevalue && contentvalue && userInfo.uid)
-            addBookReview(userInfo.uid, bookIsbn, titlevalue, contentvalue);
+          if (
+            titlevalue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            contentvalue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            userInfo.uid
+          ) {
+            addBookReview(
+              userInfo.uid,
+              bookIsbn,
+              titlevalue.trim(),
+              contentvalue.trim()
+            );
+          } else {
+            Swal.fire({
+              title: "請勿留下空白內容！",
+              icon: "warning",
+              timer: 1000,
+              showConfirmButton: false,
+            });
+          }
         }}
       >
         Submit
@@ -584,9 +576,9 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                     width={25}
                     height={25}
                   />
-                  <SUbReviewMemberName>
+                  <SubReviewMemberName>
                     {subreview.memberData?.name}
-                  </SUbReviewMemberName>
+                  </SubReviewMemberName>
                 </Gotomember>
                 <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
                 <SubReviewContent>{parse(subreview.content!)}</SubReviewContent>
@@ -608,7 +600,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                         height={20}
                       />
                     ) : (
-                      <Image src={liked} alt="likeBtn" width={20} height={20} />
+                      <Image src={like} alt="likeBtn" width={20} height={20} />
                     )}
                   </LikeButton>
                 </SubReviewLikes>
@@ -616,7 +608,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
             );
           })}
       </SubReviewsBox>
-      {userInfo.uid && (
+      {userInfo.uid ? (
         <>
           <SubReviewInput
             theme="bubble"
@@ -626,16 +618,36 @@ function SubReviewComponent({ review }: { review: BookReview }) {
           />
           <SubmitReviewBtn
             onClick={() => {
-              if (reviewValue && userInfo.uid) {
+              if (
+                reviewValue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+                userInfo.uid
+              ) {
                 sentSubReview(review, reviewValue, userInfo.uid);
                 sentNotice(review, reviewValue, userInfo.uid);
                 setReviewValue("");
+                Swal.fire({
+                  title: "感謝您的回應",
+                  icon: "success",
+                  timer: 1000,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "請勿留下空白內容！",
+                  icon: "warning",
+                  timer: 1000,
+                  showConfirmButton: false,
+                });
               }
             }}
           >
             Submit
           </SubmitReviewBtn>
         </>
+      ) : (
+        <ToLogin href="/profile">
+          <SubmitReviewBtn>趕快登入一起討論吧！</SubmitReviewBtn>
+        </ToLogin>
       )}
     </>
   ) : (
@@ -644,7 +656,9 @@ function SubReviewComponent({ review }: { review: BookReview }) {
         setShowSubReviews(true);
       }}
     >
-      查看其他{review.subReviewsNumber}則回應
+      {review.subReviewsNumber === 0
+        ? "留下您的回應"
+        : `查看其他${review.subReviewsNumber}則回應`}
     </ShowSubReviewButton>
   );
 }
@@ -671,9 +685,30 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
       </MemberReviewContentBox>
       <EditReviewButton
         onClick={() => {
-          titlevalue &&
-            contentvalue &&
-            editReview(memberReview, titlevalue, contentvalue);
+          if (
+            memberReview.title === titlevalue &&
+            contentvalue === memberReview.content
+          ) {
+            setIsEdit(false);
+          } else if (
+            titlevalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            contentvalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
+          ) {
+            editReview(memberReview, titlevalue!, contentvalue!);
+            Swal.fire({
+              title: "感謝您的評論",
+              icon: "success",
+              timer: 1000,
+              showConfirmButton: false,
+            });
+          } else {
+            Swal.fire({
+              title: "請勿留下空白內容！",
+              icon: "warning",
+              timer: 1000,
+              showConfirmButton: false,
+            });
+          }
         }}
       >
         Submit
@@ -683,7 +718,7 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
           setIsEdit(false);
         }}
       >
-        Cancle
+        Cancel
       </EditReviewButton>
     </MemberReviewBox>
   ) : (
@@ -747,10 +782,11 @@ const BookReviewMemberImg = styled(Image)`
 const BookReviewMemberLink = styled(Link)`
   padding: 0 10px;
 `;
-const BookReviewMemberName = styled.p`
+const BookReviewMemberName = styled.h4`
   display: inline-block;
   margin-right: 20px;
   font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-weight: 600;
   @media screen and (max-width: 480px) {
     font-size: ${(props) => props.theme.fz * 1.2}px;
   }
@@ -804,15 +840,15 @@ const BookReviewRatingWrap = styled.div`
   align-items: center;
 `;
 const BookReviewRatingUpper = styled.div`
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  clip-path: polygon(50% 40%, 0% 100%, 100% 100%);
   cursor: pointer;
   display: inline-block;
   height: 30px;
-  width: 30px;
+  width: 40px;
   background-color: ${(props) => props.theme.greyBlue};
 `;
 const BookReviewRatingLower = styled(BookReviewRatingUpper)`
-  clip-path: polygon(0 0, 50% 100%, 100% 0);
+  clip-path: polygon(0 0, 50% 60%, 100% 0);
 `;
 const BookReviewRatingNumber = styled.p`
   padding: 10px 0;
@@ -835,7 +871,7 @@ const SeeMoreBtn = styled.button`
 function ReviewComponent({ review, year, month, date }: ReviewProps) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showMore, setShowMore] = useState(false);
-
+  const router = useRouter();
   return (
     <>
       <BookReviewWrap key={review.reviewId}>
@@ -843,10 +879,32 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
           <BookReviewRatingWrap>
             <BookReviewRatingUpper
               onClick={() => {
-                if (userInfo.uid && review) {
+                if (userInfo && !userInfo.isSignIn) {
+                  Swal.fire({
+                    icon: "info",
+                    title: "請先登入喔！",
+                    confirmButtonText: "前往登入",
+                  }).then((result) => {
+                    result.isConfirmed && router.push("/profile");
+                  });
+                } else if (
+                  review.liked?.includes(userInfo.uid!) ||
+                  review.disliked?.includes(userInfo.uid!)
+                ) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "已經評分過了喔！",
+                    showConfirmButton: false,
+                    timer: 1000,
+                  });
+                } else if (userInfo.uid && review) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "成功評分！",
+                    showConfirmButton: false,
+                    timer: 1000,
+                  });
                   upperReview(userInfo.uid, review);
-                } else {
-                  alert("請先登入喔");
                 }
               }}
             />
@@ -855,10 +913,32 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
             </BookReviewRatingNumber>
             <BookReviewRatingLower
               onClick={() => {
-                if (userInfo.uid && review) {
+                if (userInfo && !userInfo.isSignIn) {
+                  Swal.fire({
+                    icon: "info",
+                    title: "請先登入喔！",
+                    confirmButtonText: "前往登入",
+                  }).then((result) => {
+                    result.isConfirmed && router.push("/profile");
+                  });
+                } else if (
+                  review.liked?.includes(userInfo.uid!) ||
+                  review.disliked?.includes(userInfo.uid!)
+                ) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "已經評分過了喔！",
+                    showConfirmButton: false,
+                    timer: 1000,
+                  });
+                } else if (userInfo.uid && review) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "成功評分！",
+                    showConfirmButton: false,
+                    timer: 1000,
+                  });
                   lowerReview(userInfo.uid, review);
-                } else {
-                  alert("請先登入喔");
                 }
               }}
             />

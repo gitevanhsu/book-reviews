@@ -23,11 +23,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { BookComponent } from "../book/[id]";
 import ChatRoomComponent from "../../components/group_chat";
-import LinkImg from "../../public/img/link.svg";
+import LinkImg from "../../public/img/open-book.png";
 import videoChat from "../../public/img/video-call.svg";
 import microPhone from "../../public/img/microphone.svg";
 import video from "../../public/img/video.svg";
-import phone from "../../public/img/phone.svg";
+import phone from "../../public/img/hangup.png";
 import {
   getDatabase,
   ref,
@@ -40,6 +40,7 @@ import {
 import { rtcFireSession, RTCFireSession } from "../../utils/service";
 import { GetServerSideProps } from "next/types";
 import { ParsedUrlQuery } from "querystring";
+import Swal from "sweetalert2";
 
 const GroupPage = styled.div`
   width: 100%;
@@ -103,14 +104,12 @@ const VideoAndChatBox = styled.div`
 // const HangupButton = styled(StartButton)``;
 
 // const RoomNumberInput = styled.input``;
-
-export default function Group({
-  firstData,
-  firstChat,
-}: {
+interface GroupProps {
   firstData: BookInfo;
   firstChat: string;
-}) {
+}
+
+function Group({ firstData, firstChat }: GroupProps) {
   // const userInfo = useSelector((state: RootState) => state.userInfo);
 
   // const [showVideo, setShoeVideo] = useState<boolean>(false);
@@ -302,7 +301,7 @@ export default function Group({
         <BookComponent data={firstData} />
         <GoToReviewBox href={`/book/id:${firstData.isbn}`}>
           <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
-          <GoToReview>Review Page</GoToReview>
+          <GoToReview>返回評論頁面</GoToReview>
         </GoToReviewBox>
         {/* <VideoBox>
         {showVideo && (
@@ -465,11 +464,8 @@ const CameraControl = styled(SoundControl)<CameraProps>`
 `;
 const PhoneControl = styled(SoundControl)`
   margin-right: auto;
+  background-color: ${(props) => props.theme.red};
   background-image: url(${phone.src});
-  &::after {
-    content: "";
-    transform: rotate(-45deg) translate(0%, -40%);
-  }
 `;
 const VideoChatName = styled.h4`
   font-size: ${(props) => props.theme.fz * 1.5}px;
@@ -543,6 +539,7 @@ function LiveChat({ id }: { id: string }) {
 
   const [sound, setSound] = useState(false);
   const [camera, setCamera] = useState(false);
+  const router = useRouter();
 
   const updatePeers = async (
     participants: string[],
@@ -629,8 +626,19 @@ function LiveChat({ id }: { id: string }) {
             <VideoControls>
               <PhoneControl
                 onClick={() => {
-                  setOpenChat(false);
-                  hanUp();
+                  Swal.fire({
+                    icon: "warning",
+                    title: "確定要結束通訊嗎？",
+                    showCancelButton: true,
+                    showCloseButton: true,
+                    confirmButtonText: "確定",
+                    cancelButtonText: "取消",
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      setOpenChat(false);
+                      hanUp();
+                    }
+                  });
                 }}
               />
               <SoundControl
@@ -663,10 +671,20 @@ function LiveChat({ id }: { id: string }) {
           />
           <OpenChatBTN
             onClick={() => {
-              setOpenChat(true);
-              setupVideo();
-              setSound(false);
-              setCamera(false);
+              if (!userInfo.isSignIn) {
+                Swal.fire({
+                  icon: "info",
+                  title: "請先登入喔！",
+                  confirmButtonText: "前往登入",
+                }).then((result) => {
+                  result.isConfirmed && router.push("/profile");
+                });
+              } else {
+                setOpenChat(true);
+                setupVideo();
+                setSound(false);
+                setCamera(false);
+              }
             }}
           >
             OPEN!
@@ -677,12 +695,17 @@ function LiveChat({ id }: { id: string }) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const url = (params as ParsedUrlQuery).id as string;
-  const bookIsbn = url.split("id:")[1];
-  const firstData = await getFirstBook(bookIsbn);
-  const firstChat = await getFirstChat(bookIsbn);
-  return {
-    props: { firstData, firstChat: JSON.stringify(firstChat) },
-  };
-};
+import { withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
+
+export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({})(
+  async ({ AuthUser, params }) => {
+    const url = (params as ParsedUrlQuery).id as string;
+    const bookIsbn = url.split("id:")[1];
+    const firstData = await getFirstBook(bookIsbn);
+    const firstChat = await getFirstChat(bookIsbn);
+    return {
+      props: { firstData, firstChat: JSON.stringify(firstChat) },
+    };
+  }
+);
+export default withAuthUser<GroupProps>()(Group);

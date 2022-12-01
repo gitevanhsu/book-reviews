@@ -134,7 +134,12 @@ export default function FriendsListComponent({
           ))}
         </>
       ) : (
-        ""
+        <>
+          <FriendTitle>FRIENDS</FriendTitle>
+          <Friend>
+            <FriendName>去討論區認識新朋友吧</FriendName>
+          </Friend>
+        </>
       )}
       <CloseBtn
         onClick={() => {

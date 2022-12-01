@@ -27,6 +27,7 @@ import rejectImg from "../../public/img/reject.svg";
 import linkImg from "../../public/img/new-link.svg";
 import menu from "../../public/img/user.png";
 import bell from "/public/img/bell.png";
+import Swal from "sweetalert2";
 
 const LogoImg = styled(Image)``;
 interface MesProps {
@@ -228,7 +229,11 @@ const ProfileUl = styled.ul`
   overflow: hidden;
 `;
 const ProfileLink = styled(Link)``;
-const ProfileLi = styled.li`
+
+interface ProfileLiProps {
+  nowpath?: boolean;
+}
+const ProfileLi = styled.li<ProfileLiProps>`
   padding: 0 10px;
   width: 100%;
   display: flex;
@@ -239,10 +244,12 @@ const ProfileLi = styled.li`
   font-size: ${(props) => props.theme.fz * 1.5}px;
   opacity: 0;
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
-
   transition: 0.3s;
   color: ${(props) => props.theme.black};
   border-top: 1px solid ${(props) => props.theme.greyGreen};
+  background-color: ${(props) =>
+    props.nowpath ? props.theme.yellow : "transparent"};
+
   &:hover {
     background-color: ${(props) => props.theme.yellow};
   }
@@ -286,7 +293,6 @@ function NoticeComponent() {
   const [notices, setNotice] = useState<NoticeData[]>([]);
   const [friendRequest, setFriendRequest] = useState<MemberInfo[]>([]);
   const [openMsg, setOpenMsg] = useState(false);
-
   useEffect(() => {
     let unsub1: Function;
     const getFriendRequest = async () => {
@@ -472,7 +478,7 @@ function NoticeComponent() {
               </NoticeBox>
             ) : (
               <NoticeBox isOpen={openMsg}>
-                <NoticeContent>目前沒有訊息喔！</NoticeContent>
+                <NoticeContent>目前沒有通知喔！</NoticeContent>
               </NoticeBox>
             )}
           </MesBox>
@@ -491,21 +497,45 @@ function MemberComponent() {
       <ProfileImgWrap>
         <ProfileImgImage src={menu} width={32} height={32} alt="MemberAvatar" />
         <ProfileUl>
-          <ProfileLi>
+          <ProfileLi nowpath={router.asPath === "/profile"}>
             <ProfileLink href="/profile">
-              {userInfo.isSignIn ? "Profile" : "SignIn"}
+              {userInfo.isSignIn ? "個人頁面" : "登入"}
             </ProfileLink>
           </ProfileLi>
           {userInfo.isSignIn && (
             <ProfileLi
               onClick={() => {
-                dispatch(
-                  userSignOut({ uid: "", name: "", email: "", intro: "" })
-                );
-                signout();
+                Swal.fire({
+                  title: "確定登出嗎？",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#3085d6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "確認登出",
+                  cancelButtonText: "取消",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "登出成功！",
+                      text: "成功刪除評價 / 評論。",
+                      showConfirmButton: false,
+                      timer: 1500,
+                    });
+                    signout();
+                    dispatch(
+                      userSignOut({
+                        uid: "",
+                        name: "",
+                        email: "",
+                        intro: "",
+                      })
+                    );
+                  }
+                });
               }}
             >
-              SignOut
+              登出
             </ProfileLi>
           )}
         </ProfileUl>
@@ -547,14 +577,19 @@ const MobileMenuBox = styled.div<MobileMenuBoxProps>`
   }
 `;
 const MobileMenuImg = styled(Image)``;
+interface MobileLiProps {
+  nowpath?: boolean;
+}
 
-const MobileLi = styled.li`
+const MobileLi = styled.li<MobileLiProps>`
   cursor: pointer;
   width: 100%;
   height: 50px;
   padding: 0 10px;
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
   font-size: ${(props) => props.theme.fz * 1.5}px;
+  background-color: ${(props) =>
+    props.nowpath ? props.theme.yellow : "transparent"};
   &:hover {
     background-color: ${(props) => props.theme.yellow};
   }
@@ -569,21 +604,18 @@ function MobileSlideComponent() {
   const router = useRouter();
 
   return (
-    <MobileMenuBox isSignin={userInfo.isSignIn ? "250px" : "200px"}>
+    <MobileMenuBox isSignin={userInfo.isSignIn ? "200px" : "150px"}>
       <MobileMenuImg src={menu} alt="mobile icon" width={32} height={32} />
       <MobileUl>
-        <MobileLi>
-          <PageLink href="/">Home</PageLink>
+        <MobileLi nowpath={router.asPath === "/"}>
+          <PageLink href="/">首頁</PageLink>
         </MobileLi>
-        <MobileLi>
-          <PageLink href="/books">Books</PageLink>
+        <MobileLi nowpath={router.asPath === "/books"}>
+          <PageLink href="/books">書籍</PageLink>
         </MobileLi>
-        <MobileLi>
-          <PageLink href="/search">Search</PageLink>
-        </MobileLi>
-        <MobileLi>
+        <MobileLi nowpath={router.asPath === "/profile"}>
           <PageLink href="/profile">
-            {userInfo.isSignIn ? "Profile" : "SignIn"}
+            {userInfo.isSignIn ? "個人頁面" : "登入"}
           </PageLink>
         </MobileLi>
         {userInfo.isSignIn && (
@@ -591,13 +623,37 @@ function MobileSlideComponent() {
             <PageLink
               href=""
               onClick={() => {
-                dispatch(
-                  userSignOut({ uid: "", name: "", email: "", intro: "" })
-                );
-                signout();
+                Swal.fire({
+                  title: "確定登出嗎？",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#3085d6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "確認登出",
+                  cancelButtonText: "取消",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "登出成功！",
+                      text: "成功刪除評價 / 評論。",
+                      showConfirmButton: false,
+                      timer: 1500,
+                    });
+                    signout();
+                    dispatch(
+                      userSignOut({
+                        uid: "",
+                        name: "",
+                        email: "",
+                        intro: "",
+                      })
+                    );
+                  }
+                });
               }}
             >
-              SignOut
+              登出
             </PageLink>
           </MobileLi>
         )}
@@ -632,13 +688,10 @@ export function HeaderComponent() {
       </Link>
       <Ul>
         <Li nowpath={path === "/"}>
-          <PageLink href="/">Home</PageLink>
+          <PageLink href="/">首頁</PageLink>
         </Li>
         <Li nowpath={path === "/books"}>
-          <PageLink href="/books">Books</PageLink>
-        </Li>
-        <Li nowpath={path === "/search"}>
-          <PageLink href="/search">Search</PageLink>
+          <PageLink href="/books">書籍</PageLink>
         </Li>
       </Ul>
       <MobileSlideComponent />

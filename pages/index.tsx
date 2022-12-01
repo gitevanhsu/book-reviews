@@ -121,6 +121,7 @@ const BookWarp = styled.div<PageProps>`
 `;
 const Book = styled.div`
   position: relative;
+  padding: 0 30px;
 `;
 const BookImg = styled(Image)`
   box-shadow: 5px 5px 5px ${(props) => props.theme.black};
@@ -274,7 +275,7 @@ export default function Home({ books }: HomeProps) {
       </HomeWelcome>
       <FeatureComponent />
       <HomeMain>
-        <PageTitle>Pick up the one you like!</PageTitle>
+        <PageTitle>好書推薦</PageTitle>
         <BooksWrap>
           <Buttonleft
             arrcolor={0 === page}

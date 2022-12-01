@@ -8,10 +8,8 @@ import {
   addToshelf,
   MemberInfo,
   getFirstBook,
-  getFirstChat,
   getFirstReview,
 } from "../../utils/firebaseFuncs";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
@@ -194,7 +192,7 @@ const AddToShelf = styled(InShelf)`
 `;
 const AddToShelfImg = styled(Image)`
   margin-left: 5px;
-  background-color: #ff7ffc;
+  background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
 `;
 const InShelfImg = styled(AddToShelfImg)`
@@ -257,6 +255,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
         )}
         {data.categories && data.categories?.length > 0 && (
           <SubItemBox>
+            <ItemContent>類別：</ItemContent>
             {data.categories?.map((category: string) => (
               <ItemContent key={category}>{category}</ItemContent>
             ))}
@@ -275,7 +274,7 @@ export function BookComponent({ data }: { data: BookInfo }) {
         )}
         {data.authors && (
           <ItemBox>
-            <ItemTitle>Author:</ItemTitle>
+            <ItemTitle>Author：</ItemTitle>
             {data.authors?.map((author: string) => (
               <ItemContent key={author}>{author}</ItemContent>
             ))}
@@ -320,14 +319,12 @@ export function BookComponent({ data }: { data: BookInfo }) {
     </BookBox>
   );
 }
-
-export default function Post({
-  firstData,
-  firstReview,
-}: {
+interface PostProps {
   firstData: BookInfo;
   firstReview: string;
-}) {
+}
+
+function Post({ firstData, firstReview }: PostProps) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [bookData, setBookData] = useState<BookInfo>(firstData);
   const [memberReviews, setMemberReviews] = useState<BookReview>({});
@@ -429,7 +426,16 @@ export default function Post({
     </BookPage>
   );
 }
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+
+import {
+  AuthAction,
+  withAuthUser,
+  withAuthUserTokenSSR,
+} from "next-firebase-auth";
+
+export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({
+  // whenUnauthed: AuthAction.REDIRECT_TO_LOGIN,
+})(async ({ AuthUser, params }) => {
   const url = (params as ParsedUrlQuery).id as string;
   const bookIsbn = url.split("id:")[1];
   const firstData = await getFirstBook(bookIsbn);
@@ -437,4 +443,5 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   return {
     props: { firstData, firstReview: JSON.stringify(firstReview) },
   };
-};
+});
+export default withAuthUser<PostProps>()(Post);
