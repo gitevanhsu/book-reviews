@@ -32,7 +32,7 @@ interface StarProps {
 const BookPage = styled.div`
   width: 100%;
   min-height: calc(100vh - 50px);
-  background-color: ${(props) => props.theme.lightWhite};
+  background-color: ${(props) => props.theme.grey};
   padding: 50px 30px;
 `;
 const BookPageWrap = styled.div`
@@ -88,6 +88,10 @@ const ItemTitle = styled.h2<TitleProps>`
     min-width: 70px;
   }
 `;
+const DesItemTitle = styled(ItemTitle)`
+  line-height: 30px;
+`;
+
 const ItemContent = styled.p<TitleProps>`
   line-height: ${(props) =>
     props.isTitle ? props.theme.fz * 3 : props.theme.fz * 1.5}px;
@@ -119,6 +123,9 @@ const SubItemBox = styled.div`
 
 const DeskDescript = styled(ItemContent)`
   display: block;
+  vertical-align: baseline;
+  font-size: ${(props) => props.theme.fz * 1.5}px;
+  line-height: 30px;
   @media screen and (max-width: 576px) {
     display: none;
   }
@@ -218,6 +225,7 @@ const SeeMoreBtn = styled.button`
 
 export function BookComponent({ data }: { data: BookInfo }) {
   const [showMore, setShowMore] = useState(false);
+
   return data ? (
     <BookBox>
       <BookImgBox>
@@ -286,28 +294,32 @@ export function BookComponent({ data }: { data: BookInfo }) {
         </ItemBox>
         {data.description && data.description.length > 0 && (
           <ItemBox>
-            <ItemTitle>Describe：</ItemTitle>
+            <DesItemTitle>Describe：</DesItemTitle>
             <DeskDescript>
               {showMore
                 ? data.description
                 : `${data.description.substring(0, 250)}......`}
-              <SeeMoreBtn
-                className="btn"
-                onClick={() => setShowMore(!showMore)}
-              >
-                {showMore ? "Show less" : "Show more"}
-              </SeeMoreBtn>
+              {data.description.length > 250 && (
+                <SeeMoreBtn
+                  className="btn"
+                  onClick={() => setShowMore(!showMore)}
+                >
+                  {showMore ? "Show less" : "Show more"}
+                </SeeMoreBtn>
+              )}
             </DeskDescript>
             <MobileDescript>
               {showMore
                 ? data.description
                 : `${data.description.substring(0, 150)}......`}
-              <SeeMoreBtn
-                className="btn"
-                onClick={() => setShowMore(!showMore)}
-              >
-                {showMore ? "Show less" : "Show more"}
-              </SeeMoreBtn>
+              {data.description.length > 150 && (
+                <SeeMoreBtn
+                  className="btn"
+                  onClick={() => setShowMore(!showMore)}
+                >
+                  {showMore ? "Show less" : "Show more"}
+                </SeeMoreBtn>
+              )}
             </MobileDescript>
           </ItemBox>
         )}

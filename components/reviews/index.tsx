@@ -764,7 +764,10 @@ const BookReviewHead = styled.div`
   display: flex;
   align-items: center;
 `;
-const BookReviewMemberWrap = styled.div``;
+const BookReviewMemberWrap = styled.div`
+  position: relative;
+  width: 100%;
+`;
 const BookReviewMemberImgWrap = styled.div``;
 const BookReviewMemberImg = styled(Image)`
   border-radius: 50%;
@@ -794,7 +797,6 @@ const BookReviewMemberName = styled.h4`
 const BookReviewMemberRate = styled.div`
   display: inline-block;
   font-size: ${(props) => props.theme.fz * 1.2}px;
-  margin-right: 20px;
   @media screen and (max-width: 480px) {
     font-size: ${(props) => props.theme.fz * 1}px;
   }
@@ -808,13 +810,20 @@ const BookReviewMemberRateStart = styled.span`
   }
 `;
 const BookReviewMemberDate = styled.div`
-  display: inline-block;
+  display: block;
+  width: 80px;
+  margin-left: auto;
+  font-size: ${(props) => props.theme.fz * 1.2}px;
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz * 1}px;
+    margin-left: 0;
+  }
 `;
 const BookReviewTitle = styled.div`
   font-size: ${(props) => props.theme.fz * 2}px;
   margin-top: 30px;
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz * 1.2}px;
   }
 `;
 interface BookReviewContentProps {
@@ -831,6 +840,12 @@ const BookReviewContent = styled.div<BookReviewContentProps>`
   }
   @media screen and (max-width: 480px) {
     font-size: ${(props) => props.theme.fz * 1}px;
+  }
+  & > p {
+    line-height: 25px;
+    @media screen and (max-width: 480px) {
+      line-height: 15px;
+    }
   }
 `;
 const BookReviewRatingWrap = styled.div`
@@ -984,13 +999,15 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
         <BookReviewContent showMore={showMore}>
           {parse(review.content!)}
         </BookReviewContent>
-        <SeeMoreBtn
-          onClick={() => {
-            setShowMore((prev) => !prev);
-          }}
-        >
-          {showMore ? "Show less" : "Show more"}
-        </SeeMoreBtn>
+        {review.content!.split("<p>").length > 5 && (
+          <SeeMoreBtn
+            onClick={() => {
+              setShowMore((prev) => !prev);
+            }}
+          >
+            {showMore ? "Show less" : "Show more"}
+          </SeeMoreBtn>
+        )}
         <SubReviewComponent review={review} />
       </BookReviewWrap>
     </>
