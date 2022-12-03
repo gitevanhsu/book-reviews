@@ -50,34 +50,34 @@ const Texts = styled.div`
   }
 `;
 const Quote = styled.q`
-  font-size: ${(props) => props.theme.fz * 3}px;
-  @media screen and (max-width: 992px) {
-    font-size: ${(props) => props.theme.fz * 3}px;
-  }
-  @media screen and (max-width: 768px) {
-    font-size: ${(props) => props.theme.fz * 3}px;
-  }
+  font-weight: 600;
+  font-size: ${(props) => props.theme.fz1};
+
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 2}px;
+    font-size: ${(props) => props.theme.fz2};
   }
 `;
 const Person = styled.p`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz2};
   margin-top: 30px;
   align-self: end;
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz3};
+  }
 `;
 
 const PageTitle = styled.h1`
-  font-size: ${(props) => props.theme.fz * 3}px;
+  font-size: ${(props) => props.theme.fz2};
   padding-bottom: 50px;
   text-align: center;
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 2}px;
+    font-size: ${(props) => props.theme.fz3};
   }
 `;
 const BooksWrap = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 0 10px;
 `;
 const Books = styled.div`
@@ -148,7 +148,8 @@ const Buttonleft = styled(ButtonRight)<ColorProps>`
   clip-path: polygon(67% 0, 0 50%, 67% 100%);
 `;
 const BookTitle = styled.h2`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz3};
+  font-weight: 600;
   white-space: pre-wrap;
   margin-top: 30px;
   margin-bottom: 10px;
@@ -158,14 +159,14 @@ const BookTitle = styled.h2`
 `;
 
 const BookAuthor = styled.p`
-  font-size: ${(props) => props.theme.fz * 1}px;
+  font-size: ${(props) => props.theme.fz4};
   white-space: pre-wrap;
   margin-bottom: 10px;
 `;
 const NoimgTitle = styled.h2`
   position: absolute;
   color: #fff;
-  font-size: ${(props) => props.theme.fz * 1}px;
+  font-size: ${(props) => props.theme.fz3};
   width: 100px;
   height: 150px;
   overflow: hidden;
@@ -209,13 +210,15 @@ const FeatureImg = styled(Image)`
   height: 60px;
 `;
 const FeatureTitle = styled.h2`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
   border-bottom: 4px solid ${(props) => props.theme.greyBlue};
-  margin: 50px 0 15px;
+  margin: 35px 0 15px;
   font-weight: 600;
 `;
 const FeatureContent = styled.p`
-  font-size: ${(props) => props.theme.fz * 1}px;
+  text-align: center;
+  line-height: 20px;
+  font-size: ${(props) => props.theme.fz4};
 `;
 
 function FeatureComponent() {
@@ -225,26 +228,38 @@ function FeatureComponent() {
         <FeatureBox>
           <FeatureImg src={books} alt="Books" />
           <FeatureTitle>各樣書籍</FeatureTitle>
-          <FeatureContent>種類多樣的書籍資料庫 ，遇見優質書籍。</FeatureContent>
+          <FeatureContent>
+            種類多樣的書籍資料庫
+            <br />
+            遇見優質書籍
+          </FeatureContent>
         </FeatureBox>
         <FeatureBox>
           <FeatureImg src={rating} alt="rating" />
           <FeatureTitle>優質評論</FeatureTitle>
           <FeatureContent>
-            按讚優質評論， 讓好的評論被更多人看到。
+            按讚優質評論
+            <br />
+            讓好的評論被更多人看到
           </FeatureContent>
         </FeatureBox>
         <FeatureBox>
           <FeatureImg src={bookshelf} alt="bookshelf" />
           <FeatureTitle>分享書櫃</FeatureTitle>
           <FeatureContent>
-            建立自己的書櫃，分享自己最喜歡的書籍。
+            建立自己的書櫃
+            <br />
+            分享自己最喜歡的書籍
           </FeatureContent>
         </FeatureBox>
         <FeatureBox>
           <FeatureImg src={friends} alt="friends" />
           <FeatureTitle>以書會友</FeatureTitle>
-          <FeatureContent>加入專屬討論區，認識志同道合的朋友。</FeatureContent>
+          <FeatureContent>
+            加入專屬討論區
+            <br />
+            認識志同道合的朋友
+          </FeatureContent>
         </FeatureBox>
       </FeatureWrap>
     </FeatureMain>

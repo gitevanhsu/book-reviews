@@ -38,22 +38,25 @@ const BookData = styled.div`
   }
 `;
 const BookTitle = styled.h2`
+  padding: 0 40px;
   margin-bottom: 15px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
+  line-height: 28px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 const BookAuthor = styled.h4`
+  padding: 0 40px;
   margin-bottom: 5px;
   font-weight: 600;
-  font-size: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz4};
 `;
 const BookTextSnippet = styled.p`
   display: inline-block;
   padding: 0 40px;
-  font-size: ${(props) => props.theme.fz}px;
-  line-height: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz5};
+  line-height: 18px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -69,8 +72,8 @@ const NextPage = styled.div`
   width: 30px;
   height: 24px;
   border-radius: 30px;
-  line-height: ${(props) => props.theme.fz * 2}px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  line-height: ${(props) => props.theme.fz3};
+  font-size: ${(props) => props.theme.fz4};
   text-align: center;
   border: 1px solid ${(props) => props.theme.grey};
   color: ${(props) => props.theme.black};
@@ -91,7 +94,7 @@ const PrevPage = styled(NextPage)<PrevProps>`
   }
 `;
 const PageNumber = styled.p`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz3};
   margin: 0 20px;
 `;
 const Book = styled.div`
@@ -101,16 +104,18 @@ const Book = styled.div`
   position: relative;
   border-bottom: 1px solid ${(props) => props.theme.greyBlue};
 `;
-const BookLink = styled(Link)`
+const BookLink = styled.div`
+  cursor: pointer;
   display: inline-block;
   position: relative;
 `;
 const BookImg = styled(Image)`
-  box-shadow: 0px 0px 15px ${(props) => props.theme.black}; ;
+  box-shadow: 5px 5px 10px ${(props) => props.theme.black};
 `;
 const BookDetail = styled.div`
   margin: 40px auto 0;
   max-width: 280px;
+  text-align: left;
 `;
 
 const NoimgTitle = styled.h2`
@@ -129,9 +134,26 @@ const NoimgTitle = styled.h2`
 `;
 
 function BookComponent({ data }: { data: BookInfo }) {
+  const router = useRouter();
+  const move = async (data: BookInfo) => {
+    if (data.isbn) {
+      const docSnap = await getDoc(doc(db, "books", data.isbn));
+      if (docSnap.exists()) {
+        router.push(`/book/id:${data.isbn}`);
+      } else {
+        await setDoc(doc(db, "books", data.isbn), data);
+        router.push(`/book/id:${data.isbn}`);
+      }
+    }
+  };
+
   return (
     <Book>
-      <BookLink href={`/book/id:${data.isbn}`}>
+      <BookLink
+        onClick={() => {
+          move(data);
+        }}
+      >
         <BookImg
           src={data.smallThumbnail ? data.smallThumbnail : bookcover}
           alt={`${data.title}`}
@@ -158,12 +180,12 @@ const SearchInput = styled.input`
   background-color: transparent;
   width: 100%;
   padding: 0 10px;
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz3};
   &:focus {
     outline: none;
   }
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 const SearchBtton = styled(Image)`
@@ -171,45 +193,35 @@ const SearchBtton = styled(Image)`
 `;
 const HistoryTitle = styled.p`
   display: inline-block;
-  font-size: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz4};
   padding-left: 10px;
+  margin: 10px 0;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: start;
+  width: 100%;
 `;
 const HistoryBox = styled.div`
   display: flex;
   flex-wrap: wrap;
   margin-top: 0px;
-  & > ${HistoryTitle} {
-    margin: 10px 0;
-    font-size: ${(props) => props.theme.fz * 1.2}px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-align: start;
-    width: 100%;
-  }
 `;
+
 const History = styled.div`
   display: flex;
   padding: 5px 10px;
+  font-size: ${(props) => props.theme.fz5};
   cursor: pointer;
   border-radius: 10px;
   background-color: ${(props) => props.theme.yellow};
-  align-items: center;
   margin: 5px;
   &:hover {
     background-color: ${(props) => props.theme.greyBlue};
   }
 `;
 
-const HistoryRemove = styled(Image)`
-  width: 20px;
-  height: 20px;
-  padding: 2px;
-  border-radius: 5px;
-  margin-left: 10px;
-`;
 const SearchBooks = styled.div`
   width: 100%;
-  max-width: 800px;
   margin: 20px auto;
   display: flex;
   flex-wrap: wrap;
@@ -226,80 +238,6 @@ const SearchTitle = styled.h1`
   }
 `;
 
-const SearchBook = styled.div`
-  text-align: center;
-  position: relative;
-  width: 50%;
-  padding: 20px 20px;
-  border-bottom: 1px solid ${(props) => props.theme.black};
-  @media screen and (max-width: 576px) {
-    width: 100%;
-  }
-`;
-
-const Move = styled.div`
-  cursor: pointer;
-  display: inline-block;
-  min-width: 128px;
-  min-height: 193px;
-  position: relative;
-`;
-
-const SearchBookImg = styled(Image)`
-  box-shadow: 0px 0px 15px ${(props) => props.theme.black};
-`;
-const SearchNoimgTitle = styled.h2`
-  position: absolute;
-  color: ${(props) => props.theme.white};
-  font-size: ${(props) => props.theme.fz * 2}px;
-  width: 180px;
-  height: 271px;
-  overflow: hidden;
-  padding: 20px 10px;
-  text-align: center;
-  letter-spacing: 2px;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-`;
-const SearchBookInfos = styled.div`
-  padding: 10px 0;
-  max-width: 200px;
-  margin: 30px auto;
-`;
-const SearchBookTitle = styled.h2`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  line-height: ${(props) => props.theme.fz * 1.5}px;
-  height: ${(props) => props.theme.fz * 3}px;
-  display: -webkit-box;
-  text-overflow: ellipsis;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  white-space: wrap;
-  margin-bottom: 10px;
-`;
-const SearchBookAuthor = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.2}px;
-  margin-bottom: 5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-const SearchBookIsbn = styled.p`
-  font-size: ${(props) => props.theme.fz}px;
-`;
-
-const BackBtn = styled.button`
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-top: 10px;
-  border-radius: 10px;
-  background-color: ${(props) => props.theme.yellow};
-  &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
-  }
-`;
 const SearchNoResult = styled.div`
   width: 100%;
   margin-top: 20px;
@@ -316,10 +254,8 @@ export default function BooksComponent({
   const pageRef = useRef<DocumentData>();
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   const [searchBooks, setSearchBooks] = useState<BookInfo[]>();
-  const booksRef = useRef<HTMLDivElement>(null);
   const [serchValue, setSerchValue] = useState<string>("");
   const noResultRef = useRef<HTMLDivElement>(null);
   const [histories, sethistories] = useState<string[]>([]);
@@ -388,17 +324,6 @@ export default function BooksComponent({
       }
     });
     setSearchBooks(books);
-  };
-  const move = async (data: BookInfo) => {
-    if (data.isbn) {
-      const docSnap = await getDoc(doc(db, "books", data.isbn));
-      if (docSnap.exists()) {
-        router.push(`/book/id:${data.isbn}`);
-      } else {
-        await setDoc(doc(db, "books", data.isbn), data);
-        router.push(`/book/id:${data.isbn}`);
-      }
-    }
   };
   const saveKeyword = (value: string) => {
     const localData = localStorage.getItem("keyWord");
@@ -469,17 +394,17 @@ export default function BooksComponent({
         />
       </SearchBox>
       <HistoryBox>
+        {histories.length > 0 && <HistoryTitle>搜尋紀錄</HistoryTitle>}
         {showSearch && (
-          <BackBtn
+          <History
             onClick={() => {
               setShowSearch(false);
               setSearchBooks([]);
             }}
           >
             返回全書籍
-          </BackBtn>
+          </History>
         )}
-        {histories.length > 0 && <HistoryTitle>搜尋紀錄</HistoryTitle>}
         {histories &&
           histories.map((history) => (
             <History
@@ -495,46 +420,27 @@ export default function BooksComponent({
                 setShowSearch(true);
               }}
             >
-              <HistoryTitle>{history}</HistoryTitle>
-              <HistoryRemove src={remove} alt="Remove Btn" />
+              {history}
             </History>
           ))}
       </HistoryBox>
+
       {showSearch ? (
         searchBooks && (
-          <SearchBooks ref={booksRef}>
+          <SearchBooks>
             <SearchTitle>查詢關鍵字: {serchValue}</SearchTitle>
             <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
-            {searchBooks.map((data) => {
-              return (
-                <SearchBook key={data.isbn}>
-                  <Move
-                    onClick={() => {
-                      move(data);
-                    }}
-                  >
-                    <SearchBookImg
-                      src={
-                        data.smallThumbnail ? data.smallThumbnail : bookcover
-                      }
-                      alt={`${data.title}`}
-                      width={180}
-                      height={271}
-                    />
-                    {!data.smallThumbnail && (
-                      <SearchNoimgTitle>{data.title}</SearchNoimgTitle>
-                    )}
-                  </Move>
-                  <SearchBookInfos>
-                    <SearchBookTitle>{data.title}</SearchBookTitle>
-                    {data.authors && data.authors && (
-                      <SearchBookAuthor>{data.authors[0]}</SearchBookAuthor>
-                    )}
-                    <SearchBookIsbn>ISBN：{data.isbn}</SearchBookIsbn>
-                  </SearchBookInfos>
-                </SearchBook>
-              );
-            })}
+            <Books>
+              {searchBooks &&
+                searchBooks.map((data, index) => {
+                  console.log(data);
+                  return (
+                    <BookData key={index}>
+                      <BookComponent data={data} />
+                    </BookData>
+                  );
+                })}
+            </Books>
             {searchBooks && searchBooks.length === 0 && (
               <SearchNoResult ref={noResultRef}>
                 <SearchTitle>查無搜尋結果</SearchTitle>

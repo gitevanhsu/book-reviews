@@ -16,15 +16,14 @@ const theme = {
   grey: "#EEE",
   black: "#393E46",
   yellow2: "#ffefc6",
-  fz: "12",
+  starYellow: "#f39c12",
+  fz1: "36px",
+  fz2: "32px",
+  fz3: "24px",
+  fz4: "16px",
+  fz5: "12px",
 };
 
-// break point
-// 1280
-// 992
-// 768
-// 576
-// 480
 import initAuth from "../initAuth"; // the module you created above
 
 initAuth();
@@ -35,7 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <title>Book Reviews!</title>
-        <link rel="shortcut icon" href="static/favicon.ico" />
+        <link rel="shortcut icon" href="static/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       <ResetStyle />

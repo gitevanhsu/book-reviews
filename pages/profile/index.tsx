@@ -18,9 +18,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { useDispatch } from "react-redux";
 import { userSignOut } from "../../slices/userInfoSlice";
-import FriendsListComponent from "../../components/friendList";
 import bookcover from "/public/img/bookcover.jpeg";
-import x from "/public/img/VectorX.png";
 import {
   DragDropContext,
   Draggable,
@@ -35,14 +33,12 @@ import books from "/public/img/book-stack.png";
 import kid from "/public/img/reading-kid.png";
 import pen from "/public/img/pen.svg";
 import signOut from "/public/img/sign-out.svg";
-import people from "/public/img/people.svg";
 import produce from "immer";
 import library from "/public/img/library.jpg";
 import Swal from "sweetalert2";
 
 const InputTitle = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  padding: 20px 0;
+  font-size: ${(props) => props.theme.fz3};
 `;
 const InputContent = styled.input`
   &[type="radio"] {
@@ -61,17 +57,8 @@ const InputContent = styled.input`
   }
 `;
 const Inputbox = styled.div`
-  text-align: center;
   margin: 0 auto;
-  & > br {
-    display: none;
-  }
-  @media screen and (max-width: 768px) {
-    & > br {
-      display: block;
-    }
-  }
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 440px) {
     & > br {
       display: none;
     }
@@ -81,21 +68,17 @@ const SignArea = styled.div`
   margin-top: 50px;
   & > ${Inputbox} {
     display: flex;
-    width: 400px;
+    width: 300px;
     margin: 0 auto;
     margin-bottom: 30px;
     align-items: center;
     justify-content: center;
-    @media screen and (max-width: 480px) {
-      width: 250px;
-    }
     & > ${InputTitle} {
-      font-size: ${(props) => props.theme.fz * 2}px;
       padding: 0;
-      width: 150px;
+      width: 120px;
       @media screen and (max-width: 480px) {
-        width: 100px;
-        font-size: ${(props) => props.theme.fz * 1.2}px;
+        width: 80px;
+        font-size: ${(props) => props.theme.fz4};
       }
     }
     & > ${InputContent} {
@@ -104,11 +87,7 @@ const SignArea = styled.div`
       outline: none;
       background-color: transparent;
       border-bottom: 2px solid ${(props) => props.theme.greyBlue};
-      font-size: ${(props) => props.theme.fz * 1.5}px;
-      @media screen and (max-width: 480px) {
-        font-size: ${(props) => props.theme.fz * 1}px;
-        width: 180px;
-      }
+      font-size: ${(props) => props.theme.fz4};
     }
   }
 `;
@@ -122,36 +101,21 @@ const Overlay = styled.div`
   opacity: 0.5;
   z-index: 5;
 `;
-const SubmitButton = styled.div`
-  display: flex;
-  align-items: center;
+const SubmitButton = styled.button`
+  width: 100px;
   padding: 5px 10px;
   cursor: pointer;
   border-radius: 20px;
   margin: 10px 0;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
+  font-size: ${(props) => props.theme.fz4};
   &:hover {
     background-color: ${(props) => props.theme.greyBlue};
   }
-  @media screen and (max-width: 768px) {
-    & + & {
-      margin-left: 20px;
-    }
-  }
 `;
 const SignInBtnBox = styled.div`
-  display: flex;
-  justify-content: center;
-  & > ${SubmitButton} {
-    margin: 10px;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    padding: 10px 20px;
-    @media screen and (max-width: 480px) {
-      font-size: ${(props) => props.theme.fz * 1.2}px;
-      padding: 5px 10px;
-    }
-  }
+  text-align: center;
 `;
 
 const QuoteArea = styled.div`
@@ -162,7 +126,6 @@ const QuoteImg = styled(Image)`
   position: absolute;
   left: 0;
   opacity: 0.7;
-
   width: 100%;
   height: auto;
 `;
@@ -175,27 +138,39 @@ const SignUpArea = styled.div`
   width: 480px;
   background-color: ${(props) => props.theme.white};
   @media screen and (max-width: 576px) {
-    width: 280px;
+    width: 300px;
   }
 `;
 const SignupInputbox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 10px 0;
 `;
 const SignupInputTitle = styled.h4`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
+  width: 140px;
+  text-align: start;
+  font-size: ${(props) => props.theme.fz4};
+  line-height: ${(props) => props.theme.fz4};
+`;
+const SignupIntrobox = styled(SignupInputbox)`
+  flex-wrap: wrap;
+  text-align: center;
+  & > ${SignupInputTitle} {
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
   }
 `;
 const SignupInputContent = styled.input`
+  outline: none;
+  border: none;
   padding: 5px 10px;
+  font-size: ${(props) => props.theme.fz4};
+  border-bottom: 2px solid ${(props) => props.theme.greyBlue};
   width: 100%;
-  margin-top: 10px;
-  border: 1px solid ${(props) => props.theme.black};
-  border-radius: 5px;
   background-color: ${(props) => props.theme.white};
   @media screen (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz}px;
     margin-top: 5px;
   }
   &[type="radio"] {
@@ -226,18 +201,21 @@ const SignupInputTextArea = styled.textarea`
     height: 50px;
   }
 `;
+
 const SignupSubmitButton = styled.button`
-  padding: 10px 20px;
+  width: 100px;
+  padding: 5px 10px;
+  margin: 10px 0;
   cursor: pointer;
+  font-size: ${(props) => props.theme.fz4};
+  color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
   border-radius: 20px;
-  & + & {
-    margin-left: 10px;
-  }
   @media screen (max-width: 576px) {
     padding: 5px 10px;
   }
 `;
+
 const SignupLabel = styled.label``;
 const SignupUserAvatar = styled(Image)`
   border-radius: 50%;
@@ -313,7 +291,7 @@ function SignupComponent({ setSignUp }: { setSignUp: Function }) {
   return (
     <SignUpArea>
       <SignupInputbox>
-        <SignupInputTitle>Name: </SignupInputTitle>
+        <SignupInputTitle>名字: </SignupInputTitle>
         <SignupInputContent
           key="signUpName"
           ref={signupNameRef}
@@ -329,21 +307,21 @@ function SignupComponent({ setSignUp }: { setSignUp: Function }) {
         ></SignupInputContent>
       </SignupInputbox>
       <SignupInputbox>
-        <SignupInputTitle>Password: </SignupInputTitle>
+        <SignupInputTitle>密碼: </SignupInputTitle>
         <SignupInputContent
           key="signUpPassword"
           ref={signPasswordRef}
           type="password"
         ></SignupInputContent>
       </SignupInputbox>
-      <SignupInputbox>
+      <SignupIntrobox>
         <SignupInputTitle>自我介紹: </SignupInputTitle>
         <SignupInputTextArea
           key="signUpIntro"
           ref={signupIntroRef}
         ></SignupInputTextArea>
-      </SignupInputbox>
-      <SignupInputbox>
+      </SignupIntrobox>
+      <SignupIntrobox>
         <SignupInputTitle>選擇您喜歡的頭像</SignupInputTitle>
         <SignupLabel>
           <SignupInputContent
@@ -430,20 +408,21 @@ function SignupComponent({ setSignUp }: { setSignUp: Function }) {
           />
           <SignupUserAvatar src={books} alt="upload" width={50} height={50} />
         </SignupLabel>
-      </SignupInputbox>
+      </SignupIntrobox>
       <SignupSubmitButton
         onClick={() => {
           signup();
         }}
       >
         註冊
-      </SignupSubmitButton>
+      </SignupSubmitButton>{" "}
+      <br />
       <SignupSubmitButton
         onClick={() => {
           setSignUp(false);
         }}
       >
-        關閉
+        返回登入
       </SignupSubmitButton>
     </SignUpArea>
   );
@@ -506,7 +485,10 @@ function SigninComponent() {
           </SignArea>
           <SignInBtnBox>
             <SubmitButton onClick={signin}>登入</SubmitButton>
-            <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
+            <br />
+            <SubmitButton onClick={() => setSignUp(true)}>
+              馬上註冊
+            </SubmitButton>
           </SignInBtnBox>
         </>
       )}
@@ -516,6 +498,31 @@ function SigninComponent() {
     </>
   );
 }
+
+const MoveBook = styled.div`
+  font-size: ${(props) => props.theme.fz3};
+  line-height: 20px;
+  font-weight: 900;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  color: ${(props) => props.theme.white};
+  border-radius: 5px;
+  cursor: pointer;
+  & + & {
+    margin-top: 5px;
+  }
+`;
+
+const MobileRemove = styled(MoveBook)`
+  background-color: ${(props) => props.theme.red};
+`;
+const DeskRemove = styled(MobileRemove)`
+  display: none;
+  margin-left: auto;
+`;
+
 const BookShelfs = styled.div`
   display: flex;
   justify-content: space-around;
@@ -545,11 +552,10 @@ const ShelfTitle = styled.h2`
   top: 0;
   color: ${(props) => props.theme.black};
   background-color: #ecbe48;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   padding: 10px;
   z-index: 1;
-  /* box-shadow: 2px 0px 5px ${(props) => props.theme.black}; */
 `;
 const Books = styled.div`
   min-height: 400px;
@@ -562,14 +568,8 @@ const Book = styled.div`
   border-bottom: 1px solid #efc991;
   padding-bottom: 5px;
   margin-bottom: 10px;
-  transition: 0.3s;
-  &:hover {
-    transform: scale(1.05);
-  }
-  @media screen and (max-width: 992px) {
-    &:hover {
-      transform: scale(1);
-    }
+  &:hover > ${DeskRemove} {
+    display: block;
   }
 `;
 const BookImg = styled(Image)`
@@ -579,17 +579,19 @@ const BookImg = styled(Image)`
 const BookLink = styled(Link)`
   display: inline-block;
 `;
+const BookData = styled.div``;
 const BookTitle = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+  font-weight: 600;
 `;
-const BookData = styled.div`
-  /* margin: 0 10px; */
+const BookAuthor = styled.h4`
+  font-size: ${(props) => props.theme.fz4};
 `;
-const BookAuthor = styled.h4``;
 const NoimgTitle = styled.p`
+  font-size: ${(props) => props.theme.fz5};
+  line-height: ${(props) => props.theme.fz4};
   position: absolute;
-  color: #fff;
-  font-size: 12px;
+  color: ${(props) => props.theme.white};
   width: 80px;
   height: 120px;
   overflow: hidden;
@@ -600,16 +602,7 @@ const NoimgTitle = styled.p`
   left: 0;
   pointer-events: none;
 `;
-const RemoveBtn = styled(Image)`
-  background-color: transparent
-  padding: 3px;
-  margin-left: auto;
-  cursor: pointer;
-  border-radius: 5px;
-  &:hover {
-    background-color: ${(props) => props.theme.red};
-  }
-`;
+
 const UserAvatar = styled(Image)`
   width: 50px;
   height: 50px;
@@ -625,7 +618,7 @@ const ProfilePage = styled.main`
 `;
 const ProfilePageWrap = styled.div`
   height: 100%;
-  padding: 50px 30px;
+  padding: 50px 15px;
   max-width: 1280px;
   margin: 0 auto;
 `;
@@ -646,22 +639,21 @@ const EditBox = styled.div`
       height: 45px;
     }
   }
+  @media screen and (max-width: 480px) {
+    & > ${InputContent} {
+      width: 200px;
+    }
+  }
 `;
 
 const EditBoxDetail = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
-  }
-  @media screen and (max-width: 480px) {
-    & > input,
-    & > textarea {
-      width: 100%;
-    }
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 const EditTitle = styled.h4`
@@ -672,11 +664,17 @@ const EditTitle = styled.h4`
 const TitleInput = styled.input`
   width: 300px;
   padding: 5px 10px;
+  @media screen and (max-width: 480px) {
+    width: 200px;
+  }
 `;
 const IntroTextarea = styled.textarea`
   padding: 5px 10px;
   width: 300px;
   height: 100px;
+  @media screen and (max-width: 480px) {
+    width: 200px;
+  }
 `;
 
 const EditButtonBox = styled.div`
@@ -691,19 +689,22 @@ const UserDetail = styled.div`
   width: 100%;
   max-width: 500px;
   margin-left: 40px;
+  @media screen and (max-width: 992px) {
+    max-width: 300px;
+  }
 `;
 const UserName = styled.h2`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz2};
   margin-bottom: 10px;
   letter-spacing: 2px;
   word-wrap: break-word;
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz3};
   }
 `;
 
 const UserIntro = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -716,17 +717,17 @@ const UserIntro = styled.p`
   ::-webkit-scrollbar {
     display: none;
   }
-  @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
-  }
 `;
 const Label = styled.label``;
 const ButtonBox = styled.div`
-  margin-left: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: auto;
   @media screen and (max-width: 768px) {
-    margin-top: 20px;
     margin-left: 0;
-    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
   }
 `;
 const BtnImg = styled(Image)`
@@ -737,7 +738,6 @@ const UserInfoBox = styled.div`
   margin: 0 auto;
   width: 90%;
   display: flex;
-
   margin-bottom: 50px;
   align-items: center;
   @media screen and (max-width: 992px) {
@@ -751,17 +751,6 @@ const UserInfoBox = styled.div`
     height: 100px;
     @media screen and (max-width: 768px) {
       margin-bottom: 20px;
-    }
-  }
-  & > ${ButtonBox}>${SubmitButton} {
-    @media screen and (max-width: 480px) {
-      padding: 5px 5px;
-      margin: 0 5px;
-    }
-  }
-  & > ${ButtonBox}>${SubmitButton}>${BtnImg} {
-    @media screen and (max-width: 480px) {
-      display: none;
     }
   }
 `;
@@ -794,7 +783,7 @@ const MobileBookShelfs = styled(BookShelfs)`
     margin-bottom: 40px;
   }
   & ${ShelfTitle} {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz4};
   }
 
   & ${Books} {
@@ -809,29 +798,11 @@ const MobileBtnBox = styled.div`
   margin-left: auto;
 `;
 
-const MoveBook = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  line-height: 20px;
-  font-weight: 900;
-  text-align: center;
-  width: 20px;
-  height: 20px;
-  background-color: ${(props) => props.theme.yellow2};
-  border-radius: 5px;
-  color: #fff;
-  cursor: pointer;
-  &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
-  }
-  & + & {
-    margin-top: 2px;
-  }
-`;
 const ShelfIcon = styled.div`
   display: inline-block;
   padding-left: 2px;
   margin-right: 5px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   line-height: 20px;
   font-weight: 900;
   text-align: center;
@@ -840,6 +811,24 @@ const ShelfIcon = styled.div`
   background-color: ${(props) => props.theme.greyBlue};
   border-radius: 5px;
   color: #fff;
+`;
+
+const ProfileButton = styled.button`
+  display: flex;
+  align-items: center;
+  width: 100px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin: 10px 0;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  font-size: ${(props) => props.theme.fz5};
+  @media screen and (max-width: 768px) {
+    & + & {
+      margin-left: 20px;
+    }
+  }
 `;
 
 function MobileBookShelfComponent({
@@ -873,7 +862,7 @@ function MobileBookShelfComponent({
       <MobileBookShelfs>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>C</ShelfIcon>Collection / 收藏
+            <ShelfIcon>C</ShelfIcon>ollection / 收藏
           </ShelfTitle>
           <Books>
             {books?.map((book, index) => (
@@ -898,11 +887,7 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn
-                    src={x}
-                    alt="delete"
-                    width={20}
-                    height={20}
+                  <MobileRemove
                     onClick={() => {
                       if (book.isbn && books) {
                         setBooks((prev: BookInfo[]) =>
@@ -911,7 +896,9 @@ function MobileBookShelfComponent({
                         removeBook(book.isbn, userInfo.uid!, "books");
                       }
                     }}
-                  />
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -943,7 +930,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+            <ShelfIcon>R</ShelfIcon>eading / 閱讀
           </ShelfTitle>
           <Books>
             {reading?.map((book, index) => (
@@ -968,20 +955,18 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn
-                    src={x}
-                    alt="delete"
-                    width={20}
-                    height={20}
+                  <MobileRemove
                     onClick={() => {
                       if (book.isbn && books) {
-                        setReading((prev: BookInfo[]) =>
+                        setBooks((prev: BookInfo[]) =>
                           prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
                         );
-                        removeBook(book.isbn, userInfo.uid!, "reading");
+                        removeBook(book.isbn, userInfo.uid!, "books");
                       }
                     }}
-                  />
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -1013,7 +998,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>F</ShelfIcon>Finish / 完成
+            <ShelfIcon>F</ShelfIcon>inish / 完成
           </ShelfTitle>
           <Books>
             {finish?.map((book, index) => (
@@ -1038,20 +1023,18 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn
-                    src={x}
-                    alt="delete"
-                    width={20}
-                    height={20}
+                  <MobileRemove
                     onClick={() => {
                       if (book.isbn && books) {
-                        setFinish((prev: BookInfo[]) =>
+                        setBooks((prev: BookInfo[]) =>
                           prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
                         );
-                        removeBook(book.isbn, userInfo.uid!, "finish");
+                        removeBook(book.isbn, userInfo.uid!, "books");
                       }
                     }}
-                  />
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -1147,7 +1130,7 @@ function BookShelfComponent() {
         <BookShelfs>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>C</ShelfIcon>Collection / 收藏
+              <ShelfIcon>C</ShelfIcon>ollection / 收藏
             </ShelfTitle>
             <Droppable droppableId="books">
               {(provided) => (
@@ -1190,11 +1173,7 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
                                     setBooks((prev) =>
@@ -1210,7 +1189,9 @@ function BookShelfComponent() {
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -1223,7 +1204,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+              <ShelfIcon>R</ShelfIcon>eading / 閱讀
             </ShelfTitle>
             <Droppable droppableId="reading">
               {(provided) => (
@@ -1266,14 +1247,10 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setReading((prev) =>
+                                    setBooks((prev) =>
                                       prev.filter(
                                         (bookinfo) =>
                                           bookinfo.isbn !== book.isbn
@@ -1282,11 +1259,13 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "reading"
+                                      "books"
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -1299,7 +1278,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>F</ShelfIcon>Finish / 完成
+              <ShelfIcon>F</ShelfIcon>inish / 完成
             </ShelfTitle>
             <Droppable droppableId="finish">
               {(provided) => (
@@ -1342,14 +1321,10 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setFinish((prev) =>
+                                    setBooks((prev) =>
                                       prev.filter(
                                         (bookinfo) =>
                                           bookinfo.isbn !== book.isbn
@@ -1358,11 +1333,13 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "finish"
+                                      "books"
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -1392,7 +1369,6 @@ export default function Profile() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
   const [edit, setEdit] = useState(false);
-  const [showFriend, setShowFriend] = useState(false);
   const editNameRef = useRef<HTMLInputElement>(null);
   const editIntroRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1405,11 +1381,10 @@ export default function Profile() {
   return (
     <ProfilePage>
       <ProfilePageWrap>
-        {(edit || showFriend) && (
+        {edit && (
           <Overlay
             onClick={() => {
               setEdit(false);
-              setShowFriend(false);
             }}
           />
         )}
@@ -1431,23 +1406,23 @@ export default function Profile() {
                 </UserIntro>
               </UserDetail>
               <ButtonBox>
-                <SubmitButton
+                <ProfileButton
                   onClick={() => {
                     setEdit(true);
                   }}
                 >
                   <BtnImg src={pen} alt="edit" width={20} height={20} />
                   編輯資訊
-                </SubmitButton>
-                <SubmitButton
+                </ProfileButton>
+                {/* <ProfileButton
                   onClick={() => {
                     setShowFriend(true);
                   }}
                 >
                   <BtnImg src={people} alt="friends" width={20} height={20} />
                   好友列表
-                </SubmitButton>
-                <SubmitButton
+                </ProfileButton> */}
+                <ProfileButton
                   onClick={() => {
                     Swal.fire({
                       title: "確定登出嗎？",
@@ -1481,12 +1456,12 @@ export default function Profile() {
                 >
                   <BtnImg src={signOut} alt="sign out" width={20} height={20} />
                   登出
-                </SubmitButton>
+                </ProfileButton>
               </ButtonBox>
               {edit && (
                 <EditBox>
                   <Inputbox>
-                    <InputTitle>Avatars</InputTitle>
+                    <InputTitle>頭像</InputTitle>
                     <Label>
                       <InputContent
                         type="radio"
@@ -1550,13 +1525,13 @@ export default function Profile() {
                     </Label>
                   </Inputbox>
                   <EditBoxDetail>
-                    <EditTitle>Name</EditTitle>
+                    <EditTitle>姓名</EditTitle>
                     <TitleInput
                       ref={editNameRef}
                       defaultValue={userInfo.name}
                     />
                     <br />
-                    <EditTitle>Intro</EditTitle>
+                    <EditTitle>自我介紹</EditTitle>
                     <IntroTextarea
                       ref={editIntroRef}
                       defaultValue={userInfo.intro}
@@ -1568,7 +1543,7 @@ export default function Profile() {
                         setEdit(false);
                       }}
                     >
-                      Cancel
+                      取消
                     </SubmitButton>
                     <SubmitButton
                       onClick={() => {
@@ -1659,15 +1634,12 @@ export default function Profile() {
                         }
                       }}
                     >
-                      Submit
+                      送出
                     </SubmitButton>
                   </EditButtonBox>
                 </EditBox>
               )}
             </UserInfoBox>
-            {showFriend && (
-              <FriendsListComponent setShowFriend={setShowFriend} />
-            )}
             <BookShelfComponent />
           </>
         ) : (

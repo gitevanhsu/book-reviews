@@ -47,53 +47,41 @@ interface RatingProps {
   rating: number;
 }
 const BookReviewsBox = styled.div`
-  padding: 10px;
+  padding-top: 10px;
   width: 100%;
   border-radius: 10px;
 `;
-const ReviewTitle = styled.h2`
-  margin: 10px 0;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-`;
-const ReviewContent = styled.div`
-  line-height: 22px;
+const EmptyReview = styled.h2`
+  font-size: ${(props) => props.theme.fz4};
 `;
 
 const ShowReviewBtn = styled.button`
   margin-top: 15px;
   position: relative;
   cursor: pointer;
-  padding: 5px 50px;
   color: ${(props) => props.theme.black};
-  &::before {
-    content: "";
-    display: inline-block;
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    width: 30px;
-    transform: translateY(-50%);
-    border-top: solid 2px ${(props) => props.theme.grey};
-  }
 `;
 
 const LeaveRatingBox = styled.div`
-  padding: 20px 10px 0;
-
-  border-top: 1px solid ${(props) => props.theme.grey};
+  display: flex;
+  align-items: center;
+  padding-top: 20px;
+  margin-top: 50px;
   margin-bottom: 20px;
 `;
 const LeaveRatingButton = styled.button<RatingProps>`
   color: ${(props) =>
     props.index <= (props.hover || props.rating)
-      ? props.theme.red
+      ? props.theme.starYellow
       : props.theme.black};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz5};
   background-color: transparent;
   border: none;
   outline: none;
   cursor: pointer;
-  margin-left: 5px;
+  & + & {
+    margin-left: 5px;
+  }
 `;
 const LeaveRatingStar = styled.span``;
 const RemoveRatingButton = styled.button`
@@ -117,111 +105,81 @@ const RemoveRatingButton = styled.button`
 const ReviewMemberName = styled.h3`
   margin-bottom: 10px;
   min-width: 100px;
-  font-size: 16px;
+  font-size: ${(props) => props.theme.fz4};
   font-weight: 700;
   color: ${(props) => props.theme.black};
 `;
 const SubReviewMemberName = styled(ReviewMemberName)`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
   display: inline-block;
   margin-left: 10px;
   min-width: 50px;
-  @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-  }
 `;
 
 const SignMessage = styled.h2`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+`;
+const SignButton = styled(Link)`
+  display: inline-block;
+  cursor: pointer;
+  font-size: ${(props) => props.theme.fz5};
+  padding: 5px 10px;
+  margin-left: 20px;
+  border-radius: 5px;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.greyBlue};
 `;
 
 const MemberReviewBox = styled.div`
-  border-bottom: 1px solid ${(props) => props.theme.black};
-  padding: 10px 10px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 `;
-const MemberReviewNotice = styled.h3`
-  margin-bottom: 10px;
-  min-width: 100px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  font-weight: 700;
-  color: ${(props) => props.theme.black};
+
+const Title = styled.p`
+  font-size: ${(props) => props.theme.fz4};
+  width: 60px;
 `;
-const Title = styled.h3``;
 const TitleContent = styled.h3`
+  letter-spacing: 1px;
   display: flex;
   align-items: center;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
   font-weight: 600;
 `;
 interface ContentProps {
   showMore: boolean;
 }
 const Content = styled.div<ContentProps>`
+  letter-spacing: 2px;
   width: 100%;
-  font-size: ${(props) => props.theme.fz * 1}px;
+  font-size: ${(props) => props.theme.fz4};
+  line-height: ${(props) => props.theme.fz4};
   max-height: ${(props) => (props.showMore ? "auto" : "150px")};
   overflow: hidden;
+  & > p {
+    margin-top: 5px;
+  }
 `;
 const MemberReviewTitleBox = styled.div`
   display: flex;
-  & > ${Title} {
-    min-width: 100px;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    margin-top: 10px;
-    @media screen and (max-width: 576px) {
-      margin-bottom: 10px;
-    }
-  }
-  & > ${Content} {
-    margin: 10px 0;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    @media screen and (max-width: 576px) {
-      font-size: ${(props) => props.theme.fz * 1}px;
-    }
-  }
-  & + & {
-    margin-top: 40px;
-  }
 `;
 
 const MemberReviewContentBox = styled.div`
+  margin-top: 20px;
   display: flex;
-  margin-top: 15px;
-  & > ${Title} {
-    min-width: 100px;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    margin-top: 20px;
-    @media screen and (max-width: 576px) {
-      margin-bottom: 10px;
-    }
-  }
-  & > ${Content} {
-    margin: 10px 0;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    @media screen and (max-width: 576px) {
-      font-size: ${(props) => props.theme.fz * 1}px;
-    }
-  }
 `;
 const EditReviewButton = styled.button`
   cursor: pointer;
   margin: 10px 20px 10px 0;
-  font-size: ${(props) => props.theme.fz}px;
+  font-size: ${(props) => props.theme.fz5};
   padding: 5px 10px;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.greyBlue};
-
   & + & {
     margin-left: 20px;
   }
 `;
-const ShowSubReviewButton = styled(ShowReviewBtn)`
-  margin-left: 50px;
-  @media screen and (max-width: 576px) {
-    margin-left: 0px;
-  }
-`;
+const ShowSubReviewButton = styled(ShowReviewBtn)``;
 
 const SubReviewsBox = styled.div`
   margin-left: 50px;
@@ -232,26 +190,26 @@ const SubReviewsBox = styled.div`
   }
 `;
 const SubReviewBox = styled.div`
-  margin: 15px 0;
+  position: relative;
+  margin-top: 15px;
+  margin-bottom: 20px;
 `;
 
 const SubReviewLikes = styled.div`
-  display: inline-block;
+  padding-bottom: 10px;
+  margin-left: 30px;
   display: flex;
   align-items: center;
-  padding: 5px 0;
-  margin-left: 35px;
 `;
 const SubReviewContent = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  margin: 10px 36px;
-  @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
-  }
+  font-size: ${(props) => props.theme.fz4};
+  margin-left: 34px;
 `;
 const SubReviewTime = styled.div`
+  position: absolute;
   font-size: 12px;
-  display: inline-block;
+  right: 0;
+  top: 0;
 `;
 const SubReviewInput = styled(ReactQuill)`
   width: 100%;
@@ -265,7 +223,8 @@ const LikeButton = styled.button`
 `;
 
 const Gotomember = styled(Link)`
-  display: inline-block;
+  display: flex;
+  align-items: center;
   cursor: pointer;
 `;
 const SubMemberImg = styled(Image)`
@@ -273,32 +232,28 @@ const SubMemberImg = styled(Image)`
   border-radius: 50%;
 `;
 const LikeCount = styled.div`
-  display: inline-block;
-  width: 20px;
+  padding: 15px 10px;
 `;
 const LeaveReviewBox = styled.div`
-  padding-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-bottom: 1px solid ${(props) => props.theme.grey};
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 `;
 const LeaveInputBox = styled.div`
   width: 100%;
   display: flex;
   align-items: start;
   margin: 10px 0;
-  & > ${ReviewContent} {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-  }
   @media screen and (max-width: 576px) {
     flex-direction: column;
   }
 `;
 const LeaveReviewTitle = styled.h3`
-  min-width: 100px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  margin-top: 10px;
+  min-width: 55px;
+  font-size: ${(props) => props.theme.fz4};
+
   @media screen and (max-width: 576px) {
     margin-bottom: 10px;
   }
@@ -306,7 +261,6 @@ const LeaveReviewTitle = styled.h3`
 const LeaveReviewContentTitle = styled(ReactQuill)`
   width: 100%;
   border: 1px solid ${(props) => props.theme.black};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
   border-radius: 5px;
 `;
 const LeaveReviewTextContent = styled(ReactQuill)`
@@ -321,7 +275,6 @@ const EditTitle = styled(ReactQuill)`
   border-radius: 5px;
 `;
 const EditContent = styled(ReactQuill)`
-  margin-top: 10px;
   width: 100%;
   height: 100px;
   border: solid 1px ${(props) => props.theme.black};
@@ -351,12 +304,25 @@ const ToLogin = styled(Link)`
   }
 `;
 
-export function LeaveRatingComponent({
+const MemberReviewTitle = styled.h3`
+  min-width: 100px;
+  font-size: ${(props) => props.theme.fz4};
+  line-height: ${(props) => props.theme.fz4};
+  font-weight: 700;
+  color: ${(props) => props.theme.black};
+  @media screen and (max-width: 480px) {
+    min-width: 70px;
+  }
+`;
+
+function LeaveRatingComponent({
   bookIsbn,
   memberReview,
+  setMemberReview,
 }: {
   bookIsbn: string;
-  memberReview: BookReview;
+  memberReview: BookReview | undefined;
+  setMemberReview: Function;
 }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [rating, setRating] = useState(0);
@@ -368,7 +334,7 @@ export function LeaveRatingComponent({
   return userInfo.isSignIn ? (
     <>
       <LeaveRatingBox>
-        <ReviewMemberName>Rate this book</ReviewMemberName>
+        <MemberReviewTitle>您的評價</MemberReviewTitle>
         {[...Array(5)].map((_, index) => {
           index += 1;
           return (
@@ -412,7 +378,7 @@ export function LeaveRatingComponent({
                       showConfirmButton: false,
                       timer: 1500,
                     });
-                    if (userInfo.uid) {
+                    if (userInfo.uid && memberReview) {
                       removeBookRating(
                         userInfo.uid,
                         bookIsbn,
@@ -421,6 +387,7 @@ export function LeaveRatingComponent({
                       );
                       setRating(0);
                       setHover(0);
+                      setMemberReview(undefined);
                     }
                   }
                 });
@@ -435,11 +402,99 @@ export function LeaveRatingComponent({
   ) : (
     <LeaveRatingBox>
       <SignMessage>加入會員分享你的想法！</SignMessage>
+      <SignButton href="/profile">加入會員</SignButton>
     </LeaveRatingBox>
   );
 }
 
-export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
+function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
+  const [isEdit, setIsEdit] = useState(false);
+  const [titlevalue, setTitleValue] = useState(memberReview.title);
+  const [contentvalue, setContentValue] = useState(memberReview.content);
+  const [showMore, setShowMore] = useState(false);
+
+  return isEdit ? (
+    <MemberReviewBox>
+      <MemberReviewTitleBox>
+        <Title>標題</Title>
+        <EditTitle theme="bubble" value={titlevalue} onChange={setTitleValue} />
+      </MemberReviewTitleBox>
+      <MemberReviewContentBox>
+        <LeaveReviewTitle>內容</LeaveReviewTitle>
+        <EditContent
+          theme="bubble"
+          value={contentvalue}
+          onChange={setContentValue}
+        />
+      </MemberReviewContentBox>
+      <EditReviewButton
+        onClick={() => {
+          if (
+            memberReview.title === titlevalue &&
+            contentvalue === memberReview.content
+          ) {
+            setIsEdit(false);
+          } else if (
+            titlevalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            contentvalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
+          ) {
+            editReview(memberReview, titlevalue!, contentvalue!);
+            Swal.fire({
+              title: "感謝您的評論",
+              icon: "success",
+              timer: 1000,
+              showConfirmButton: false,
+            });
+            setIsEdit(false);
+          } else {
+            Swal.fire({
+              title: "請勿留下空白內容！",
+              icon: "warning",
+              timer: 1000,
+              showConfirmButton: false,
+            });
+            setIsEdit(false);
+          }
+        }}
+      >
+        送出
+      </EditReviewButton>
+      <EditReviewButton
+        onClick={() => {
+          setIsEdit(false);
+        }}
+      >
+        取消
+      </EditReviewButton>
+    </MemberReviewBox>
+  ) : (
+    <MemberReviewBox>
+      <MemberReviewTitleBox>
+        <TitleContent>{parse(memberReview.title!)}</TitleContent>
+      </MemberReviewTitleBox>
+      <MemberReviewContentBox>
+        <Content showMore={showMore}>{parse(memberReview?.content!)}</Content>
+      </MemberReviewContentBox>
+      <EditReviewButton
+        onClick={() => {
+          setIsEdit(true);
+        }}
+      >
+        編輯
+      </EditReviewButton>
+      {memberReview?.content!.split("<p>").length > 8 && (
+        <SeeMoreBtn
+          onClick={() => {
+            setShowMore((prev) => !prev);
+          }}
+        >
+          {showMore ? "Show less" : "Show more"}
+        </SeeMoreBtn>
+      )}
+    </MemberReviewBox>
+  );
+}
+function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [titlevalue, setTitleValue] = useState("");
   const [contentvalue, setContentValue] = useState("");
@@ -447,7 +502,7 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
   return userInfo.isSignIn ? (
     <LeaveReviewBox>
       <LeaveInputBox>
-        <LeaveReviewTitle>Title</LeaveReviewTitle>
+        <LeaveReviewTitle>標題</LeaveReviewTitle>
         <LeaveReviewContentTitle
           theme="bubble"
           value={titlevalue}
@@ -455,7 +510,7 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
         />
       </LeaveInputBox>
       <LeaveInputBox>
-        <LeaveReviewTitle>Content</LeaveReviewTitle>
+        <LeaveReviewTitle>內容</LeaveReviewTitle>
         <LeaveReviewTextContent
           theme="bubble"
           value={contentvalue}
@@ -485,14 +540,13 @@ export function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
           }
         }}
       >
-        Submit
+        送出
       </SubmitReviewBtn>
     </LeaveReviewBox>
   ) : (
     <></>
   );
 }
-
 function SubReviewComponent({ review }: { review: BookReview }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [showSubReviews, setShowSubReviews] = useState<boolean>(false);
@@ -580,10 +634,8 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                     {subreview.memberData?.name}
                   </SubReviewMemberName>
                 </Gotomember>
-                <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
                 <SubReviewContent>{parse(subreview.content!)}</SubReviewContent>
                 <SubReviewLikes>
-                  <LikeCount>{subreview.likeCount}</LikeCount>
                   <LikeButton
                     onClick={() => {
                       userInfo.uid &&
@@ -603,7 +655,9 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                       <Image src={like} alt="likeBtn" width={20} height={20} />
                     )}
                   </LikeButton>
+                  <LikeCount>{subreview.likeCount}</LikeCount>
                 </SubReviewLikes>
+                <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
               </SubReviewBox>
             );
           })}
@@ -663,90 +717,6 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   );
 }
 
-function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
-  const [isEdit, setIsEdit] = useState(false);
-  const [titlevalue, setTitleValue] = useState(memberReview.title);
-  const [contentvalue, setContentValue] = useState(memberReview.content);
-  const [showMore, setShowMore] = useState(false);
-  return isEdit ? (
-    <MemberReviewBox>
-      <MemberReviewNotice>Your review</MemberReviewNotice>
-      <MemberReviewTitleBox>
-        <Title>Title</Title>
-        <EditTitle theme="bubble" value={titlevalue} onChange={setTitleValue} />
-      </MemberReviewTitleBox>
-      <MemberReviewContentBox>
-        <LeaveReviewTitle>Content</LeaveReviewTitle>
-        <EditContent
-          theme="bubble"
-          value={contentvalue}
-          onChange={setContentValue}
-        />
-      </MemberReviewContentBox>
-      <EditReviewButton
-        onClick={() => {
-          if (
-            memberReview.title === titlevalue &&
-            contentvalue === memberReview.content
-          ) {
-            setIsEdit(false);
-          } else if (
-            titlevalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
-            contentvalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
-          ) {
-            editReview(memberReview, titlevalue!, contentvalue!);
-            Swal.fire({
-              title: "感謝您的評論",
-              icon: "success",
-              timer: 1000,
-              showConfirmButton: false,
-            });
-          } else {
-            Swal.fire({
-              title: "請勿留下空白內容！",
-              icon: "warning",
-              timer: 1000,
-              showConfirmButton: false,
-            });
-          }
-        }}
-      >
-        Submit
-      </EditReviewButton>
-      <EditReviewButton
-        onClick={() => {
-          setIsEdit(false);
-        }}
-      >
-        Cancel
-      </EditReviewButton>
-    </MemberReviewBox>
-  ) : (
-    <MemberReviewBox>
-      <MemberReviewNotice>Your review</MemberReviewNotice>
-      <MemberReviewTitleBox>
-        <TitleContent>{parse(memberReview.title!)}</TitleContent>
-      </MemberReviewTitleBox>
-      <MemberReviewContentBox>
-        <Content showMore={showMore}>{parse(memberReview?.content!)}</Content>
-      </MemberReviewContentBox>
-      <EditReviewButton
-        onClick={() => {
-          setIsEdit(true);
-        }}
-      >
-        Edit
-      </EditReviewButton>
-      <SeeMoreBtn
-        onClick={() => {
-          setShowMore((prev) => !prev);
-        }}
-      >
-        {showMore ? "Show less" : "Show more"}
-      </SeeMoreBtn>
-    </MemberReviewBox>
-  );
-}
 interface ReviewProps {
   review: BookReview;
   year: number;
@@ -777,10 +747,6 @@ const BookReviewMemberImg = styled(Image)`
     width: 50px;
     height: 50px;
   }
-  @media screen and (max-width: 480px) {
-    width: 30px;
-    height: 30px;
-  }
 `;
 const BookReviewMemberLink = styled(Link)`
   padding: 0 10px;
@@ -788,64 +754,59 @@ const BookReviewMemberLink = styled(Link)`
 const BookReviewMemberName = styled.h4`
   display: inline-block;
   margin-right: 20px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
   font-weight: 600;
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 const BookReviewMemberRate = styled.div`
   display: inline-block;
-  font-size: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz4};
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz5};
   }
 `;
 const BookReviewMemberRateStart = styled.span`
   display: inline-block;
-  font-size: ${(props) => props.theme.fz * 1.2}px;
-  color: ${(props) => props.theme.red};
+  font-size: ${(props) => props.theme.fz4};
+  color: ${(props) => props.theme.starYellow};
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz5};
   }
 `;
 const BookReviewMemberDate = styled.div`
+  position: absolute;
+  right: 0;
+  top: 0;
   display: block;
-  width: 80px;
   margin-left: auto;
-  font-size: ${(props) => props.theme.fz * 1.2}px;
+  font-size: ${(props) => props.theme.fz5};
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
-    margin-left: 0;
+    display: none;
   }
 `;
 const BookReviewTitle = styled.div`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz4};
   margin-top: 30px;
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 interface BookReviewContentProps {
   showMore: boolean;
 }
 const BookReviewContent = styled.div<BookReviewContentProps>`
-  max-height: ${(props) => (props.showMore ? "auto" : "150px")};
+  max-height: ${(props) => (props.showMore ? "auto" : "160px")};
   overflow: hidden;
-  padding: 20px 0 0 50px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  padding: 20px 0 0 60px;
+  font-size: ${(props) => props.theme.fz4};
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
-    padding-left: 30px;
-  }
-  @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
+    font-size: ${(props) => props.theme.fz4};
+    padding-left: 50px;
   }
   & > p {
-    line-height: 25px;
-    @media screen and (max-width: 480px) {
-      line-height: 15px;
-    }
+    line-height: 20px;
   }
 `;
 const BookReviewRatingWrap = styled.div`
@@ -872,14 +833,19 @@ const BookReviewRatingNumber = styled.p`
 const SeeMoreBtn = styled.button`
   font-size: ${(props) => props.theme.fz * 1}px;
   padding: 5px 10px;
+  margin-right: 20px;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
-  margin-left: 50px;
   margin-top: 20px;
+`;
+
+const ButtonsWrap = styled.div`
+  margin-left: 60px;
   @media screen and (max-width: 576px) {
-    margin-left: 30px;
+    font-size: ${(props) => props.theme.fz4};
+    margin-left: 50px;
   }
 `;
 
@@ -999,16 +965,18 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
         <BookReviewContent showMore={showMore}>
           {parse(review.content!)}
         </BookReviewContent>
-        {review.content!.split("<p>").length > 5 && (
-          <SeeMoreBtn
-            onClick={() => {
-              setShowMore((prev) => !prev);
-            }}
-          >
-            {showMore ? "Show less" : "Show more"}
-          </SeeMoreBtn>
-        )}
-        <SubReviewComponent review={review} />
+        <ButtonsWrap>
+          {review.content!.split("<p>").length > 5 && (
+            <SeeMoreBtn
+              onClick={() => {
+                setShowMore((prev) => !prev);
+              }}
+            >
+              {showMore ? "顯示較少" : "顯示全部"}
+            </SeeMoreBtn>
+          )}
+          <SubReviewComponent review={review} />
+        </ButtonsWrap>
       </BookReviewWrap>
     </>
   );
@@ -1034,7 +1002,6 @@ export function ReviewsComponent({
         orderBy("reviewRating", "desc")
       );
       unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
-        setMemberReview(undefined);
         const reviewsArr: BookReview[] = [];
         const userIds: string[] = [];
         querySnapshot.forEach((review) => {
@@ -1053,7 +1020,6 @@ export function ReviewsComponent({
           );
           review.memberId == userInfo.uid &&
             setMemberReview({ ...review, memberData: userData });
-
           return { ...review, memberData: userData };
         });
         setReviews(newReviewsArr);
@@ -1068,13 +1034,19 @@ export function ReviewsComponent({
   }, [bookIsbn, userInfo.uid]);
   return (
     <>
+      <LeaveRatingComponent
+        memberReview={memberReview}
+        bookIsbn={bookIsbn}
+        setMemberReview={setMemberReview}
+      />
+
       {memberReview && memberReview.title && memberReview.title.length > 0 ? (
         <MemberReviewComponent memberReview={memberReview} />
       ) : (
         <LeaveCommentComponent bookIsbn={bookIsbn} />
       )}
       <BookReviewsBox>
-        {reviews.length > 0 ? (
+        {reviews.length > 0 && reviews[0]?.title?.length! > 0 ? (
           reviews.map((review) => {
             const ReviewDate = new Date(
               review.time ? review.time?.seconds * 1000 : ""
@@ -1094,7 +1066,7 @@ export function ReviewsComponent({
             );
           })
         ) : (
-          <ReviewTitle>留下第一則評論吧！</ReviewTitle>
+          <EmptyReview>留下第一則評論吧！</EmptyReview>
         )}
       </BookReviewsBox>
     </>

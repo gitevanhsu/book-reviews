@@ -47,32 +47,37 @@ const Member = styled.div`
 `;
 
 const MemberName = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 1px;
+  font-weight: 600;
 `;
 const MemberImg = styled(Image)`
   margin-right: 5px;
 `;
 const MemberContent = styled.p`
   display: inline-block;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   padding-left: 30px;
   min-width: 100px;
   white-space: pre-wrap;
   letter-spacing: 2px;
-  line-height: ${(props) => props.theme.fz * 2}px;
+  margin: 5px 0;
+  line-height: ${(props) => props.theme.fz4};
 `;
 const InputBox = styled.div`
   position: absolute;
   bottom: 0;
   margin-top: 10px;
-  padding: 0 10px 5px;
   width: 100%;
 `;
 const MessageInput = styled.input`
   width: 100%;
   border-radius: 5px;
   padding: 5px 10px;
+  border: none;
+  outline: none;
+  border-top: 1px solid ${(props) => props.theme.grey};
+  font-size: ${(props) => props.theme.fz4};
 `;
 const ChatDate = styled.p`
   padding-left: 30px;
@@ -97,7 +102,7 @@ const ChatRoomTitle = styled.h3`
   box-shadow: 5px 0px 5px ${(props) => props.theme.black};
   position: sticky;
   text-align: center;
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz3};
   background-color: ${(props) => props.theme.yellow}; ;
 `;
 
@@ -211,6 +216,7 @@ export default function ChatRoomComponent({
       <InputBox>
         <MessageInput
           ref={inputRef}
+          placeholder="留下評論......"
           onKeyPress={(e) => {
             if (!userInfo.isSignIn) {
               Swal.fire({

@@ -54,13 +54,13 @@ const GroupPageWrap = styled.div`
 `;
 const GoToReviewBox = styled(Link)`
   display: inline-block;
-  margin-bottom: 30px;
 `;
 const GoToReview = styled.p`
+  font-size: ${(props) => props.theme.fz4};
   vertical-align: middle;
   display: inline-block;
   margin-left: 10px;
-  color: #000;
+  color: ${(props) => props.theme.black};
   cursor: pointer;
 `;
 const GoToReviewImg = styled(Image)`
@@ -77,7 +77,19 @@ const VideoAndChatBox = styled.div`
     align-items: center;
   }
 `;
-
+const Wrap = styled.div`
+  z-index: 2;
+  top: 25%;
+  right: 5px;
+  position: fixed;
+  margin-left: 20px;
+  margin-bottom: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  opacity: 0.9;
+  padding: 20px 10px;
+  border-radius: 10px;
+  color: ${(props) => props.theme.black};
+`;
 // const VideoBox = styled.div`
 //   display: flex;
 //   align-items: center;
@@ -298,11 +310,14 @@ function Group({ firstData, firstChat }: GroupProps) {
   return (
     <GroupPage>
       <GroupPageWrap>
+        <Wrap>
+          <GoToReviewBox href={`/book/id:${firstData.isbn}`}>
+            <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
+            <GoToReview>返回評論頁面</GoToReview>
+          </GoToReviewBox>
+        </Wrap>
         <BookComponent data={firstData} />
-        <GoToReviewBox href={`/book/id:${firstData.isbn}`}>
-          <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
-          <GoToReview>返回評論頁面</GoToReview>
-        </GoToReviewBox>
+
         {/* <VideoBox>
         {showVideo && (
           <>
@@ -384,7 +399,7 @@ const OpenChatBTN = styled.button`
   background-color: ${(props) => props.theme.yellow};
   color: ${(props) => props.theme.black};
   border-radius: 10px;
-  font-size: ${(props) => props.theme.fz}px;
+  font-size: ${(props) => props.theme.fz4};
   cursor: pointer;
   padding: 10px 20px;
   &:hover {
@@ -468,7 +483,7 @@ const PhoneControl = styled(SoundControl)`
   background-image: url(${phone.src});
 `;
 const VideoChatName = styled.h4`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
   text-align: center;
 `;
 const Participants = styled.ul`
