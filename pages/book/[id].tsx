@@ -14,10 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import bookcover from "/public/img/bookcover.jpeg";
 
-import {
-  ReviewsComponent,
-  // LeaveRatingComponent,
-} from "../../components/reviews";
+import { ReviewsComponent } from "../../components/reviews";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store";
 import Link from "next/link";
@@ -403,10 +400,6 @@ function Post({ firstData, firstReview }: PostProps) {
     <BookPage>
       <BookPageWrap>
         <BookComponent data={bookData} />
-        {/* <LeaveRatingComponent
-          memberReview={memberReviews}
-          bookIsbn={typeof firstData.isbn === "string" ? firstData.isbn : ""}
-        /> */}
         <ReviewsComponent
           bookIsbn={typeof firstData.isbn === "string" ? firstData.isbn : ""}
           firstReview={JSON.parse(firstReview)}
@@ -450,15 +443,11 @@ function Post({ firstData, firstReview }: PostProps) {
   );
 }
 
-import {
-  AuthAction,
-  withAuthUser,
-  withAuthUserTokenSSR,
-} from "next-firebase-auth";
+import { withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
 
 export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({
   // whenUnauthed: AuthAction.REDIRECT_TO_LOGIN,
-})(async ({ AuthUser, params }) => {
+})(async ({ params }) => {
   const url = (params as ParsedUrlQuery).id as string;
   const bookIsbn = url.split("id:")[1];
   const firstData = await getFirstBook(bookIsbn);

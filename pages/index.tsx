@@ -52,17 +52,22 @@ const Texts = styled.div`
 const Quote = styled.q`
   font-weight: 600;
   font-size: ${(props) => props.theme.fz1};
-
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 768px) {
     font-size: ${(props) => props.theme.fz2};
+  }
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz3};
   }
 `;
 const Person = styled.p`
   font-size: ${(props) => props.theme.fz2};
   margin-top: 30px;
   align-self: end;
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 768px) {
     font-size: ${(props) => props.theme.fz3};
+  }
+  @media screen and (max-width: 576px) {
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 
@@ -165,8 +170,8 @@ const BookAuthor = styled.p`
 `;
 const NoimgTitle = styled.h2`
   position: absolute;
-  color: #fff;
-  font-size: ${(props) => props.theme.fz3};
+  color: ${(props) => props.theme.white};
+  font-size: ${(props) => props.theme.fz4};
   width: 100px;
   height: 150px;
   overflow: hidden;
@@ -219,6 +224,9 @@ const FeatureContent = styled.p`
   text-align: center;
   line-height: 20px;
   font-size: ${(props) => props.theme.fz4};
+  @media screen and (max-width: 768px) {
+    font-size: ${(props) => props.theme.fz5};
+  }
 `;
 
 function FeatureComponent() {
@@ -282,10 +290,6 @@ export default function Home({ books }: HomeProps) {
             </Quote>
             <Person>― Marcus Tullius Cicero</Person>
           </Texts>
-          {/* <Texts>
-            <Quote>&ldquo;Reading brings us unknown friends.&rdquo;</Quote>
-            <Person>― Honore de Belzac</Person>
-          </Texts> */}
         </WelcomeText>
       </HomeWelcome>
       <FeatureComponent />

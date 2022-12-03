@@ -14,10 +14,11 @@ import {
   NoticeData,
   removeNotice,
   signout,
+  db,
 } from "../../utils/firebaseFuncs";
 import { useDispatch, useSelector } from "react-redux";
 import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
-import { onSnapshot, query, where } from "firebase/firestore";
+import { doc, onSnapshot, query, where } from "firebase/firestore";
 import { RootState } from "../../store";
 import { useRouter } from "next/router";
 import acceptImg from "../../public/img/accept.svg";
@@ -25,6 +26,7 @@ import rejectImg from "../../public/img/reject.svg";
 import linkImg from "../../public/img/new-link.svg";
 import menu from "../../public/img/user.png";
 import bell from "/public/img/bell.png";
+import Friends from "/public/img/multiple-users.png";
 import Swal from "sweetalert2";
 
 interface MesProps {
@@ -37,6 +39,22 @@ interface MesBoxProps {
 interface LiProps {
   nowpath: boolean;
 }
+const NoticeContent = styled.div`
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+`;
+const NoNoticeContent = styled(NoticeContent)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 10px;
+  height: 50px;
+  width: 200px;
+  font-size: ${(props) => props.theme.fz4};
+  transition: 0.3s;
+  height: 0;
+`;
 const MesBox = styled.div<MesProps>`
   margin-right: 20px;
   position: relative;
@@ -55,6 +73,10 @@ const MesBox = styled.div<MesProps>`
     bottom: -5px;
     right: -8px;
     border-radius: 50%;
+  }
+  &:hover > ${NoNoticeContent} {
+    transition: 0.3s;
+    height: 80px;
   }
 `;
 const Header = styled.header`
@@ -145,14 +167,7 @@ const FriendRequestBox = styled.div`
   align-items: center;
   margin: 20px 0;
 `;
-const NoticeContent = styled.div`
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-`;
-const NoNoticeContent = styled(NoticeContent)`
-  padding: 10px 10px;
-`;
+
 const ResImgs = styled.div`
   margin-left: auto;
   display: flex;
@@ -187,6 +202,9 @@ const Notice = styled.div`
 const MemberName = styled.h3`
   letter-spacing: 2px;
   font-size: ${(props) => props.theme.fz3};
+  @media screen and (max-width: 768px) {
+    font-size: ${(props) => props.theme.fz4};
+  }
 `;
 const MemberImg = styled(Image)`
   margin-right: 20px;
@@ -229,7 +247,6 @@ const ProfileLi = styled.li<ProfileLiProps>`
   border-top: 1px solid ${(props) => props.theme.grey};
   background-color: ${(props) =>
     props.nowpath ? props.theme.yellow : "transparent"};
-
   &:hover {
     background-color: ${(props) => props.theme.yellow};
   }
@@ -403,7 +420,6 @@ function NoticeComponent() {
       );
     };
     getAllNotice();
-    console.log("effect");
     return () => {
       if (unsub1) {
         unsub1();
@@ -517,6 +533,148 @@ function MemberComponent() {
   );
 }
 
+const FriendsImg = styled(Image)`
+  height: 100%;
+  display: inline-block;
+  padding-top: 10px;
+  border-radius: 50%;
+`;
+const FriendsName = styled.p`
+  font-size: ${(props) => props.theme.fz3};
+  margin-left: 10px;
+  @media screen and (max-width: 768px) {
+    font-size: ${(props) => props.theme.fz4};
+  }
+`;
+const NoFriends = styled.p`
+  font-size: ${(props) => props.theme.fz4};
+  width: 100%;
+  text-align: center;
+`;
+const FriendsUl = styled.ul`
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: ${(props) => props.theme.white};
+  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  border-radius: 0 0 10px 10px;
+  transition: height 0.2s;
+  color: ${(props) => props.theme.black};
+`;
+
+const FriendsLi = styled.li`
+  padding: 0px 10px;
+  align-items: center;
+  display: flex;
+  width: 210px;
+  font-size: ${(props) => props.theme.fz4};
+  border-bottom: 1px solid ${(props) => props.theme.grey};
+  color: ${(props) => props.theme.black};
+  height: 0;
+  opacity: 0;
+  cursor: pointer;
+  &:hover {
+    background-color: ${(props) => props.theme.yellow};
+  }
+`;
+const FriendsBox = styled.div`
+  position: relative;
+  height: 100%;
+  z-index: 5;
+  margin-right: 20px;
+  overflow: hidden;
+  &:hover {
+    overflow: visible;
+  }
+  &:hover ${FriendsLi} {
+    padding: 10px 10px;
+    height: 70px;
+    transition: 0.3s;
+    opacity: 1;
+  }
+`;
+const FriendsWrap = styled.div``;
+
+function FriendsComponent() {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  const [friendList, setFriendList] = useState<MemberInfo[]>([]);
+  const router = useRouter();
+  useEffect(() => {
+    let unSubscription: Function;
+    const getFriendList = async () => {
+      if (userInfo.uid)
+        unSubscription = onSnapshot(
+          doc(db, "members", userInfo.uid),
+          async (doc) => {
+            const memberInfo = doc.data() as MemberInfo;
+            if (memberInfo?.friends && memberInfo.friends.length > 0) {
+              const request = memberInfo.friends.map(async (uids) => {
+                const res = await getMemberData(uids);
+                return res as MemberInfo;
+              });
+              const allMemberInfo = await Promise.all(request);
+              setFriendList(allMemberInfo);
+            }
+          }
+        );
+    };
+    if (userInfo.isSignIn) {
+      getFriendList();
+    } else {
+      setFriendList([]);
+    }
+    return () => {
+      if (unSubscription) {
+        unSubscription();
+      }
+    };
+  }, [userInfo.uid]);
+  const gotoMemberPage = (uid: string) => {
+    uid
+      ? router.push(`/member/id:${uid}`)
+      : router.push(`/book/id:9781473537804`);
+  };
+  return (
+    <FriendsBox>
+      <FriendsWrap>
+        <FriendsImg src={Friends} width={27} height={27} alt="MemberAvatar" />
+        <FriendsUl>
+          {friendList.length > 0 ? (
+            friendList.map((friend) => {
+              console.log(friend);
+              return (
+                <FriendsLi
+                  key={friend.uid}
+                  onClick={() => {
+                    friend.uid && gotoMemberPage(friend.uid);
+                  }}
+                >
+                  <FriendsImg
+                    src={friend.img!}
+                    alt="memberImg"
+                    width={40}
+                    height={40}
+                  />
+                  <FriendsName>{friend.name}</FriendsName>
+                </FriendsLi>
+              );
+            })
+          ) : (
+            <FriendsLi
+              onClick={() => {
+                gotoMemberPage("");
+              }}
+            >
+              <NoFriends>去討論區認識新朋友吧！</NoFriends>
+            </FriendsLi>
+          )}
+        </FriendsUl>
+      </FriendsWrap>
+    </FriendsBox>
+  );
+}
+
 export function HeaderComponent() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -548,6 +706,7 @@ export function HeaderComponent() {
         </Li>
       </Ul>
       <MemberComponent />
+      <FriendsComponent />
       <NoticeComponent />
     </Header>
   );

@@ -1414,14 +1414,6 @@ export default function Profile() {
                   <BtnImg src={pen} alt="edit" width={20} height={20} />
                   編輯資訊
                 </ProfileButton>
-                {/* <ProfileButton
-                  onClick={() => {
-                    setShowFriend(true);
-                  }}
-                >
-                  <BtnImg src={people} alt="friends" width={20} height={20} />
-                  好友列表
-                </ProfileButton> */}
                 <ProfileButton
                   onClick={() => {
                     Swal.fire({

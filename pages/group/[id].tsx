@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import {
-  getBookInfo,
   BookInfo,
   getMemberData,
   MemberInfo,
@@ -9,13 +8,7 @@ import {
   ChatMessage,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  VideoHTMLAttributes,
-} from "react";
+import { useCallback, useRef, useState, VideoHTMLAttributes } from "react";
 
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -713,7 +706,7 @@ function LiveChat({ id }: { id: string }) {
 import { withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
 
 export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({})(
-  async ({ AuthUser, params }) => {
+  async ({ params }) => {
     const url = (params as ParsedUrlQuery).id as string;
     const bookIsbn = url.split("id:")[1];
     const firstData = await getFirstBook(bookIsbn);
