@@ -828,10 +828,10 @@ const BookReviewRatingLower = styled(BookReviewRatingUpper)`
 `;
 const BookReviewRatingNumber = styled.p`
   padding: 10px 0;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz3};
 `;
 const SeeMoreBtn = styled.button`
-  font-size: ${(props) => props.theme.fz * 1}px;
+  font-size: ${(props) => props.theme.fz5};
   padding: 5px 10px;
   margin-right: 20px;
   border-radius: 5px;
