@@ -256,8 +256,13 @@ export const emailSignIn = async (email: string, password: string) => {
       email,
       password
     );
-
     const user = userCredential.user;
+    Swal.fire({
+      icon: "success",
+      title: "登入成功！",
+      timer: 1000,
+      showConfirmButton: false,
+    });
   } catch (error) {
     const errorMessage = (error as Error).message;
 
@@ -270,7 +275,7 @@ export const emailSignIn = async (email: string, password: string) => {
       });
     } else if (errorMessage === "Firebase: Error (auth/user-not-found).") {
       Swal.fire({
-        title: "帳號或密碼錯誤請重新輸入。",
+        title: "還不是用戶喔，歡迎註冊。",
         icon: "warning",
         timer: 1000,
         showConfirmButton: false,
