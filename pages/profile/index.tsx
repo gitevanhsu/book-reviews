@@ -664,6 +664,7 @@ const EditTitle = styled.h4`
 const TitleInput = styled.input`
   width: 300px;
   padding: 5px 10px;
+
   @media screen and (max-width: 480px) {
     width: 200px;
   }

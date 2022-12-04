@@ -48,7 +48,7 @@ const NoNoticeContent = styled(NoticeContent)`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 10px;
+  padding: 20px 10px;
   height: 50px;
   width: 200px;
   font-size: ${(props) => props.theme.fz4};
@@ -446,7 +446,7 @@ function NoticeComponent() {
           }}
         >
           <MesImg src={bell} alt="Message" width={27} height={27} />
-          {notices.length + friendRequest.length > 0 ? (
+          {allnotice.length > 0 ? (
             <NoticeBox
               isOpen={openMsg}
               notice={
@@ -642,7 +642,6 @@ function FriendsComponent() {
         <FriendsUl>
           {friendList.length > 0 ? (
             friendList.map((friend) => {
-              console.log(friend);
               return (
                 <FriendsLi
                   key={friend.uid}
@@ -679,6 +678,7 @@ export function HeaderComponent() {
   const dispatch = useDispatch();
   const router = useRouter();
   const path = router.pathname;
+  const userInfo = useSelector((state: RootState) => state.userInfo);
 
   useEffect(() => {
     const auth = getAuth();
@@ -706,7 +706,7 @@ export function HeaderComponent() {
         </Li>
       </Ul>
       <MemberComponent />
-      <FriendsComponent />
+      {userInfo.isSignIn && <FriendsComponent />}
       <NoticeComponent />
     </Header>
   );

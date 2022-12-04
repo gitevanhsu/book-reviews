@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import styled from "styled-components";
 import { doc, DocumentData, getDoc, setDoc } from "firebase/firestore";
 import {
@@ -16,7 +15,8 @@ import { useRouter } from "next/router";
 import produce from "immer";
 import Swal from "sweetalert2";
 import searchImg from "public/img/search.png";
-import remove from "/public/img/hp-books.png";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const BooksPage = styled.div`
   padding: 50px 30px;
@@ -25,10 +25,12 @@ const BooksPage = styled.div`
 `;
 
 const Books = styled.div`
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
 `;
 const BookData = styled.div`
+  text-align: center;
   width: 25%;
   @media screen and (max-width: 922px) {
     width: 50%;
@@ -222,7 +224,7 @@ const History = styled.div`
 
 const SearchBooks = styled.div`
   width: 100%;
-  margin: 20px auto;
+  margin: 20px;
   display: flex;
   flex-wrap: wrap;
 `;
@@ -231,7 +233,7 @@ const SearchTitle = styled.h1`
   text-align: center;
   width: 100%;
   margin: 25px auto 5px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   color: ${(props) => props.theme.black};
   & + & {
     margin: 5px auto 25px;
@@ -260,6 +262,7 @@ export default function BooksComponent({
   const noResultRef = useRef<HTMLDivElement>(null);
   const [histories, sethistories] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const lastIsbn = firstBook[firstBook.length - 1]?.isbn;
@@ -324,6 +327,7 @@ export default function BooksComponent({
       }
     });
     setSearchBooks(books);
+    setLoading(false);
   };
   const saveKeyword = (value: string) => {
     const localData = localStorage.getItem("keyWord");
@@ -363,11 +367,7 @@ export default function BooksComponent({
               setSerchValue(inputRef.current.value);
               saveKeyword(inputRef.current.value);
               inputRef.current.value = "";
-              Swal.fire({
-                title: "搜尋中...",
-                timer: 1200,
-                showConfirmButton: false,
-              });
+              setLoading(true);
               setShowSearch(true);
             }
           }}
@@ -383,11 +383,7 @@ export default function BooksComponent({
               setSerchValue(inputRef.current.value);
               saveKeyword(inputRef.current.value);
               inputRef.current.value = "";
-              Swal.fire({
-                title: "搜尋中...",
-                timer: 1200,
-                showConfirmButton: false,
-              });
+              setLoading(true);
               setShowSearch(true);
             }
           }}
@@ -412,11 +408,7 @@ export default function BooksComponent({
               onClick={() => {
                 bookSearcher(history);
                 setSerchValue(history);
-                Swal.fire({
-                  title: "搜尋中...",
-                  timer: 1200,
-                  showConfirmButton: false,
-                });
+                setLoading(true);
                 setShowSearch(true);
               }}
             >
@@ -429,11 +421,38 @@ export default function BooksComponent({
         searchBooks && (
           <SearchBooks>
             <SearchTitle>查詢關鍵字: {serchValue}</SearchTitle>
-            <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            {loading ? (
+              <SearchTitle>搜尋中...</SearchTitle>
+            ) : (
+              <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            )}
             <Books>
+              {loading &&
+                Array.from({ length: 8 }).map((_, index) => (
+                  <BookData key={index}>
+                    <Book>
+                      <Skeleton
+                        style={{
+                          width: "128px",
+                          height: "193px",
+                        }}
+                      />
+                      <BookDetail>
+                        <BookTitle>
+                          <Skeleton />
+                        </BookTitle>
+                        <BookAuthor>
+                          <Skeleton />
+                        </BookAuthor>
+                        <BookTextSnippet>
+                          <Skeleton count={3} />
+                        </BookTextSnippet>
+                      </BookDetail>
+                    </Book>
+                  </BookData>
+                ))}
               {searchBooks &&
                 searchBooks.map((data, index) => {
-                  console.log(data);
                   return (
                     <BookData key={index}>
                       <BookComponent data={data} />
