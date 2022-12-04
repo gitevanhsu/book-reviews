@@ -451,12 +451,6 @@ function SigninComponent() {
       email && password && emailSignIn(email, password);
       emailRef.current.value = "";
       passwordRef.current.value = "";
-      Swal.fire({
-        icon: "success",
-        title: "登入成功！",
-        timer: 1000,
-        showConfirmButton: false,
-      });
     }
   };
   return (

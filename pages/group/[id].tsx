@@ -556,6 +556,7 @@ function LiveChat({ id }: { id: string }) {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("group1");
     let tempVideoTag: HTMLVideoElement | null;
     if (myVideoRef) {
       tempVideoTag = myVideoRef.current;

@@ -629,6 +629,7 @@ function FriendsComponent() {
         unSubscription();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userInfo.uid]);
   const gotoMemberPage = (uid: string) => {
     uid
