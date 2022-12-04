@@ -3,33 +3,28 @@ import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
 import {
-  emailSignUp,
   emailSignIn,
   signout,
   BookInfo,
   getBookDatas,
   removeBook,
-  db,
   MemberInfo,
   updateBooks,
   getMemberData,
   editMemberInfo,
+  emailSignUp,
 } from "../../utils/firebaseFuncs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { useDispatch } from "react-redux";
 import { userSignOut } from "../../slices/userInfoSlice";
-import FriendsListComponent from "../../components/friendList";
 import bookcover from "/public/img/bookcover.jpeg";
-import x from "/public/img/VectorX.png";
 import {
   DragDropContext,
   Draggable,
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
-import SignupComponent from "../../components/signup";
-import Portal from "../../components/portal";
 import male from "/public/img/reading-male.png";
 import male2 from "/public/img/reading-male2.png";
 import female from "/public/img/reading-female.png";
@@ -38,13 +33,12 @@ import books from "/public/img/book-stack.png";
 import kid from "/public/img/reading-kid.png";
 import pen from "/public/img/pen.svg";
 import signOut from "/public/img/sign-out.svg";
-import people from "/public/img/people.svg";
 import produce from "immer";
 import library from "/public/img/library.jpg";
+import Swal from "sweetalert2";
 
 const InputTitle = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  padding: 20px 0;
+  font-size: ${(props) => props.theme.fz3};
 `;
 const InputContent = styled.input`
   &[type="radio"] {
@@ -63,17 +57,8 @@ const InputContent = styled.input`
   }
 `;
 const Inputbox = styled.div`
-  text-align: center;
   margin: 0 auto;
-  & > br {
-    display: none;
-  }
-  @media screen and (max-width: 768px) {
-    & > br {
-      display: block;
-    }
-  }
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 440px) {
     & > br {
       display: none;
     }
@@ -83,21 +68,17 @@ const SignArea = styled.div`
   margin-top: 50px;
   & > ${Inputbox} {
     display: flex;
-    width: 400px;
+    width: 300px;
     margin: 0 auto;
     margin-bottom: 30px;
     align-items: center;
     justify-content: center;
-    @media screen and (max-width: 480px) {
-      width: 250px;
-    }
     & > ${InputTitle} {
-      font-size: ${(props) => props.theme.fz * 2}px;
       padding: 0;
-      width: 150px;
+      width: 120px;
       @media screen and (max-width: 480px) {
-        width: 100px;
-        font-size: ${(props) => props.theme.fz * 1.2}px;
+        width: 80px;
+        font-size: ${(props) => props.theme.fz4};
       }
     }
     & > ${InputContent} {
@@ -106,11 +87,7 @@ const SignArea = styled.div`
       outline: none;
       background-color: transparent;
       border-bottom: 2px solid ${(props) => props.theme.greyBlue};
-      font-size: ${(props) => props.theme.fz * 1.5}px;
-      @media screen and (max-width: 480px) {
-        font-size: ${(props) => props.theme.fz * 1}px;
-        width: 180px;
-      }
+      font-size: ${(props) => props.theme.fz4};
     }
   }
 `;
@@ -124,36 +101,21 @@ const Overlay = styled.div`
   opacity: 0.5;
   z-index: 5;
 `;
-const SubmitButton = styled.div`
-  display: flex;
-  align-items: center;
+const SubmitButton = styled.button`
+  width: 100px;
   padding: 5px 10px;
   cursor: pointer;
   border-radius: 20px;
   margin: 10px 0;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
+  font-size: ${(props) => props.theme.fz4};
   &:hover {
     background-color: ${(props) => props.theme.greyBlue};
   }
-  @media screen and (max-width: 768px) {
-    & + & {
-      margin-left: 20px;
-    }
-  }
 `;
 const SignInBtnBox = styled.div`
-  display: flex;
-  justify-content: center;
-  & > ${SubmitButton} {
-    margin: 10px;
-    font-size: ${(props) => props.theme.fz * 1.5}px;
-    padding: 10px 20px;
-    @media screen and (max-width: 480px) {
-      font-size: ${(props) => props.theme.fz * 1.2}px;
-      padding: 5px 10px;
-    }
-  }
+  text-align: center;
 `;
 
 const QuoteArea = styled.div`
@@ -164,61 +126,403 @@ const QuoteImg = styled(Image)`
   position: absolute;
   left: 0;
   opacity: 0.7;
-
   width: 100%;
   height: auto;
 `;
+
+const SignUpArea = styled.div`
+  margin: 0 auto;
+  text-align: center;
+  padding: 10px 20px;
+  z-index: 6;
+  width: 480px;
+  background-color: ${(props) => props.theme.white};
+  @media screen and (max-width: 576px) {
+    width: 300px;
+  }
+`;
+const SignupInputbox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+`;
+const SignupInputTitle = styled.h4`
+  width: 140px;
+  text-align: start;
+  font-size: ${(props) => props.theme.fz4};
+  line-height: ${(props) => props.theme.fz4};
+`;
+const SignupIntrobox = styled(SignupInputbox)`
+  flex-wrap: wrap;
+  text-align: center;
+  & > ${SignupInputTitle} {
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
+  }
+`;
+const SignupInputContent = styled.input`
+  outline: none;
+  border: none;
+  padding: 5px 10px;
+  font-size: ${(props) => props.theme.fz4};
+  border-bottom: 2px solid ${(props) => props.theme.greyBlue};
+  width: 100%;
+  background-color: ${(props) => props.theme.white};
+  @media screen (max-width: 576px) {
+    margin-top: 5px;
+  }
+  &[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  &[type="radio"] + img {
+    cursor: pointer;
+    outline: 2px solid ${(props) => props.theme.grey};
+    margin: 10px 10px;
+  }
+  &[type="radio"]:checked + img {
+    outline: 2px solid ${(props) => props.theme.red};
+  }
+`;
+const SignupInputTextArea = styled.textarea`
+  font-family: Arial;
+  border: 1px solid ${(props) => props.theme.black};
+  border-radius: 5px;
+  background-color: ${(props) => props.theme.white};
+  padding: 5px 10px;
+  width: 100%;
+  height: 80px;
+  margin-top: 10px;
+  @media screen (max-width: 576px) {
+    height: 50px;
+  }
+`;
+
+const SignupSubmitButton = styled.button`
+  width: 100px;
+  padding: 5px 10px;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: ${(props) => props.theme.fz4};
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  border-radius: 20px;
+  @media screen (max-width: 576px) {
+    padding: 5px 10px;
+  }
+`;
+
+const SignupLabel = styled.label``;
+const SignupUserAvatar = styled(Image)`
+  border-radius: 50%;
+`;
+function SignupComponent({ setSignUp }: { setSignUp: Function }) {
+  const signupNameRef = useRef<HTMLInputElement>(null);
+  const signupEmailRef = useRef<HTMLInputElement>(null);
+  const signPasswordRef = useRef<HTMLInputElement>(null);
+  const signupIntroRef = useRef<HTMLTextAreaElement>(null);
+  const [avatar, setAvatar] = useState("books");
+
+  const isRadioSelect = (value: string): boolean => avatar === value;
+  const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
+    setAvatar(e.currentTarget.value);
+  const signup = () => {
+    if (
+      signupNameRef.current &&
+      signupEmailRef.current &&
+      signPasswordRef.current &&
+      signupIntroRef.current
+    ) {
+      const name = signupNameRef.current.value;
+      const email = signupEmailRef.current.value;
+      const password = signPasswordRef.current.value;
+      const intro = signupIntroRef.current.value;
+      if (
+        password.trim().length < 6 ||
+        name.trim().length === 0 ||
+        email.trim().length === 0
+      ) {
+        Swal.fire({
+          icon: "warning",
+          title: "請輸入正確資訊",
+          text: "密碼至少六個字喔",
+        });
+      } else if (avatar === "books") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "male") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male.png?alt=media&token=4966e0d4-b850-4c33-a3eb-88f2a9d9238b";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "male2") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male2.png?alt=media&token=225beacb-0954-4f29-849e-1cdaa4fb359b";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "female") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female.png?alt=media&token=cd1fbeef-0d9e-4d34-9217-0c0921e24bd6";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "female2") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female2.png?alt=media&token=26bba03e-f92f-4068-b2ba-8dfc56313553";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "kid") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-kid.png?alt=media&token=6ad7ec20-5fc7-4076-8972-52ca4c6b3bfa";
+        emailSignUp(name, email, password, intro, img);
+      } else if (avatar === "books") {
+        const img =
+          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        emailSignUp(name, email, password, intro, img);
+      }
+
+      signupNameRef.current.value = "";
+      signupEmailRef.current.value = "";
+      signPasswordRef.current.value = "";
+      signupIntroRef.current.value = "";
+    }
+  };
+
+  return (
+    <SignUpArea>
+      <SignupInputbox>
+        <SignupInputTitle>名字: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpName"
+          ref={signupNameRef}
+          type="text"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>Email: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpEmail"
+          ref={signupEmailRef}
+          type="email"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupInputbox>
+        <SignupInputTitle>密碼: </SignupInputTitle>
+        <SignupInputContent
+          key="signUpPassword"
+          ref={signPasswordRef}
+          type="password"
+        ></SignupInputContent>
+      </SignupInputbox>
+      <SignupIntrobox>
+        <SignupInputTitle>自我介紹: </SignupInputTitle>
+        <SignupInputTextArea
+          key="signUpIntro"
+          ref={signupIntroRef}
+        ></SignupInputTextArea>
+      </SignupIntrobox>
+      <SignupIntrobox>
+        <SignupInputTitle>選擇您喜歡的頭像</SignupInputTitle>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="male"
+            checked={isRadioSelect("male")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={male}
+            alt="maleAvatar"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="male2"
+            checked={isRadioSelect("male2")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={male2}
+            alt="maleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="female"
+            checked={isRadioSelect("female")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={female}
+            alt="femaleAvatar"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="female2"
+            checked={isRadioSelect("female2")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={female2}
+            alt="femaleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="kid"
+            checked={isRadioSelect("kid")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar
+            src={kid}
+            alt="femaleAvatar2"
+            width={50}
+            height={50}
+          />
+        </SignupLabel>
+        <SignupLabel>
+          <SignupInputContent
+            type="radio"
+            name="avatar"
+            value="books"
+            checked={isRadioSelect("books")}
+            onChange={avatarSelector}
+          />
+          <SignupUserAvatar src={books} alt="upload" width={50} height={50} />
+        </SignupLabel>
+      </SignupIntrobox>
+      <SignupSubmitButton
+        onClick={() => {
+          signup();
+        }}
+      >
+        註冊
+      </SignupSubmitButton>{" "}
+      <br />
+      <SignupSubmitButton
+        onClick={() => {
+          setSignUp(false);
+        }}
+      >
+        返回登入
+      </SignupSubmitButton>
+    </SignUpArea>
+  );
+}
 
 function SigninComponent() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [showSignup, setSignUp] = useState(false);
   const signin = () => {
-    if (emailRef.current && passwordRef.current) {
+    if (
+      emailRef.current &&
+      passwordRef.current &&
+      (emailRef.current.value.trim().length === 0 ||
+        passwordRef.current.value.trim().length < 6)
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "請輸入正確 email & password",
+        text: "密碼至少六個字喔",
+      });
+    } else if (emailRef.current && passwordRef.current) {
       const email = emailRef.current.value;
       const password = passwordRef.current.value;
 
       email && password && emailSignIn(email, password);
       emailRef.current.value = "";
       passwordRef.current.value = "";
+      Swal.fire({
+        icon: "success",
+        title: "登入成功！",
+        timer: 1000,
+        showConfirmButton: false,
+      });
     }
   };
   return (
     <>
-      <SignArea>
-        <Inputbox>
-          <InputTitle>Email: </InputTitle>
-          <InputContent
-            key="signInEmail"
-            ref={emailRef}
-            type="email"
-          ></InputContent>
-        </Inputbox>
-        <Inputbox>
-          <InputTitle>Password: </InputTitle>
-          <InputContent
-            key="signInPassword"
-            ref={passwordRef}
-            type="password"
-          ></InputContent>
-        </Inputbox>
-      </SignArea>
-      <SignInBtnBox>
-        <SubmitButton onClick={signin}>登入</SubmitButton>
-        <SubmitButton onClick={() => setSignUp(true)}>註冊</SubmitButton>
-      </SignInBtnBox>
+      {showSignup ? (
+        <SignupComponent setSignUp={setSignUp} />
+      ) : (
+        <>
+          <SignArea>
+            <Inputbox>
+              <InputTitle>Email: </InputTitle>
+              <InputContent
+                key="signInEmail"
+                ref={emailRef}
+                type="email"
+              ></InputContent>
+            </Inputbox>
+            <Inputbox>
+              <InputTitle>Password: </InputTitle>
+              <InputContent
+                key="signInPassword"
+                ref={passwordRef}
+                type="password"
+              ></InputContent>
+            </Inputbox>
+          </SignArea>
+          <SignInBtnBox>
+            <SubmitButton onClick={signin}>登入</SubmitButton>
+            <br />
+            <SubmitButton onClick={() => setSignUp(true)}>
+              馬上註冊
+            </SubmitButton>
+          </SignInBtnBox>
+        </>
+      )}
       <QuoteArea>
         <QuoteImg src={library} alt="Library" priority />
       </QuoteArea>
-      {showSignup && (
-        <Portal>
-          <Overlay onClick={() => setSignUp(false)} />
-          <SignupComponent setSignUp={setSignUp} />
-        </Portal>
-      )}
     </>
   );
 }
+
+const MoveBook = styled.div`
+  font-size: ${(props) => props.theme.fz3};
+  line-height: 20px;
+  font-weight: 900;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  color: ${(props) => props.theme.white};
+  border-radius: 5px;
+  cursor: pointer;
+  & + & {
+    margin-top: 5px;
+  }
+`;
+
+const MobileRemove = styled(MoveBook)`
+  background-color: ${(props) => props.theme.red};
+`;
+const DeskRemove = styled(MobileRemove)`
+  display: none;
+  margin-left: auto;
+`;
+
 const BookShelfs = styled.div`
   display: flex;
   justify-content: space-around;
@@ -235,7 +539,7 @@ const BookShelf = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: start;
-  height: 520px;
+  height: 500px;
   overflow: auto;
   ::-webkit-scrollbar {
     display: none;
@@ -247,51 +551,47 @@ const ShelfTitle = styled.h2`
   width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  background-color: #ecbe48;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   padding: 10px;
   z-index: 1;
-  box-shadow: 2px 0px 5px ${(props) => props.theme.black};
 `;
 const Books = styled.div`
-  min-height: 450px;
+  min-height: 400px;
   padding: 15px 15px;
 `;
 const Book = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 5px double #875303;
-  padding-bottom: 1px;
+  border-bottom: 1px solid #efc991;
+  padding-bottom: 5px;
   margin-bottom: 10px;
-  transition: 0.3s;
-  &:hover {
-    transform: scale(1.05);
-  }
-  @media screen and (max-width: 992px) {
-    &:hover {
-      transform: scale(1);
-    }
+  &:hover > ${DeskRemove} {
+    display: block;
   }
 `;
 const BookImg = styled(Image)`
   box-shadow: 0px 0px 5px ${(props) => props.theme.black};
+  margin-right: 10px;
 `;
 const BookLink = styled(Link)`
   display: inline-block;
 `;
+const BookData = styled.div``;
 const BookTitle = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+  font-weight: 600;
 `;
-const BookData = styled.div`
-  margin: 0 10px;
+const BookAuthor = styled.h4`
+  font-size: ${(props) => props.theme.fz4};
 `;
-const BookAuthor = styled.h4``;
 const NoimgTitle = styled.p`
+  font-size: ${(props) => props.theme.fz5};
+  line-height: ${(props) => props.theme.fz4};
   position: absolute;
-  color: #fff;
-  font-size: 12px;
+  color: ${(props) => props.theme.white};
   width: 80px;
   height: 120px;
   overflow: hidden;
@@ -302,22 +602,14 @@ const NoimgTitle = styled.p`
   left: 0;
   pointer-events: none;
 `;
-const RemoveBtn = styled(Image)`
-  background-color: transparent
-  padding: 3px;
-  margin-left: auto;
-  cursor: pointer;
-  border-radius: 5px;
-  &:hover {
-    background-color: ${(props) => props.theme.red};
-  }
-`;
+
 const UserAvatar = styled(Image)`
   width: 50px;
   height: 50px;
   border-radius: 50%;
 `;
 const ProfilePage = styled.main`
+  overflow: hidden;
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 60px);
@@ -326,7 +618,7 @@ const ProfilePage = styled.main`
 `;
 const ProfilePageWrap = styled.div`
   height: 100%;
-  padding: 50px 30px;
+  padding: 50px 15px;
   max-width: 1280px;
   margin: 0 auto;
 `;
@@ -347,22 +639,21 @@ const EditBox = styled.div`
       height: 45px;
     }
   }
+  @media screen and (max-width: 480px) {
+    & > ${InputContent} {
+      width: 200px;
+    }
+  }
 `;
 
 const EditBoxDetail = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   @media screen and (max-width: 576px) {
-    font-size: ${(props) => props.theme.fz * 1.2}px;
-  }
-  @media screen and (max-width: 480px) {
-    & > input,
-    & > textarea {
-      width: 100%;
-    }
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
 const EditTitle = styled.h4`
@@ -373,11 +664,17 @@ const EditTitle = styled.h4`
 const TitleInput = styled.input`
   width: 300px;
   padding: 5px 10px;
+  @media screen and (max-width: 480px) {
+    width: 200px;
+  }
 `;
 const IntroTextarea = styled.textarea`
   padding: 5px 10px;
   width: 300px;
   height: 100px;
+  @media screen and (max-width: 480px) {
+    width: 200px;
+  }
 `;
 
 const EditButtonBox = styled.div`
@@ -389,21 +686,28 @@ const EditButtonBox = styled.div`
 `;
 
 const UserDetail = styled.div`
-  margin: 0 auto;
+  width: 100%;
+  max-width: 500px;
+  margin-left: 40px;
+  @media screen and (max-width: 992px) {
+    max-width: 300px;
+  }
 `;
 const UserName = styled.h2`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz2};
   margin-bottom: 10px;
   letter-spacing: 2px;
+  word-wrap: break-word;
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz3};
   }
 `;
 
 const UserIntro = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
   width: 100%;
   border-top: 1px solid ${(props) => props.theme.grey};
   margin-top: 10px;
@@ -413,17 +717,17 @@ const UserIntro = styled.p`
   ::-webkit-scrollbar {
     display: none;
   }
-  @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
-  }
 `;
 const Label = styled.label``;
 const ButtonBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-left: auto;
   @media screen and (max-width: 768px) {
-    margin-top: 20px;
     margin-left: 0;
-    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
   }
 `;
 const BtnImg = styled(Image)`
@@ -432,7 +736,7 @@ const BtnImg = styled(Image)`
 const UserInfoBox = styled.div`
   position: relative;
   margin: 0 auto;
-  width: 60%;
+  width: 90%;
   display: flex;
   margin-bottom: 50px;
   align-items: center;
@@ -447,17 +751,6 @@ const UserInfoBox = styled.div`
     height: 100px;
     @media screen and (max-width: 768px) {
       margin-bottom: 20px;
-    }
-  }
-  & > ${ButtonBox}>${SubmitButton} {
-    @media screen and (max-width: 480px) {
-      padding: 5px 5px;
-      margin: 0 5px;
-    }
-  }
-  & > ${ButtonBox}>${SubmitButton}>${BtnImg} {
-    @media screen and (max-width: 480px) {
-      display: none;
     }
   }
 `;
@@ -490,7 +783,7 @@ const MobileBookShelfs = styled(BookShelfs)`
     margin-bottom: 40px;
   }
   & ${ShelfTitle} {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz4};
   }
 
   & ${Books} {
@@ -505,29 +798,11 @@ const MobileBtnBox = styled.div`
   margin-left: auto;
 `;
 
-const MoveBook = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
-  line-height: 20px;
-  font-weight: 900;
-  text-align: center;
-  width: 20px;
-  height: 20px;
-  background-color: ${(props) => props.theme.yellow2};
-  border-radius: 5px;
-  color: #fff;
-  cursor: pointer;
-  &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
-  }
-  & + & {
-    margin-top: 2px;
-  }
-`;
 const ShelfIcon = styled.div`
   display: inline-block;
   padding-left: 2px;
   margin-right: 5px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   line-height: 20px;
   font-weight: 900;
   text-align: center;
@@ -536,6 +811,24 @@ const ShelfIcon = styled.div`
   background-color: ${(props) => props.theme.greyBlue};
   border-radius: 5px;
   color: #fff;
+`;
+
+const ProfileButton = styled.button`
+  display: flex;
+  align-items: center;
+  width: 100px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin: 10px 0;
+  color: ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.yellow};
+  font-size: ${(props) => props.theme.fz5};
+  @media screen and (max-width: 768px) {
+    & + & {
+      margin-left: 20px;
+    }
+  }
 `;
 
 function MobileBookShelfComponent({
@@ -569,7 +862,7 @@ function MobileBookShelfComponent({
       <MobileBookShelfs>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>C</ShelfIcon>Collection / 收藏
+            <ShelfIcon>C</ShelfIcon>ollection / 收藏
           </ShelfTitle>
           <Books>
             {books?.map((book, index) => (
@@ -594,7 +887,18 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <MobileRemove
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setBooks((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "books");
+                      }
+                    }}
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -626,7 +930,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+            <ShelfIcon>R</ShelfIcon>eading / 閱讀
           </ShelfTitle>
           <Books>
             {reading?.map((book, index) => (
@@ -651,7 +955,18 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <MobileRemove
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setBooks((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "books");
+                      }
+                    }}
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -683,7 +998,7 @@ function MobileBookShelfComponent({
         </BookShelf>
         <BookShelf>
           <ShelfTitle>
-            <ShelfIcon>F</ShelfIcon>Finish / 完成
+            <ShelfIcon>F</ShelfIcon>inish / 完成
           </ShelfTitle>
           <Books>
             {finish?.map((book, index) => (
@@ -708,7 +1023,18 @@ function MobileBookShelfComponent({
                   )}
                 </BookData>
                 <MobileBtnBox>
-                  <RemoveBtn src={x} alt="delete" width={20} height={20} />
+                  <MobileRemove
+                    onClick={() => {
+                      if (book.isbn && books) {
+                        setBooks((prev: BookInfo[]) =>
+                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
+                        );
+                        removeBook(book.isbn, userInfo.uid!, "books");
+                      }
+                    }}
+                  >
+                    X
+                  </MobileRemove>
                   <MoveBook
                     onClick={() => {
                       UpdateBooks({
@@ -752,7 +1078,7 @@ function BookShelfComponent() {
     const getBooks = async () => {
       if (userInfo.uid) {
         const memberData = (await getMemberData(userInfo.uid)) as MemberInfo;
-        if (memberData.books && memberData.reading && memberData.finish) {
+        if (memberData?.books && memberData?.reading && memberData?.finish) {
           const booksDatas = await getBookDatas(memberData.books);
           booksDatas.length && setBooks(booksDatas as BookInfo[]);
           const readingDatas = await getBookDatas(memberData.reading);
@@ -804,7 +1130,7 @@ function BookShelfComponent() {
         <BookShelfs>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>C</ShelfIcon>Collection / 收藏
+              <ShelfIcon>C</ShelfIcon>ollection / 收藏
             </ShelfTitle>
             <Droppable droppableId="books">
               {(provided) => (
@@ -847,11 +1173,7 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
                                     setBooks((prev) =>
@@ -867,7 +1189,9 @@ function BookShelfComponent() {
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -880,7 +1204,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>R</ShelfIcon>Reading / 閱讀
+              <ShelfIcon>R</ShelfIcon>eading / 閱讀
             </ShelfTitle>
             <Droppable droppableId="reading">
               {(provided) => (
@@ -923,14 +1247,10 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setReading((prev) =>
+                                    setBooks((prev) =>
                                       prev.filter(
                                         (bookinfo) =>
                                           bookinfo.isbn !== book.isbn
@@ -939,11 +1259,13 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "reading"
+                                      "books"
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -956,7 +1278,7 @@ function BookShelfComponent() {
           </BookShelf>
           <BookShelf>
             <ShelfTitle>
-              <ShelfIcon>F</ShelfIcon>Finish / 完成
+              <ShelfIcon>F</ShelfIcon>inish / 完成
             </ShelfTitle>
             <Droppable droppableId="finish">
               {(provided) => (
@@ -999,14 +1321,10 @@ function BookShelfComponent() {
                                   <BookAuthor>{book.authors![0]}</BookAuthor>
                                 )}
                               </BookData>
-                              <RemoveBtn
-                                src={x}
-                                alt="delete"
-                                width={20}
-                                height={20}
+                              <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setFinish((prev) =>
+                                    setBooks((prev) =>
                                       prev.filter(
                                         (bookinfo) =>
                                           bookinfo.isbn !== book.isbn
@@ -1015,11 +1333,13 @@ function BookShelfComponent() {
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "finish"
+                                      "books"
                                     );
                                   }
                                 }}
-                              />
+                              >
+                                X
+                              </DeskRemove>
                             </Book>
                           )}
                         </Draggable>
@@ -1049,7 +1369,6 @@ export default function Profile() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
   const [edit, setEdit] = useState(false);
-  const [showFriend, setShowFriend] = useState(false);
   const editNameRef = useRef<HTMLInputElement>(null);
   const editIntroRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1062,11 +1381,10 @@ export default function Profile() {
   return (
     <ProfilePage>
       <ProfilePageWrap>
-        {(edit || showFriend) && (
+        {edit && (
           <Overlay
             onClick={() => {
               setEdit(false);
-              setShowFriend(false);
             }}
           />
         )}
@@ -1088,38 +1406,54 @@ export default function Profile() {
                 </UserIntro>
               </UserDetail>
               <ButtonBox>
-                <SubmitButton
+                <ProfileButton
                   onClick={() => {
                     setEdit(true);
                   }}
                 >
                   <BtnImg src={pen} alt="edit" width={20} height={20} />
                   編輯資訊
-                </SubmitButton>
-                <SubmitButton
+                </ProfileButton>
+                <ProfileButton
                   onClick={() => {
-                    setShowFriend(true);
-                  }}
-                >
-                  <BtnImg src={people} alt="friends" width={20} height={20} />
-                  好友列表
-                </SubmitButton>
-                <SubmitButton
-                  onClick={() => {
-                    signout();
-                    dispatch(
-                      userSignOut({ uid: "", name: "", email: "", intro: "" })
-                    );
+                    Swal.fire({
+                      title: "確定登出嗎？",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#3085d6",
+                      cancelButtonColor: "#d33",
+                      confirmButtonText: "確認登出",
+                      cancelButtonText: "取消",
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        Swal.fire({
+                          icon: "success",
+                          title: "登出成功！",
+                          text: "成功刪除評價 / 評論。",
+                          showConfirmButton: false,
+                          timer: 1500,
+                        });
+                        signout();
+                        dispatch(
+                          userSignOut({
+                            uid: "",
+                            name: "",
+                            email: "",
+                            intro: "",
+                          })
+                        );
+                      }
+                    });
                   }}
                 >
                   <BtnImg src={signOut} alt="sign out" width={20} height={20} />
                   登出
-                </SubmitButton>
+                </ProfileButton>
               </ButtonBox>
               {edit && (
                 <EditBox>
                   <Inputbox>
-                    <InputTitle>Avatars</InputTitle>
+                    <InputTitle>頭像</InputTitle>
                     <Label>
                       <InputContent
                         type="radio"
@@ -1183,13 +1517,13 @@ export default function Profile() {
                     </Label>
                   </Inputbox>
                   <EditBoxDetail>
-                    <EditTitle>Name</EditTitle>
+                    <EditTitle>姓名</EditTitle>
                     <TitleInput
                       ref={editNameRef}
                       defaultValue={userInfo.name}
                     />
                     <br />
-                    <EditTitle>Intro</EditTitle>
+                    <EditTitle>自我介紹</EditTitle>
                     <IntroTextarea
                       ref={editIntroRef}
                       defaultValue={userInfo.intro}
@@ -1201,7 +1535,7 @@ export default function Profile() {
                         setEdit(false);
                       }}
                     >
-                      Cancle
+                      取消
                     </SubmitButton>
                     <SubmitButton
                       onClick={() => {
@@ -1292,15 +1626,12 @@ export default function Profile() {
                         }
                       }}
                     >
-                      Submit
+                      送出
                     </SubmitButton>
                   </EditButtonBox>
                 </EditBox>
               )}
             </UserInfoBox>
-            {showFriend && (
-              <FriendsListComponent setShowFriend={setShowFriend} />
-            )}
             <BookShelfComponent />
           </>
         ) : (

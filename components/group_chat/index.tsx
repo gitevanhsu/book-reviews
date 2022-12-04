@@ -7,32 +7,35 @@ import {
   getMemberData,
   sentMessage,
   ChatMessage,
-  getFirstChat,
 } from "../../utils/firebaseFuncs";
 import { RootState } from "../../store";
 
 import male from "/public/img/reading-male.png";
 import { useSelector } from "react-redux";
 import { onSnapshot, query, collection } from "firebase/firestore";
-import { GetServerSideProps } from "next/types";
-import { ParsedUrlQuery } from "querystring";
+import Link from "next/link";
+import Swal from "sweetalert2";
+import { useRouter } from "next/router";
+
 const ChatRoom = styled.div`
+  position: relative;
   width: 600px;
   margin-top: 20px;
   background-color: ${(props) => props.theme.lightWhite};
   border: 1px solid ${(props) => props.theme.greyBlue};
-  padding: 10px;
+  overflow: hidden;
   border-radius: 10px;
-  max-height: 460px;
+  max-height: 500px;
   box-shadow: 0px 0px 3px ${(props) => props.theme.black};
   @media screen and (max-width: 768px) {
     width: 100%;
   }
 `;
 const ChatContent = styled.div`
-  padding: 10px 10px;
-  max-height: 400px;
-  min-height: 400px;
+  position: relative;
+  padding: 10px 10px 40px;
+  max-height: 350px;
+  min-height: 350px;
   overflow: auto;
   ::-webkit-scrollbar {
     display: none;
@@ -44,29 +47,37 @@ const Member = styled.div`
 `;
 
 const MemberName = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+  letter-spacing: 1px;
+  font-weight: 600;
 `;
 const MemberImg = styled(Image)`
   margin-right: 5px;
 `;
 const MemberContent = styled.p`
   display: inline-block;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   padding-left: 30px;
   min-width: 100px;
   white-space: pre-wrap;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  margin: 5px 0;
+  line-height: ${(props) => props.theme.fz4};
 `;
 const InputBox = styled.div`
+  position: absolute;
+  bottom: 0;
   margin-top: 10px;
   width: 100%;
-  display: flex;
-  align-items: center;
 `;
 const MessageInput = styled.input`
   width: 100%;
   border-radius: 5px;
   padding: 5px 10px;
+  border: none;
+  outline: none;
+  border-top: 1px solid ${(props) => props.theme.grey};
+  font-size: ${(props) => props.theme.fz4};
 `;
 const ChatDate = styled.p`
   padding-left: 30px;
@@ -84,6 +95,22 @@ const MyChat = styled(MemberChat)`
   margin-left: auto;
 `;
 
+const ChatRoomTitle = styled.h3`
+  top: 0;
+  letter-spacing: 3px;
+  padding: 10px 0;
+  box-shadow: 5px 0px 5px ${(props) => props.theme.black};
+  position: sticky;
+  text-align: center;
+  font-size: ${(props) => props.theme.fz3};
+  background-color: ${(props) => props.theme.yellow}; ;
+`;
+
+const Nomessage = styled(MemberContent)`
+  width: 100%;
+  text-align: center;
+`;
+
 export default function ChatRoomComponent({
   id,
   chatdata,
@@ -95,6 +122,7 @@ export default function ChatRoomComponent({
   const [chats, setChats] = useState<ChatMessage[]>(chatdata);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatBox = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let unsub: Function;
@@ -123,7 +151,6 @@ export default function ChatRoomComponent({
         }
       );
     }
-    console.log("effect");
     return () => {
       if (unsub) {
         unsub();
@@ -137,8 +164,9 @@ export default function ChatRoomComponent({
 
   return (
     <ChatRoom>
+      <ChatRoomTitle>聊天室</ChatRoomTitle>
       <ChatContent ref={chatBox}>
-        {chats ? (
+        {chats.length > 0 ? (
           chats.map((chat) => {
             const chatDate = new Date(
               chat.time ? chat.time?.seconds * 1000 : ""
@@ -157,20 +185,22 @@ export default function ChatRoomComponent({
               return (
                 <MemberChat key={chat.messageId}>
                   <Member>
-                    <MemberImg
-                      src={
-                        chat.memberData && chat.memberData.img
-                          ? chat.memberData.img
-                          : male
-                      }
-                      alt={
-                        chat.memberData && chat.memberData.name
-                          ? chat.memberData.name
-                          : "user Img"
-                      }
-                      width={25}
-                      height={25}
-                    />
+                    <Link href={`/member/id:${chat.memberData?.uid}`}>
+                      <MemberImg
+                        src={
+                          chat.memberData && chat.memberData.img
+                            ? chat.memberData.img
+                            : male
+                        }
+                        alt={
+                          chat.memberData && chat.memberData.name
+                            ? chat.memberData.name
+                            : "user Img"
+                        }
+                        width={25}
+                        height={25}
+                      />
+                    </Link>
                     <MemberName>{chat.memberData?.name}</MemberName>
                   </Member>
                   <MemberContent>{chat.content}</MemberContent>
@@ -180,14 +210,23 @@ export default function ChatRoomComponent({
             }
           })
         ) : (
-          <MemberContent>跟大家分享你的想法吧！</MemberContent>
+          <Nomessage>趕快跟大家分享你的想法吧！</Nomessage>
         )}
       </ChatContent>
       <InputBox>
         <MessageInput
           ref={inputRef}
+          placeholder="留下評論......"
           onKeyPress={(e) => {
-            if (
+            if (!userInfo.isSignIn) {
+              Swal.fire({
+                icon: "info",
+                title: "請先登入喔！",
+                confirmButtonText: "前往登入",
+              }).then((result) => {
+                result.isConfirmed && router.push("/profile");
+              });
+            } else if (
               e.code === "Enter" &&
               inputRef &&
               inputRef.current &&

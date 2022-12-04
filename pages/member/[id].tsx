@@ -20,7 +20,8 @@ import addFriendImg from "/public/img/add-friend.png";
 import wait from "/public/img/wait.png";
 
 const MemberPage = styled.div`
-  width: 100vw;
+  overflow: hidden;
+  width: 100%;
   height: 100%;
   min-height: calc(100vh - 60px);
   position: relative;
@@ -28,14 +29,14 @@ const MemberPage = styled.div`
 `;
 const MemberPageWrap = styled.div`
   height: 100%;
-  padding: 50px 30px;
+  padding: 50px 15px;
   max-width: 1280px;
   margin: 0 auto;
 `;
 const BookShelfs = styled.div`
   display: flex;
   justify-content: space-around;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     flex-direction: column;
   }
 `;
@@ -44,17 +45,16 @@ const BookShelf = styled.div`
   width: 30%;
   border: solid 5px ${(props) => props.theme.grey};
   background-color: ${(props) => props.theme.yellow2};
-  /* box-shadow: 0px 0px 5px ${(props) => props.theme.black}; */
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   justify-content: start;
-  height: 520px;
+  height: 500px;
   overflow: auto;
   ::-webkit-scrollbar {
     display: none;
   }
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     width: 100%;
     height: 350px;
     margin-bottom: 40px;
@@ -63,19 +63,19 @@ const BookShelf = styled.div`
 const ShelfTitle = styled.h2`
   text-align: center;
   position: sticky;
+  width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  background-color: #ecbe48;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   padding: 10px;
   z-index: 1;
-  box-shadow: 2px 0px 5px ${(props) => props.theme.black};
 `;
 const Books = styled.div`
-  min-height: 450px;
+  min-height: 400px;
   padding: 15px 15px;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 992px) {
     min-height: 250px;
   }
 `;
@@ -83,27 +83,30 @@ const Book = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 5px double #875303;
-  padding-bottom: 1px;
+  border-bottom: 1px solid #efc991;
+  padding-bottom: 5px;
   margin-bottom: 10px;
 `;
 const BookImg = styled(Image)`
   box-shadow: 0px 0px 5px ${(props) => props.theme.black};
+  margin-right: 10px;
 `;
 const BookLink = styled(Link)`
   display: inline-block;
 `;
 const BookTitle = styled.h3`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+  font-weight: 600;
 `;
-const BookData = styled.div`
-  margin: 0 10px;
+const BookData = styled.div``;
+const BookAuthor = styled.h4`
+  font-size: ${(props) => props.theme.fz4};
 `;
-const BookAuthor = styled.h4``;
 const NoimgTitle = styled.p`
+  font-size: ${(props) => props.theme.fz5};
+  line-height: ${(props) => props.theme.fz4};
   position: absolute;
-  color: #fff;
-  font-size: 12px;
+  color: ${(props) => props.theme.white};
   width: 80px;
   height: 120px;
   overflow: hidden;
@@ -122,9 +125,10 @@ const FriendStateImg = styled(Image)`
 `;
 
 const FriendRequestBox = styled.div`
+  margin-left: auto;
   padding: 5px 10px;
   @media screen and (max-width: 768px) {
-    margin-top: 40px;
+    margin: 40px auto;
   }
 `;
 const AcceptRequest = styled.button`
@@ -173,14 +177,20 @@ const WaitRequest = styled.div`
 `;
 
 const UserDetail = styled.div`
-  margin-left: 30px;
+  width: 100%;
+  max-width: 500px;
+  margin-left: 40px;
+  @media screen and (max-width: 992px) {
+    max-width: 300px;
+  }
 `;
 const UserName = styled.h2`
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz2};
   margin-bottom: 10px;
   letter-spacing: 2px;
+  word-wrap: break-word;
   @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1.5}px;
+    font-size: ${(props) => props.theme.fz3};
   }
 `;
 const UserAvatar = styled(Image)`
@@ -189,10 +199,11 @@ const UserAvatar = styled(Image)`
   border-radius: 50%;
 `;
 const UserIntro = styled.p`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   white-space: pre-wrap;
-  width: 300px;
+  overflow-wrap: break-word;
+  width: 100%;
   border-top: 1px solid ${(props) => props.theme.grey};
   margin-top: 10px;
   padding-top: 10px;
@@ -201,15 +212,12 @@ const UserIntro = styled.p`
   ::-webkit-scrollbar {
     display: none;
   }
-  @media screen and (max-width: 480px) {
-    font-size: ${(props) => props.theme.fz * 1}px;
-  }
 `;
 
 const UserInfoBox = styled.div`
   position: relative;
   margin: 0 auto;
-  width: 60%;
+  width: 90%;
   display: flex;
   margin-bottom: 50px;
   align-items: center;
@@ -226,6 +234,20 @@ const UserInfoBox = styled.div`
       margin-bottom: 20px;
     }
   }
+`;
+const ShelfIcon = styled.div`
+  display: inline-block;
+  padding-left: 2px;
+  margin-right: 5px;
+  font-size: ${(props) => props.theme.fz4};
+  line-height: 20px;
+  font-weight: 900;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.theme.greyBlue};
+  border-radius: 5px;
+  color: #fff;
 `;
 
 export default function MemberPageComponent() {
@@ -273,7 +295,6 @@ export default function MemberPageComponent() {
     };
     getBooks();
     memberData();
-    console.log("effect!");
   }, [id, userInfo]);
 
   return (
@@ -334,10 +355,11 @@ export default function MemberPageComponent() {
             )}
           </FriendRequestBox>
         </UserInfoBox>
-
         <BookShelfs>
           <BookShelf>
-            <ShelfTitle>Collection / 收藏</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>C</ShelfIcon>ollection / 收藏
+            </ShelfTitle>
             <Books>
               {books?.map(
                 (book) =>
@@ -372,7 +394,9 @@ export default function MemberPageComponent() {
             </Books>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Reading / 閱讀</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>R</ShelfIcon>eading / 閱讀
+            </ShelfTitle>
             <Books>
               {reading?.map(
                 (book) =>
@@ -407,7 +431,9 @@ export default function MemberPageComponent() {
             </Books>
           </BookShelf>
           <BookShelf>
-            <ShelfTitle>Finish / 完成</ShelfTitle>
+            <ShelfTitle>
+              <ShelfIcon>F</ShelfIcon>inish / 完成
+            </ShelfTitle>
             <Books>
               {finish?.map(
                 (book) =>

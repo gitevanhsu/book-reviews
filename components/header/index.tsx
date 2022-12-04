@@ -14,37 +14,54 @@ import {
   NoticeData,
   removeNotice,
   signout,
+  db,
 } from "../../utils/firebaseFuncs";
 import { useDispatch, useSelector } from "react-redux";
 import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
-import { onSnapshot, query, where } from "firebase/firestore";
+import { doc, onSnapshot, query, where } from "firebase/firestore";
 import { RootState } from "../../store";
 import { useRouter } from "next/router";
-import logo from "../../public/img/book-shelf-books-education-learning-school-study-svgrepo-com.svg";
-import message from "../../public/img/message.svg";
 import acceptImg from "../../public/img/accept.svg";
 import rejectImg from "../../public/img/reject.svg";
 import linkImg from "../../public/img/new-link.svg";
 import menu from "../../public/img/user.png";
 import bell from "/public/img/bell.png";
+import Friends from "/public/img/multiple-users.png";
+import Swal from "sweetalert2";
 
-const LogoImg = styled(Image)``;
 interface MesProps {
   mesCount?: number;
 }
 interface MesBoxProps {
   isOpen?: boolean;
+  notice?: number;
 }
 interface LiProps {
   nowpath: boolean;
 }
+const NoticeContent = styled.div`
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+`;
+const NoNoticeContent = styled(NoticeContent)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 10px;
+  height: 50px;
+  width: 200px;
+  font-size: ${(props) => props.theme.fz4};
+  transition: 0.3s;
+  height: 0;
+`;
 const MesBox = styled.div<MesProps>`
   margin-right: 20px;
   position: relative;
   &::after {
     content: ${(props) =>
       props.mesCount !== 0 ? `'` + `${props.mesCount}` + `'` : null};
-    font-size: ${(props) => props.theme.fz}px;
+    font-size: ${(props) => props.theme.fz4};
     display: inline-block;
     background-color: ${(props) => props.theme.red};
     color: ${(props) => props.theme.white};
@@ -57,12 +74,15 @@ const MesBox = styled.div<MesProps>`
     right: -8px;
     border-radius: 50%;
   }
+  &:hover > ${NoNoticeContent} {
+    transition: 0.3s;
+    height: 80px;
+  }
 `;
-
 const Header = styled.header`
   padding-top: 10px;
   width: 100%;
-  border-bottom: solid 1px ${(props) => props.theme.greyGreen};
+  border-bottom: solid 1px ${(props) => props.theme.grey};
   height: 60px;
   position: relative;
   display: flex;
@@ -72,40 +92,43 @@ const Header = styled.header`
 const Ul = styled.ul`
   display: flex;
   align-items: center;
-  margin-left: 30px;
   padding: 0 20px;
   height: 100%;
   overflow: hidden;
-  @media screen and (max-width: 576px) {
-    display: none;
-  }
 `;
-
 const Li = styled.li<LiProps>`
   list-style: none;
   display: inline-block;
   height: 100%;
-  width: 100%;
-  padding: 0 10px;
-  margin: 0;
+  width: 150px;
+  letter-spacing: 10px;
+  text-indent: 10px;
+  font-weight: 500;
   background-color: ${(props) =>
-    props.nowpath ? props.theme.greyBlue : props.theme.white};
+    props.nowpath ? props.theme.greyBlue : props.theme.grey};
   display: flex;
   align-items: center;
-  transform: ${(props) =>
-    props.nowpath ? "translateY(0%)" : "translateY(10%)"};
   border-radius: 10px 10px 0 0;
-  font-size: 20px;
-  transition: 0.2s;
+  font-size: ${(props) => props.theme.fz4};
   &:hover {
-    transform: translateY(0%);
     background-color: ${(props) => props.theme.greyBlue};
   }
   & + & {
     margin-left: 20px;
   }
+  @media screen and (max-width: 576px) {
+    width: 80px;
+  }
+  @media screen and (max-width: 480px) {
+    font-size: ${(props) => props.theme.fz5};
+    width: 60px;
+    & + & {
+      margin-left: 10px;
+    }
+  }
 `;
 const PageLink = styled(Link)`
+  justify-content: center;
   display: inline-block;
   display: flex;
   align-items: center;
@@ -114,52 +137,41 @@ const PageLink = styled(Link)`
   text-decoration: none;
   color: ${(props) => props.theme.black};
 `;
+
 const NoticeBox = styled.div<MesBoxProps>`
   position: absolute;
-  top: calc(100% - 1px);
-  right: 0;
-  width: 0px;
-  width: ${(props) => (props.isOpen ? "300px" : "0px")};
-  overflow: hidden;
+  top: calc(100% + 8px);
+  height: ${(props) => (props.isOpen ? `${props.notice! * 150}px` : "0px")};
+  min-height: ${(props) => (props.isOpen ? "30px" : "0px")};
+  right: -15px;
+  border-radius: 0 0 10px 10px;
+  overflow: auto;
   z-index: 10;
   background-color: ${(props) => props.theme.white};
   box-shadow: 5px 5px 5px ${(props) => props.theme.black};
-  padding: ${(props) => (props.isOpen ? "5px 20px" : "0px")};
-  transition: 0.2s;
-  border-radius: 10px;
+  transition: height 0.2s;
+  color: ${(props) => props.theme.black};
 `;
 const MesImg = styled(Image)`
+  opacity: 0.7;
   cursor: pointer;
-  transform: rotate(-2deg);
   &:hover ${NoticeBox} {
     right: -28px;
   }
 `;
-const FriendRequests = styled.div`
-  max-height: 200px;
-  overflow: auto;
-  border-bottom: 1px solid #000;
-  ::-webkit-scrollbar {
-    display: none;
-  }
-`;
+
 const FriendRequestBox = styled.div`
+  padding: 0 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 20px 0;
 `;
-const NoticeContent = styled.div`
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-`;
+
 const ResImgs = styled.div`
-  align-self: center;
+  margin-left: auto;
   display: flex;
-  justify-content: space-around;
   width: 60px;
-  justify-items: end;
 `;
 const ResImg1 = styled(Image)`
   background-color: ${(props) => props.theme.yellow};
@@ -170,6 +182,7 @@ const ResImg1 = styled(Image)`
   }
 `;
 const ResImg2 = styled(ResImg1)`
+  margin-left: 10px;
   background-color: ${(props) => props.theme.red};
   &:hover {
     background-color: ${(props) => props.theme.red};
@@ -178,46 +191,32 @@ const ResImg2 = styled(ResImg1)`
 const ResImg3 = styled(ResImg1)`
   background-color: ${(props) => props.theme.yellow};
 `;
-const Notices = styled.div`
-  max-height: 200px;
-  overflow: auto;
-  ::-webkit-scrollbar {
-    display: none;
-  }
-`;
+
 const Notice = styled.div`
+  padding: 0 10px;
   display: flex;
-  justify-content: space-between;
+  justify-content: start;
   align-items: center;
   margin: 20px 0;
 `;
 const MemberName = styled.h3`
   letter-spacing: 2px;
-  font-size: 22px;
+  font-size: ${(props) => props.theme.fz3};
+  @media screen and (max-width: 768px) {
+    font-size: ${(props) => props.theme.fz4};
+  }
 `;
 const MemberImg = styled(Image)`
   margin-right: 20px;
+  border-radius: 50%;
 `;
 const NoticeMessage = styled.p`
-  font-size: 14px;
+  font-size: ${(props) => props.theme.fz5};
   letter-spacing: 2px;
 `;
-interface OverLayProps {
-  isOpen: boolean;
-}
-const OverLay = styled.div<OverLayProps>`
-  display: ${(props) => (props.isOpen ? "block" : "none")};
-  position: absolute;
-  z-index: 9;
-  width: 100vw;
-  height: 100vh;
-  top: 0;
-  right: 0;
-  background-color: #000;
-  opacity: 0.3;
-`;
+
 const ProfileUl = styled.ul`
-  border-top: 1px solid ${(props) => props.theme.greyGreen};
+  border-top: 1px solid ${(props) => props.theme.grey};
   background-color: ${(props) => props.theme.white};
   position: absolute;
   border-radius: 0 0 10px 10px;
@@ -228,7 +227,11 @@ const ProfileUl = styled.ul`
   overflow: hidden;
 `;
 const ProfileLink = styled(Link)``;
-const ProfileLi = styled.li`
+
+interface ProfileLiProps {
+  nowpath?: boolean;
+}
+const ProfileLi = styled.li<ProfileLiProps>`
   padding: 0 10px;
   width: 100%;
   display: flex;
@@ -236,13 +239,14 @@ const ProfileLi = styled.li`
   text-align: right;
   cursor: pointer;
   height: 0;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   opacity: 0;
-  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
-
+  border-bottom: 1px solid ${(props) => props.theme.grey};
   transition: 0.3s;
   color: ${(props) => props.theme.black};
-  border-top: 1px solid ${(props) => props.theme.greyGreen};
+  border-top: 1px solid ${(props) => props.theme.grey};
+  background-color: ${(props) =>
+    props.nowpath ? props.theme.yellow : "transparent"};
   &:hover {
     background-color: ${(props) => props.theme.yellow};
   }
@@ -269,27 +273,114 @@ const ProfileBox = styled.div`
     transition: 0.2s;
     opacity: 1;
   }
-  @media screen and (max-width: 576px) {
-    margin-left: 0;
-    display: none;
-  }
 `;
 
 const ProfileImgWrap = styled.div``;
 const ProfileImgImage = styled(Image)`
+  opacity: 0.7;
   height: 100%;
   display: inline-block;
   padding-top: 10px;
 `;
+
+function FriendRequestComponent({ data }: { data: MemberInfo }) {
+  const userInfo = useSelector((state: RootState) => state.userInfo);
+  return (
+    <>
+      {data.img && (
+        <Link href={`/member/id:${data.uid}`}>
+          <MemberImg
+            src={data && data?.img ? data?.img : male}
+            alt={data && data?.name ? data.name : "user Img"}
+            width={40}
+            height={40}
+          />
+        </Link>
+      )}
+      <NoticeContent>
+        <MemberName>{data.name}</MemberName>
+        <NoticeMessage>向您發出好友邀請</NoticeMessage>
+      </NoticeContent>
+      <ResImgs>
+        <ResImg1
+          src={acceptImg}
+          alt="acceptImg"
+          width={25}
+          height={25}
+          onClick={() => {
+            if (userInfo.uid && data.uid)
+              acceptFriendRequest(userInfo.uid, data.uid);
+          }}
+        />
+        <ResImg2
+          src={rejectImg}
+          alt="rejectImg"
+          width={25}
+          height={25}
+          onClick={() => {
+            if (userInfo.uid && data.uid) {
+              rejectFriendRequest(userInfo.uid, data.uid);
+            }
+          }}
+        />
+      </ResImgs>
+    </>
+  );
+}
+
+function CommentNoticeComponent({ data }: { data: NoticeData }) {
+  return (
+    <>
+      <Link href={`/member/id:${data.poster}`}>
+        <MemberImg
+          src={
+            data?.posterInfo && data?.posterInfo?.img
+              ? data?.posterInfo?.img
+              : male
+          }
+          alt={
+            data?.posterInfo && data?.posterInfo?.name
+              ? data?.posterInfo.name
+              : "user Img"
+          }
+          width={40}
+          height={40}
+        ></MemberImg>
+      </Link>
+      <NoticeContent>
+        <MemberName>{data?.posterInfo?.name}</MemberName>
+        <NoticeMessage>回應了您的評論</NoticeMessage>
+      </NoticeContent>
+      <ResImgs>
+        <Link href={data?.postUrl}>
+          <ResImg3 src={linkImg} alt="delete" width={25} height={25} />
+        </Link>
+        <ResImg2
+          src={rejectImg}
+          alt="delete"
+          width={25}
+          height={25}
+          onClick={() => {
+            removeNotice(data);
+          }}
+        />
+      </ResImgs>
+    </>
+  );
+}
+
 function NoticeComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [notices, setNotice] = useState<NoticeData[]>([]);
   const [friendRequest, setFriendRequest] = useState<MemberInfo[]>([]);
   const [openMsg, setOpenMsg] = useState(false);
-
+  const [allnotice, setAllnotice] = useState<(NoticeData | MemberInfo)[]>([]);
   useEffect(() => {
     let unsub1: Function;
-    const getFriendRequest = async () => {
+    let unsub2: Function;
+
+    const getAllNotice = async () => {
+      let allNotices: (NoticeData | MemberInfo)[] = [];
       unsub1 = onSnapshot(
         query(
           friendRequestRef,
@@ -304,12 +395,10 @@ function NoticeComponent() {
           const invitorData = (await Promise.all(
             newInviteData
           )) as MemberInfo[];
+          allNotices.push(...invitorData);
           setFriendRequest(invitorData);
         }
       );
-    };
-    let unsub2: Function;
-    const getReviewNotice = async () => {
       unsub2 = onSnapshot(
         query(noticeRef, where("reciver", "==", userInfo.uid)),
         async (querySnapshot) => {
@@ -325,12 +414,12 @@ function NoticeComponent() {
                 posterInfo: memberDatas[index],
               } as NoticeData)
           );
+          allNotices.push(...newNotices);
           setNotice(newNotices);
         }
       );
     };
-    getFriendRequest();
-    getReviewNotice();
+    getAllNotice();
     return () => {
       if (unsub1) {
         unsub1();
@@ -341,142 +430,48 @@ function NoticeComponent() {
     };
   }, [userInfo.uid]);
 
+  useEffect(() => {
+    setAllnotice([...notices, ...friendRequest]);
+  }, [notices, friendRequest]);
   return (
     <>
       {userInfo.isSignIn && (
-        <>
-          <OverLay
-            isOpen={openMsg}
-            onClick={() => {
-              setOpenMsg((prev) => !prev);
-            }}
-          />
-          <MesBox mesCount={notices.length + friendRequest.length}>
-            <MesImg
-              src={bell}
-              alt="Message"
-              width={30}
-              height={30}
-              onClick={() => {
-                setOpenMsg((prev) => !prev);
-              }}
-            />
-            {notices.length + friendRequest.length > 0 ? (
-              <NoticeBox isOpen={openMsg}>
-                <FriendRequests>
-                  {friendRequest &&
-                    friendRequest.map((invitor) => {
-                      return (
-                        <FriendRequestBox key={invitor && invitor.uid}>
-                          {invitor.img && (
-                            <Link href={`/member/id:${invitor.uid}`}>
-                              <MemberImg
-                                src={
-                                  invitor && invitor?.img ? invitor?.img : male
-                                }
-                                alt={
-                                  invitor && invitor?.name
-                                    ? invitor.name
-                                    : "user Img"
-                                }
-                                width={50}
-                                height={50}
-                              />
-                            </Link>
-                          )}
-                          <NoticeContent>
-                            <MemberName>{invitor.name}</MemberName>
-                            <NoticeMessage>向您發出好友邀請</NoticeMessage>
-                          </NoticeContent>
-                          <ResImgs>
-                            <ResImg1
-                              src={acceptImg}
-                              alt="acceptImg"
-                              width={25}
-                              height={25}
-                              onClick={() => {
-                                if (userInfo.uid && invitor.uid)
-                                  acceptFriendRequest(
-                                    userInfo.uid,
-                                    invitor.uid
-                                  );
-                              }}
-                            />
-                            <ResImg2
-                              src={rejectImg}
-                              alt="rejectImg"
-                              width={25}
-                              height={25}
-                              onClick={() => {
-                                if (userInfo.uid && invitor.uid) {
-                                  rejectFriendRequest(
-                                    userInfo.uid,
-                                    invitor.uid
-                                  );
-                                }
-                              }}
-                            />
-                          </ResImgs>
-                        </FriendRequestBox>
-                      );
-                    })}
-                </FriendRequests>
-                <Notices>
-                  {notices &&
-                    notices.map((notice) => {
-                      return (
-                        <Notice key={`${+notice.time}`}>
-                          <Link href={`/member/id:${notice.poster}`}>
-                            <MemberImg
-                              src={
-                                notice?.posterInfo && notice?.posterInfo?.img
-                                  ? notice?.posterInfo?.img
-                                  : male
-                              }
-                              alt={
-                                notice?.posterInfo && notice?.posterInfo?.name
-                                  ? notice?.posterInfo.name
-                                  : "user Img"
-                              }
-                              width={50}
-                              height={50}
-                            ></MemberImg>
-                          </Link>
-                          <NoticeContent>
-                            <MemberName>{notice?.posterInfo?.name}</MemberName>
-                            <NoticeMessage>回應了您的評論</NoticeMessage>
-                          </NoticeContent>
-                          <ResImgs>
-                            <Link href={notice?.postUrl}>
-                              <ResImg3
-                                src={linkImg}
-                                alt="delete"
-                                width={25}
-                                height={25}
-                              />
-                            </Link>
-                            <ResImg2
-                              src={rejectImg}
-                              alt="delete"
-                              width={25}
-                              height={25}
-                              onClick={() => {
-                                removeNotice(notice);
-                              }}
-                            />
-                          </ResImgs>
-                        </Notice>
-                      );
-                    })}
-                </Notices>
-              </NoticeBox>
-            ) : (
-              <NoticeBox isOpen={openMsg}>
-                <NoticeContent>目前沒有訊息喔！</NoticeContent>
-              </NoticeBox>
-            )}
-          </MesBox>
-        </>
+        <MesBox
+          mesCount={notices.length + friendRequest.length}
+          onMouseEnter={() => {
+            setOpenMsg(true);
+          }}
+          onMouseLeave={() => {
+            setOpenMsg(false);
+          }}
+        >
+          <MesImg src={bell} alt="Message" width={27} height={27} />
+          {notices.length + friendRequest.length > 0 ? (
+            <NoticeBox
+              isOpen={openMsg}
+              notice={
+                (notices.length > 0 ? 1 : 0) +
+                (friendRequest.length > 0 ? 1 : 0)
+              }
+            >
+              {allnotice.map((data) =>
+                "noticeid" in data ? (
+                  <Notice key={data.noticeid}>
+                    <CommentNoticeComponent data={data} />
+                  </Notice>
+                ) : (
+                  <FriendRequestBox key={data.uid}>
+                    <FriendRequestComponent data={data} />
+                  </FriendRequestBox>
+                )
+              )}
+            </NoticeBox>
+          ) : (
+            <NoticeBox isOpen={openMsg}>
+              <NoNoticeContent>目前沒有通知喔！</NoNoticeContent>
+            </NoticeBox>
+          )}
+        </MesBox>
       )}
     </>
   );
@@ -485,27 +480,51 @@ function NoticeComponent() {
 function MemberComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
-
+  const router = useRouter();
   return (
     <ProfileBox>
       <ProfileImgWrap>
-        <ProfileImgImage src={menu} width={32} height={32} alt="MemberAvatar" />
+        <ProfileImgImage src={menu} width={27} height={27} alt="MemberAvatar" />
         <ProfileUl>
-          <ProfileLi>
+          <ProfileLi nowpath={router.asPath === "/profile"}>
             <ProfileLink href="/profile">
-              {userInfo.isSignIn ? "Profile" : "SignIn"}
+              {userInfo.isSignIn ? "個人頁面" : "登入"}
             </ProfileLink>
           </ProfileLi>
           {userInfo.isSignIn && (
             <ProfileLi
               onClick={() => {
-                dispatch(
-                  userSignOut({ uid: "", name: "", email: "", intro: "" })
-                );
-                signout();
+                Swal.fire({
+                  title: "確定登出嗎？",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#3085d6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "確認登出",
+                  cancelButtonText: "取消",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    Swal.fire({
+                      icon: "success",
+                      title: "登出成功！",
+                      text: "成功刪除評價 / 評論。",
+                      showConfirmButton: false,
+                      timer: 1500,
+                    });
+                    signout();
+                    dispatch(
+                      userSignOut({
+                        uid: "",
+                        name: "",
+                        email: "",
+                        intro: "",
+                      })
+                    );
+                  }
+                });
               }}
             >
-              SignOut
+              登出
             </ProfileLi>
           )}
         </ProfileUl>
@@ -513,98 +532,149 @@ function MemberComponent() {
     </ProfileBox>
   );
 }
-interface MobileMenuBoxProps {
-  isSignin: string;
-}
 
-const MobileUl = styled.ul`
-  background-color: ${(props) => props.theme.white};
-  border-top: 1px solid ${(props) => props.theme.greyGreen};
-  border-radius: 0 0 10px 10px;
-  position: absolute;
-  top: 100%;
-  right: -10px;
-  width: 140px;
-  z-index: 4;
-  height: 0;
-  overflow: hidden;
-  transition: 0.3s;
-`;
-const MobileMenuBox = styled.div<MobileMenuBoxProps>`
-  position: relative;
-  display: none;
-  align-items: center;
-  margin: 0 15px;
-  margin-left: auto;
+const FriendsImg = styled(Image)`
   height: 100%;
-  &:hover ${MobileUl} {
-    height: ${(props) => props.isSignin};
-    transition: 0.3s;
-    box-shadow: 5px 5px 5px ${(props) => props.theme.black};
-  }
-  @media screen and (max-width: 576px) {
-    display: flex;
+  display: inline-block;
+  padding-top: 10px;
+  border-radius: 50%;
+`;
+const FriendsName = styled.p`
+  font-size: ${(props) => props.theme.fz3};
+  margin-left: 10px;
+  @media screen and (max-width: 768px) {
+    font-size: ${(props) => props.theme.fz4};
   }
 `;
-const MobileMenuImg = styled(Image)``;
-
-const MobileLi = styled.li`
-  cursor: pointer;
+const NoFriends = styled.p`
+  font-size: ${(props) => props.theme.fz4};
   width: 100%;
-  height: 50px;
-  padding: 0 10px;
-  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  text-align: center;
+`;
+const FriendsUl = styled.ul`
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: ${(props) => props.theme.white};
+  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  border-radius: 0 0 10px 10px;
+  transition: height 0.2s;
+  color: ${(props) => props.theme.black};
+`;
+
+const FriendsLi = styled.li`
+  padding: 0px 10px;
+  align-items: center;
+  display: flex;
+  width: 210px;
+  font-size: ${(props) => props.theme.fz4};
+  border-bottom: 1px solid ${(props) => props.theme.grey};
+  color: ${(props) => props.theme.black};
+  height: 0;
+  opacity: 0;
+  cursor: pointer;
   &:hover {
     background-color: ${(props) => props.theme.yellow};
   }
-  & > ${PageLink} {
-    color: ${(props) => props.theme.black};
+`;
+const FriendsBox = styled.div`
+  position: relative;
+  height: 100%;
+  z-index: 5;
+  margin-right: 20px;
+  overflow: hidden;
+  &:hover {
+    overflow: visible;
+  }
+  &:hover ${FriendsLi} {
+    padding: 10px 10px;
+    height: 70px;
+    transition: 0.3s;
+    opacity: 1;
   }
 `;
+const FriendsWrap = styled.div``;
 
-function MobileSlideComponent() {
+function FriendsComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const dispatch = useDispatch();
+  const [friendList, setFriendList] = useState<MemberInfo[]>([]);
   const router = useRouter();
-
+  useEffect(() => {
+    let unSubscription: Function;
+    const getFriendList = async () => {
+      if (userInfo.uid)
+        unSubscription = onSnapshot(
+          doc(db, "members", userInfo.uid),
+          async (doc) => {
+            const memberInfo = doc.data() as MemberInfo;
+            if (memberInfo?.friends && memberInfo.friends.length > 0) {
+              const request = memberInfo.friends.map(async (uids) => {
+                const res = await getMemberData(uids);
+                return res as MemberInfo;
+              });
+              const allMemberInfo = await Promise.all(request);
+              setFriendList(allMemberInfo);
+            }
+          }
+        );
+    };
+    if (userInfo.isSignIn) {
+      getFriendList();
+    } else {
+      setFriendList([]);
+    }
+    return () => {
+      if (unSubscription) {
+        unSubscription();
+      }
+    };
+  }, [userInfo.uid]);
+  const gotoMemberPage = (uid: string) => {
+    uid
+      ? router.push(`/member/id:${uid}`)
+      : router.push(`/book/id:9781473537804`);
+  };
   return (
-    <MobileMenuBox isSignin={userInfo.isSignIn ? "250px" : "200px"}>
-      <MobileMenuImg src={menu} alt="mobile icon" width={32} height={32} />
-      <MobileUl>
-        <MobileLi>
-          <PageLink href="/">Home</PageLink>
-        </MobileLi>
-        <MobileLi>
-          <PageLink href="/books">Books</PageLink>
-        </MobileLi>
-        <MobileLi>
-          <PageLink href="/search">Search</PageLink>
-        </MobileLi>
-        <MobileLi>
-          <PageLink href="/profile">
-            {userInfo.isSignIn ? "Profile" : "SignIn"}
-          </PageLink>
-        </MobileLi>
-        {userInfo.isSignIn && (
-          <MobileLi>
-            <PageLink
-              href=""
+    <FriendsBox>
+      <FriendsWrap>
+        <FriendsImg src={Friends} width={27} height={27} alt="MemberAvatar" />
+        <FriendsUl>
+          {friendList.length > 0 ? (
+            friendList.map((friend) => {
+              console.log(friend);
+              return (
+                <FriendsLi
+                  key={friend.uid}
+                  onClick={() => {
+                    friend.uid && gotoMemberPage(friend.uid);
+                  }}
+                >
+                  <FriendsImg
+                    src={friend.img!}
+                    alt="memberImg"
+                    width={40}
+                    height={40}
+                  />
+                  <FriendsName>{friend.name}</FriendsName>
+                </FriendsLi>
+              );
+            })
+          ) : (
+            <FriendsLi
               onClick={() => {
-                dispatch(
-                  userSignOut({ uid: "", name: "", email: "", intro: "" })
-                );
-                signout();
+                gotoMemberPage("");
               }}
             >
-              SignOut
-            </PageLink>
-          </MobileLi>
-        )}
-      </MobileUl>
-    </MobileMenuBox>
+              <NoFriends>去討論區認識新朋友吧！</NoFriends>
+            </FriendsLi>
+          )}
+        </FriendsUl>
+      </FriendsWrap>
+    </FriendsBox>
   );
 }
+
 export function HeaderComponent() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -627,22 +697,16 @@ export function HeaderComponent() {
   }, []);
   return (
     <Header>
-      <Link href="/">
-        <LogoImg src={logo} alt="logo" width={70} height={70} priority />
-      </Link>
       <Ul>
         <Li nowpath={path === "/"}>
-          <PageLink href="/">Home</PageLink>
+          <PageLink href="/">首頁</PageLink>
         </Li>
         <Li nowpath={path === "/books"}>
-          <PageLink href="/books">Books</PageLink>
-        </Li>
-        <Li nowpath={path === "/search"}>
-          <PageLink href="/search">Search</PageLink>
+          <PageLink href="/books">書籍</PageLink>
         </Li>
       </Ul>
-      <MobileSlideComponent />
       <MemberComponent />
+      <FriendsComponent />
       <NoticeComponent />
     </Header>
   );
