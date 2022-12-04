@@ -480,7 +480,7 @@ function NoticeComponent() {
 function MemberComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const dispatch = useDispatch();
-
+  const router = useRouter();
   return (
     <ProfileBox>
       <ProfileImgWrap>

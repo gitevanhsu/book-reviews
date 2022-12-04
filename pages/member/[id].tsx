@@ -295,7 +295,6 @@ export default function MemberPageComponent() {
     };
     getBooks();
     memberData();
-    console.log("effect!");
   }, [id, userInfo]);
 
   return (
