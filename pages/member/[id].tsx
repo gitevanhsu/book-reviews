@@ -137,9 +137,10 @@ const AcceptRequest = styled.button`
   padding: 5px 10px;
   border: solid 1px ${(props) => props.theme.grey};
   background-color: ${(props) => props.theme.yellow};
+  color: ${(props) => props.theme.black};
   cursor: pointer;
   border-radius: 20px;
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   &:hover {
     background-color: ${(props) => props.theme.greyBlue};
   }
@@ -150,7 +151,8 @@ const SentRequest = styled.button`
   padding: 5px 10px;
   border: solid 1px ${(props) => props.theme.grey};
   background-color: ${(props) => props.theme.yellow};
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
+  color: ${(props) => props.theme.black};
   border-radius: 20px;
   cursor: pointer;
   &:hover {
@@ -158,8 +160,9 @@ const SentRequest = styled.button`
   }
 `;
 const OtherRequest = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   background-color: ${(props) => props.theme.greyGreen};
+  color: ${(props) => props.theme.black};
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -167,7 +170,7 @@ const OtherRequest = styled.div`
   border: solid 1px ${(props) => props.theme.grey};
 `;
 const WaitRequest = styled.div`
-  font-size: ${(props) => props.theme.fz * 1.5}px;
+  font-size: ${(props) => props.theme.fz4};
   background-color: ${(props) => props.theme.greyGreen};
   border-radius: 20px;
   display: flex;

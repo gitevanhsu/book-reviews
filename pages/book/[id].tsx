@@ -183,7 +183,7 @@ const Wrap = styled.div`
 const NoimgTitle = styled.h2`
   position: absolute;
   color: #fff;
-  font-size: ${(props) => props.theme.fz * 2}px;
+  font-size: ${(props) => props.theme.fz3};
   width: 220px;
   height: 331px;
   overflow: hidden;

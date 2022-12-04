@@ -8,7 +8,13 @@ import {
   ChatMessage,
 } from "../../utils/firebaseFuncs";
 import { useRouter } from "next/router";
-import { useCallback, useRef, useState, VideoHTMLAttributes } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  VideoHTMLAttributes,
+} from "react";
 
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -548,6 +554,22 @@ function LiveChat({ id }: { id: string }) {
   const [sound, setSound] = useState(false);
   const [camera, setCamera] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    let tempVideoTag: HTMLVideoElement | null;
+    if (myVideoRef) {
+      tempVideoTag = myVideoRef.current;
+    }
+    return () => {
+      if (tempVideoTag) {
+        (tempVideoTag.srcObject as MediaStream)
+          .getTracks()
+          .forEach((track: { stop: () => void }) => track.stop());
+        remove(ref(db, `livechat/${id}/participants/${userInfo.uid}`));
+        remove(ref(db, `livechat/${id}/negotiations/${userInfo.uid}`));
+      }
+    };
+  }, [openChat]);
 
   const updatePeers = async (
     participants: string[],
