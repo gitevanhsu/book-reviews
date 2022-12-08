@@ -1,15 +1,19 @@
 import { useState } from "react";
+import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
 import styled from "styled-components";
+
 import { BookInfo, getBooks } from "../utils/firebaseFuncs";
-import bookcover from "/public/img/bookcover.jpeg";
-import bookImg from "../public/img/book.jpg";
-import books from "/public/img/hp-books.png";
-import friends from "/public/img/hp-friend.png";
-import rating from "/public/img/hp-reiew-rating.png";
-import bookshelf from "/public/img/hp-bookshelf.png";
-import { GetServerSideProps } from "next";
+import {
+  bookCover,
+  book,
+  hpBooks,
+  friends,
+  rating,
+  bookshelf,
+} from "../utils/imgs";
 
 const HomeWelcome = styled.div`
   height: 55vh;
@@ -98,9 +102,7 @@ const Books = styled.div`
 interface PageProps {
   page: number;
 }
-interface ColorProps {
-  arrcolor: boolean;
-}
+
 const BookWarp = styled.div<PageProps>`
   transform: ${(props) => `translateX(${props.page * -100}%)`};
   display: inline-block;
@@ -131,6 +133,10 @@ const Book = styled.div`
 const BookImg = styled(Image)`
   box-shadow: 5px 5px 5px ${(props) => props.theme.black};
 `;
+
+interface ColorProps {
+  arrColor: boolean;
+}
 const ButtonRight = styled.div<ColorProps>`
   clip-path: polygon(33% 0, 100% 50%, 33% 100%);
   width: 70px;
@@ -138,7 +144,7 @@ const ButtonRight = styled.div<ColorProps>`
   display: inline-block;
   cursor: pointer;
   background-color: ${(props) =>
-    props.arrcolor ? props.theme.grey : props.theme.greyBlue};
+    props.arrColor ? props.theme.grey : props.theme.darkYellow};
   opacity: 0.7;
   &:hover {
     opacity: 1;
@@ -147,9 +153,9 @@ const ButtonRight = styled.div<ColorProps>`
     width: 50px;
   }
 `;
-const Buttonleft = styled(ButtonRight)<ColorProps>`
+const ButtonLeft = styled(ButtonRight)<ColorProps>`
   background-color: ${(props) =>
-    props.arrcolor ? props.theme.grey : props.theme.greyBlue};
+    props.arrColor ? props.theme.grey : props.theme.darkYellow};
   clip-path: polygon(67% 0, 0 50%, 67% 100%);
 `;
 const BookTitle = styled.h2`
@@ -168,7 +174,7 @@ const BookAuthor = styled.p`
   white-space: pre-wrap;
   margin-bottom: 10px;
 `;
-const NoimgTitle = styled.h2`
+const NoImgTitle = styled.h2`
   position: absolute;
   color: ${(props) => props.theme.white};
   font-size: ${(props) => props.theme.fz4};
@@ -216,7 +222,7 @@ const FeatureImg = styled(Image)`
 `;
 const FeatureTitle = styled.h2`
   font-size: ${(props) => props.theme.fz3};
-  border-bottom: 4px solid ${(props) => props.theme.greyBlue};
+  border-bottom: 4px solid ${(props) => props.theme.darkYellow};
   margin: 35px 0 15px;
   font-weight: 600;
 `;
@@ -234,7 +240,7 @@ function FeatureComponent() {
     <FeatureMain>
       <FeatureWrap>
         <FeatureBox>
-          <FeatureImg src={books} alt="Books" />
+          <FeatureImg src={hpBooks} alt="Books" />
           <FeatureTitle>各樣書籍</FeatureTitle>
           <FeatureContent>
             種類多樣的書籍資料庫
@@ -282,7 +288,7 @@ export default function Home({ books }: HomeProps) {
   return (
     <>
       <HomeWelcome>
-        <WelcomeImage src={bookImg} alt="book" priority />
+        <WelcomeImage src={book} alt="book" priority />
         <WelcomeText>
           <Texts>
             <Quote>
@@ -296,52 +302,47 @@ export default function Home({ books }: HomeProps) {
       <HomeMain>
         <PageTitle>好書推薦</PageTitle>
         <BooksWrap>
-          <Buttonleft
-            arrcolor={0 === page}
+          <ButtonLeft
+            arrColor={0 === page}
             onClick={() => {
               setPage((prev) => (prev === 0 ? 0 : prev - 1));
             }}
           />
           <Books>
-            {books &&
-              books.map((book) => {
-                return (
-                  <BookWarp key={book.isbn} page={page}>
-                    <Book>
-                      <Link href={`/book/id:${book.isbn}`}>
-                        <BookImg
-                          src={
-                            book.smallThumbnail
-                              ? book.smallThumbnail
-                              : bookcover
-                          }
-                          alt={`${book.title}`}
-                          width={100}
-                          height={150}
-                        />
-                      </Link>
-                      {!book.smallThumbnail && (
-                        <NoimgTitle>{book.title}</NoimgTitle>
-                      )}
-                      <BookTitle>{book.title}</BookTitle>
-                      {book.authors && book.authors[0]?.length > 0 && (
-                        <BookAuthor>{book.authors[0]}</BookAuthor>
-                      )}
-                    </Book>
-                  </BookWarp>
-                );
-              })}
+            {books.map((book) => {
+              return (
+                <BookWarp key={book.isbn} page={page}>
+                  <Book>
+                    <Link href={`/book/id:${book.isbn}`}>
+                      <BookImg
+                        src={
+                          book.smallThumbnail ? book.smallThumbnail : bookCover
+                        }
+                        alt={`${book.title}`}
+                        width={100}
+                        height={150}
+                      />
+                    </Link>
+                    {!book.smallThumbnail && (
+                      <NoImgTitle>{book.title}</NoImgTitle>
+                    )}
+                    <BookTitle>{book.title}</BookTitle>
+                    {book.authors && book.authors[0]?.length > 0 && (
+                      <BookAuthor>{book.authors[0]}</BookAuthor>
+                    )}
+                  </Book>
+                </BookWarp>
+              );
+            })}
           </Books>
-          {books && (
-            <ButtonRight
-              arrcolor={books?.length - 5 === page}
-              onClick={() => {
-                setPage((prev) =>
-                  prev === books!.length - 5 ? books!.length - 5 : prev + 1
-                );
-              }}
-            />
-          )}
+          <ButtonRight
+            arrColor={books?.length - 5 === page}
+            onClick={() => {
+              setPage((prev) =>
+                prev === books!.length - 5 ? books!.length - 5 : prev + 1
+              );
+            }}
+          />
         </BooksWrap>
       </HomeMain>
     </>

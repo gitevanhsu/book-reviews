@@ -1,31 +1,25 @@
+import { useEffect, useRef, useState } from "react";
+import { GetServerSideProps } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { ParsedUrlQuery } from "querystring";
+
 import styled from "styled-components";
-import { doc, onSnapshot } from "firebase/firestore";
+import { useDispatch, useSelector } from "react-redux";
+import { doc, onSnapshot, Unsubscribe } from "firebase/firestore";
+
+import { ReviewsComponent } from "../../components/reviews";
+import { RootState } from "../../store";
+import { bookCover, mark, yellowMark, chat } from "../../utils/imgs";
 import {
   BookInfo,
-  getMemberReviews,
-  BookReview,
   db,
-  addToshelf,
+  addBookToShelf,
   MemberInfo,
   getFirstBook,
   getFirstReview,
 } from "../../utils/firebaseFuncs";
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import bookcover from "/public/img/bookcover.jpeg";
 
-import { ReviewsComponent } from "../../components/reviews";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../store";
-import Link from "next/link";
-import mark from "../../public/img/bookmark-white.png";
-import yellowMark from "../../public/img/bookmark-yellow.png";
-import chat from "../../public/img/chat.svg";
-import { GetServerSideProps } from "next";
-import { ParsedUrlQuery } from "querystring";
-interface StarProps {
-  rating: boolean;
-}
 const BookPage = styled.div`
   width: 100%;
   min-height: calc(100vh - 50px);
@@ -73,7 +67,7 @@ const ItemBox = styled.div<ItemBoxProps>`
   display: flex;
   margin-top: ${(props) => (props.hasSub ? "5px" : "20px")};
 `;
-const TitleTiemBox = styled(ItemBox)`
+const TitleItemBox = styled(ItemBox)`
   margin-top: 0;
 `;
 const ItemTitle = styled.h2<TitleProps>`
@@ -159,7 +153,9 @@ const BookRatingNum = styled.p`
   line-height: ${(props) => props.theme.fz4};
   font-size: ${(props) => props.theme.fz4};
 `;
-
+interface StarProps {
+  rating: boolean;
+}
 const Star = styled.div<StarProps>`
   display: inline-block;
   color: ${(props) => (props.rating ? props.theme.starYellow : "black")};
@@ -173,16 +169,16 @@ const Wrap = styled.div`
   position: fixed;
   margin-left: 20px;
   margin-bottom: 20px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
   opacity: 0.9;
   padding: 20px 10px;
   border-radius: 10px;
   color: ${(props) => props.theme.black};
 `;
 
-const NoimgTitle = styled.h2`
+const NoImgTitle = styled.h2`
   position: absolute;
-  color: #fff;
+  color: ${(props) => props.theme.white};
   font-size: ${(props) => props.theme.fz3};
   width: 220px;
   height: 331px;
@@ -238,14 +234,15 @@ export function BookComponent({ data }: { data: BookInfo }) {
   const [showMore, setShowMore] = useState(false);
   const contentRef = useRef<HTMLParagraphElement>(null);
   const contentClientHeightRef = useRef<number>();
+
   useEffect(() => {
     contentClientHeightRef.current = contentRef.current?.clientHeight!;
   }, []);
-  return data ? (
+  return (
     <BookBox>
       <BookImgBox>
         <BookImg
-          src={data.smallThumbnail ? data.smallThumbnail : bookcover}
+          src={data.smallThumbnail || bookCover}
           alt={`${data.title}`}
           width={220}
           height={331}
@@ -289,11 +286,11 @@ export function BookComponent({ data }: { data: BookInfo }) {
           </SubItemBox>
         )}
       </BookImgBox>
-      {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
+      {!data.smallThumbnail && <NoImgTitle>{data.title}</NoImgTitle>}
       <BookDetail>
-        <TitleTiemBox>
-          <ItemContent isTitle={true}>{data.title}</ItemContent>
-        </TitleTiemBox>
+        <TitleItemBox>
+          <ItemContent isTitle>{data.title}</ItemContent>
+        </TitleItemBox>
         {data.subtitle && (
           <ItemBox hasSub={true}>
             <ItemContent>{data.subtitle}</ItemContent>
@@ -333,10 +330,6 @@ export function BookComponent({ data }: { data: BookInfo }) {
         )}
       </BookDetail>
     </BookBox>
-  ) : (
-    <BookBox>
-      <ItemTitle>查無書籍資料</ItemTitle>
-    </BookBox>
   );
 }
 interface PostProps {
@@ -344,55 +337,40 @@ interface PostProps {
   firstReview: string;
 }
 
-function Post({ firstData, firstReview }: PostProps) {
+export default function Post({ firstData, firstReview }: PostProps) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [bookData, setBookData] = useState<BookInfo>(firstData);
-  const [memberReviews, setMemberReviews] = useState<BookReview>({});
   const [inShelf, setInShelf] = useState<boolean>(false);
   const dispatch = useDispatch();
   useEffect(() => {
-    let unsub1: Function;
-    if (typeof firstData.isbn === "string") {
-      unsub1 = onSnapshot(doc(db, "books", `${firstData.isbn}`), (doc) => {
+    const unSubscriptBookData = onSnapshot(
+      doc(db, "books", `${firstData.isbn}`),
+      (doc) => {
         const bookData = doc.data() as BookInfo;
         setBookData(bookData);
-      });
-    }
-    let unsub2: Function;
-    if (userInfo.uid) {
-      unsub2 = onSnapshot(doc(db, "members", userInfo.uid!), (doc) => {
-        const userData = doc.data() as MemberInfo;
-        if (
-          typeof firstData.isbn === "string" &&
-          (userData.books?.includes(firstData.isbn) ||
-            userData.reading?.includes(firstData.isbn) ||
-            userData.finish?.includes(firstData.isbn))
-        ) {
-          setInShelf(true);
+      }
+    );
+    let unScriptBookInShelf: Unsubscribe;
+    if (userInfo?.uid) {
+      unScriptBookInShelf = onSnapshot(
+        doc(db, "members", userInfo?.uid!),
+        (doc) => {
+          const userData = doc.data() as MemberInfo;
+          if (
+            typeof firstData.isbn === "string" &&
+            (userData.books?.includes(firstData.isbn) ||
+              userData.reading?.includes(firstData.isbn) ||
+              userData.finish?.includes(firstData.isbn))
+          ) {
+            setInShelf(true);
+          }
         }
-      });
-
-      if (
-        userInfo.isSignIn &&
-        userInfo.uid &&
-        typeof firstData.isbn === "string"
-      ) {
-        getMemberReviews(userInfo.uid, firstData.isbn).then((res) => {
-          setMemberReviews(res);
-        });
-      }
-      if (
-        typeof firstData.isbn === "string" &&
-        (userInfo.books?.includes(firstData.isbn) ||
-          userInfo.reading?.includes(firstData.isbn) ||
-          userInfo.finish?.includes(firstData.isbn))
-      ) {
-        setInShelf(true);
-      }
+      );
     }
+
     return () => {
-      if (unsub1) unsub1();
-      if (unsub2) unsub2();
+      unSubscriptBookData();
+      unScriptBookInShelf && unScriptBookInShelf();
     };
   }, [dispatch, firstData.isbn, userInfo]);
 
@@ -401,7 +379,7 @@ function Post({ firstData, firstReview }: PostProps) {
       <BookPageWrap>
         <BookComponent data={bookData} />
         <ReviewsComponent
-          bookIsbn={typeof firstData.isbn === "string" ? firstData.isbn : ""}
+          bookIsbn={firstData.isbn!}
           firstReview={JSON.parse(firstReview)}
         />
       </BookPageWrap>
@@ -420,7 +398,7 @@ function Post({ firstData, firstReview }: PostProps) {
                   userInfo &&
                   userInfo.uid
                 )
-                  addToshelf(firstData.isbn, userInfo.uid);
+                  addBookToShelf(firstData.isbn, userInfo.uid);
               }}
             >
               {inShelf || (
@@ -443,17 +421,18 @@ function Post({ firstData, firstReview }: PostProps) {
   );
 }
 
-import { withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
-
-export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({
-  // whenUnauthed: AuthAction.REDIRECT_TO_LOGIN,
-})(async ({ params }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const url = (params as ParsedUrlQuery).id as string;
   const bookIsbn = url.split("id:")[1];
   const firstData = await getFirstBook(bookIsbn);
   const firstReview = await getFirstReview(bookIsbn);
-  return {
-    props: { firstData, firstReview: JSON.stringify(firstReview) },
-  };
-});
-export default withAuthUser<PostProps>()(Post);
+  if (firstData) {
+    return {
+      props: { firstData, firstReview: JSON.stringify(firstReview) },
+    };
+  } else {
+    return {
+      notFound: true,
+    };
+  }
+};

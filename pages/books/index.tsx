@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
 import Image from "next/image";
+
 import styled from "styled-components";
+import produce from "immer";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+
 import { doc, DocumentData, getDoc, setDoc } from "firebase/firestore";
 import {
   loadBooks,
@@ -9,14 +16,7 @@ import {
   getBookRef,
   db,
 } from "../../utils/firebaseFuncs";
-import bookcover from "/public/img/bookcover.jpeg";
-import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import produce from "immer";
-import Swal from "sweetalert2";
-import searchImg from "public/img/search.png";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { bookCover, searchImg } from "../../utils/imgs";
 
 const BooksPage = styled.div`
   padding: 50px 30px;
@@ -81,7 +81,7 @@ const NextPage = styled.div`
   color: ${(props) => props.theme.black};
   cursor: pointer;
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow};
   }
 `;
 interface PrevProps {
@@ -92,7 +92,7 @@ const PrevPage = styled(NextPage)<PrevProps>`
   cursor: ${(props) => (props.hasPrev ? "not-allowed" : "pointer")};
   &:hover {
     background-color: ${(props) =>
-      props.hasPrev ? "transparent" : props.theme.greyBlue};
+      props.hasPrev ? "transparent" : props.theme.darkYellow};
   }
 `;
 const PageNumber = styled.p`
@@ -104,7 +104,7 @@ const Book = styled.div`
   height: 100%;
   text-align: center;
   position: relative;
-  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
+  border-bottom: 1px solid ${(props) => props.theme.darkYellow};
 `;
 const BookLink = styled.div`
   cursor: pointer;
@@ -120,7 +120,7 @@ const BookDetail = styled.div`
   text-align: left;
 `;
 
-const NoimgTitle = styled.h2`
+const NoImgTitle = styled.h2`
   position: absolute;
   color: #fff;
   font-size: 16px;
@@ -148,21 +148,16 @@ function BookComponent({ data }: { data: BookInfo }) {
       }
     }
   };
-
   return (
     <Book>
-      <BookLink
-        onClick={() => {
-          move(data);
-        }}
-      >
+      <BookLink onClick={() => move(data)}>
         <BookImg
-          src={data.smallThumbnail ? data.smallThumbnail : bookcover}
+          src={data.smallThumbnail ? data.smallThumbnail : bookCover}
           alt={`${data.title}`}
           width={128}
           height={193}
         />
-        {!data.smallThumbnail && <NoimgTitle>{data.title}</NoimgTitle>}
+        {!data.smallThumbnail && <NoImgTitle>{data.title}</NoImgTitle>}
       </BookLink>
       <BookDetail>
         <BookTitle>{data.title}</BookTitle>
@@ -175,7 +170,7 @@ function BookComponent({ data }: { data: BookInfo }) {
 
 const SearchBox = styled.div`
   display: flex;
-  border-bottom: 1px solid ${(props) => props.theme.greyBlue};
+  border-bottom: 1px solid ${(props) => props.theme.darkYellow};
 `;
 const SearchInput = styled.input`
   border: none;
@@ -190,7 +185,7 @@ const SearchInput = styled.input`
     font-size: ${(props) => props.theme.fz4};
   }
 `;
-const SearchBtton = styled(Image)`
+const SearchButton = styled(Image)`
   cursor: pointer;
 `;
 const HistoryTitle = styled.p`
@@ -218,7 +213,7 @@ const History = styled.div`
   background-color: ${(props) => props.theme.yellow};
   margin: 5px;
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow};
   }
 `;
 
@@ -245,24 +240,40 @@ const SearchNoResult = styled.div`
   margin-top: 20px;
   text-align: center;
 `;
+interface GoogleBook {
+  items: {
+    volumeInfo: {
+      industryIdentifiers: { type: string; identifier: string }[];
+      title: string;
+      subtitle: string;
+      authors: string[];
+      categories: string[];
+      description: string;
+      publisher: string;
+      publishedDate: string;
+      infoLink: string;
+      imageLinks: { smallThumbnail: string; thumbnail: string } | undefined;
+    };
+    searchInfo: { textSnippet: string } | undefined;
+  }[];
+}
 
 export default function BooksComponent({
   firstBook,
 }: {
   firstBook: BookInfo[];
 }) {
-  const [bookDatas, setBookDatas] = useState<BookInfo[]>(firstBook);
-  const [page, setPage] = useState<number>(0);
-  const pageRef = useRef<DocumentData>();
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [searchBooks, setSearchBooks] = useState<BookInfo[]>();
-  const [serchValue, setSerchValue] = useState<string>("");
-  const noResultRef = useRef<HTMLDivElement>(null);
-  const [histories, sethistories] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [bookData, setBookData] = useState<BookInfo[]>(firstBook);
+  const [searchBooks, setSearchBooks] = useState<BookInfo[]>([]);
+  const [histories, setHistories] = useState<string[]>([]);
+  const [searchValue, setSearchValue] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+
+  const pageRef = useRef<DocumentData>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const noResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const lastIsbn = firstBook[firstBook.length - 1]?.isbn;
@@ -274,19 +285,19 @@ export default function BooksComponent({
   }, [firstBook]);
 
   useEffect(() => {
-    if (page + 1 > bookDatas.length / 16) {
+    if (page + 1 > bookData.length / 16) {
       loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
-        setBookDatas([...bookDatas, ...booksData]);
+        setBookData([...bookData, ...booksData]);
         pageRef.current = lastVisible;
       });
     }
-  }, [bookDatas, page]);
+  }, [bookData, page]);
 
   useEffect(() => {
     const localData = localStorage.getItem("keyWord");
     if (localData) {
       const keywords = (JSON.parse(localData) as string[]) || [];
-      sethistories(keywords);
+      setHistories(keywords);
     }
   }, []);
 
@@ -295,10 +306,10 @@ export default function BooksComponent({
       `https://www.googleapis.com/books/v1/volumes?q=intitle:${input}&maxResults=40&key=${process.env.NEXT_PUBLIC_GOOGLE_BOOK_API}`
     );
     const books: BookInfo[] = [];
-    const parseData = await result.json();
-    parseData.items?.map((book: any) => {
+    const parseData = (await result.json()) as GoogleBook;
+    parseData.items?.map((book) => {
       const bookIsbnArr = book.volumeInfo.industryIdentifiers?.filter(
-        (isbn: any) => {
+        (isbn) => {
           if (isbn.type === "ISBN_13") {
             return isbn.identifier;
           }
@@ -306,7 +317,7 @@ export default function BooksComponent({
       );
       if (bookIsbnArr?.length > 0) {
         const isbn = bookIsbnArr[0].identifier;
-        const bookDatas: BookInfo = {
+        const bookData = {
           isbn: isbn,
           title: book.volumeInfo.title || "",
           subtitle: book.volumeInfo.subtitle || "",
@@ -322,8 +333,8 @@ export default function BooksComponent({
           ratingMember: [],
           ratingCount: 0,
           reviewCount: 0,
-        };
-        books.push(bookDatas);
+        } as BookInfo;
+        books.push(bookData);
       }
     });
     setSearchBooks(books);
@@ -339,14 +350,14 @@ export default function BooksComponent({
         if (draft.length > 5) draft.splice(5, draft.length - 1);
       });
       localStorage.setItem("keyWord", JSON.stringify(newKeywords));
-      sethistories(newKeywords);
+      setHistories(newKeywords);
     } else {
       const keywords: string[] = [];
       const newKeywords = produce(keywords, (draft) => {
         draft.push(value);
       });
       localStorage.setItem("keyWord", JSON.stringify(newKeywords));
-      sethistories(newKeywords);
+      setHistories(newKeywords);
     }
   };
 
@@ -363,28 +374,28 @@ export default function BooksComponent({
               inputRef.current &&
               inputRef.current.value.trim()
             ) {
-              bookSearcher(inputRef.current.value);
-              setSerchValue(inputRef.current.value);
-              saveKeyword(inputRef.current.value);
-              inputRef.current.value = "";
               setLoading(true);
               setShowSearch(true);
+              bookSearcher(inputRef.current.value);
+              setSearchValue(inputRef.current.value);
+              saveKeyword(inputRef.current.value);
+              inputRef.current.value = "";
             }
           }}
         />
-        <SearchBtton
+        <SearchButton
           width={20}
           height={20}
           src={searchImg}
           alt="search Image"
           onClick={() => {
             if (inputRef && inputRef.current && inputRef.current.value.trim()) {
-              bookSearcher(inputRef.current.value);
-              setSerchValue(inputRef.current.value);
-              saveKeyword(inputRef.current.value);
-              inputRef.current.value = "";
               setLoading(true);
               setShowSearch(true);
+              bookSearcher(inputRef.current.value);
+              setSearchValue(inputRef.current.value);
+              saveKeyword(inputRef.current.value);
+              inputRef.current.value = "";
             }
           }}
         />
@@ -406,10 +417,10 @@ export default function BooksComponent({
             <History
               key={history}
               onClick={() => {
-                bookSearcher(history);
-                setSerchValue(history);
                 setLoading(true);
                 setShowSearch(true);
+                bookSearcher(history);
+                setSearchValue(history);
               }}
             >
               {history}
@@ -418,60 +429,58 @@ export default function BooksComponent({
       </HistoryBox>
 
       {showSearch ? (
-        searchBooks && (
-          <SearchBooks>
-            <SearchTitle>查詢關鍵字: {serchValue}</SearchTitle>
-            {loading ? (
-              <SearchTitle>搜尋中...</SearchTitle>
-            ) : (
-              <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
-            )}
-            <Books>
-              {loading &&
-                Array.from({ length: 8 }).map((_, index) => (
+        <SearchBooks>
+          <SearchTitle>查詢關鍵字: {searchValue}</SearchTitle>
+          {loading ? (
+            <SearchTitle>搜尋中...</SearchTitle>
+          ) : (
+            <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+          )}
+          <Books>
+            {loading &&
+              Array.from({ length: 8 }).map((_, index) => (
+                <BookData key={index}>
+                  <Book>
+                    <Skeleton
+                      style={{
+                        width: "128px",
+                        height: "193px",
+                      }}
+                    />
+                    <BookDetail>
+                      <BookTitle>
+                        <Skeleton />
+                      </BookTitle>
+                      <BookAuthor>
+                        <Skeleton />
+                      </BookAuthor>
+                      <BookTextSnippet>
+                        <Skeleton count={3} />
+                      </BookTextSnippet>
+                    </BookDetail>
+                  </Book>
+                </BookData>
+              ))}
+            {searchBooks &&
+              searchBooks.map((data, index) => {
+                return (
                   <BookData key={index}>
-                    <Book>
-                      <Skeleton
-                        style={{
-                          width: "128px",
-                          height: "193px",
-                        }}
-                      />
-                      <BookDetail>
-                        <BookTitle>
-                          <Skeleton />
-                        </BookTitle>
-                        <BookAuthor>
-                          <Skeleton />
-                        </BookAuthor>
-                        <BookTextSnippet>
-                          <Skeleton count={3} />
-                        </BookTextSnippet>
-                      </BookDetail>
-                    </Book>
+                    <BookComponent data={data} />
                   </BookData>
-                ))}
-              {searchBooks &&
-                searchBooks.map((data, index) => {
-                  return (
-                    <BookData key={index}>
-                      <BookComponent data={data} />
-                    </BookData>
-                  );
-                })}
-            </Books>
-            {searchBooks && searchBooks.length === 0 && (
-              <SearchNoResult ref={noResultRef}>
-                <SearchTitle>查無搜尋結果</SearchTitle>
-                <SearchTitle>請用其他關鍵字搜尋</SearchTitle>
-              </SearchNoResult>
-            )}
-          </SearchBooks>
-        )
+                );
+              })}
+          </Books>
+          {searchBooks && searchBooks.length === 0 && (
+            <SearchNoResult ref={noResultRef}>
+              <SearchTitle>查無搜尋結果</SearchTitle>
+              <SearchTitle>請用其他關鍵字搜尋</SearchTitle>
+            </SearchNoResult>
+          )}
+        </SearchBooks>
       ) : (
         <>
           <Books>
-            {bookDatas.map((book, index) => {
+            {bookData.map((book, index) => {
               if (index >= page * 16 && index < page * 16 + 16) {
                 return (
                   <BookData key={book.isbn}>

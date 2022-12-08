@@ -1,21 +1,21 @@
 import type { AppProps } from "next/app";
-import { ResetStyle, GlobalStyle } from "../components/globalStyle";
-import { HeaderComponent } from "../components/header";
-import { Provider } from "react-redux";
-import store from "../store";
-import { resetServerContext } from "react-beautiful-dnd";
-import { ThemeProvider } from "styled-components";
 import Head from "next/head";
 
+import { ResetStyle, GlobalStyle } from "../components/globalStyle";
+import { ThemeProvider } from "styled-components";
+import { resetServerContext } from "react-beautiful-dnd";
+import { Provider } from "react-redux";
+
+import store from "../store";
+import { HeaderComponent } from "../components/header";
 const theme = {
   red: "#E84545",
-  greyBlue: "#A0BCC2",
-  greyGreen: "#DAE5D0",
+  darkYellow: "#f4d68b",
+  darkYellow2: "#d3b874",
   yellow: "#F9EBC8",
   white: "#F5F5F5",
   grey: "#EEE",
   black: "#393E46",
-  yellow2: "#ffefc6",
   starYellow: "#f39c12",
   fz1: "36px",
   fz2: "32px",
@@ -23,10 +23,6 @@ const theme = {
   fz4: "16px",
   fz5: "12px",
 };
-
-import initAuth from "../initAuth"; // the module you created above
-
-initAuth();
 
 export default function App({ Component, pageProps }: AppProps) {
   resetServerContext();

@@ -1,7 +1,29 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.bubble.css";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
+import parse from "html-react-parser";
+import Swal from "sweetalert2";
+import {
+  getDoc,
+  onSnapshot,
+  query,
+  where,
+  doc,
+  DocumentData,
+  collection,
+  orderBy,
+  Unsubscribe,
+} from "firebase/firestore";
+
+import { RootState } from "../../store";
+import { male, like, liked } from "../../utils/imgs";
 import {
   BookReview,
   bookRating,
@@ -18,34 +40,7 @@ import {
   MemberInfo,
   sentNotice,
 } from "../../utils/firebaseFuncs";
-import { RootState } from "../../store";
 
-import male from "/public/img/reading-male.png";
-import { useSelector } from "react-redux";
-import {
-  getDoc,
-  onSnapshot,
-  query,
-  where,
-  doc,
-  DocumentData,
-  collection,
-  orderBy,
-} from "firebase/firestore";
-import like from "../../public/img/like.svg";
-import liked from "../../public/img/liked.svg";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.bubble.css";
-import parse from "html-react-parser";
-import Swal from "sweetalert2";
-import { useRouter } from "next/router";
-
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-interface RatingProps {
-  index: number;
-  hover: number;
-  rating: number;
-}
 const BookReviewsBox = styled.div`
   padding-top: 10px;
   width: 100%;
@@ -69,6 +64,11 @@ const LeaveRatingBox = styled.div`
   margin-top: 50px;
   margin-bottom: 20px;
 `;
+interface RatingProps {
+  index: number;
+  hover: number;
+  rating: number;
+}
 const LeaveRatingButton = styled.button<RatingProps>`
   color: ${(props) =>
     props.index <= (props.hover || props.rating)
@@ -126,7 +126,7 @@ const SignButton = styled(Link)`
   margin-left: 20px;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
 `;
 
 const MemberReviewBox = styled.div`
@@ -174,7 +174,7 @@ const EditReviewButton = styled.button`
   padding: 5px 10px;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
   & + & {
     margin-left: 20px;
   }
@@ -222,7 +222,7 @@ const LikeButton = styled.button`
   cursor: pointer;
 `;
 
-const Gotomember = styled(Link)`
+const GotoMemberPage = styled(Link)`
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -290,7 +290,7 @@ const SubmitReviewBtn = styled.button`
   text-align: center;
   border-radius: 5px;
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
 `;
 
 const ToLogin = styled(Link)`
@@ -322,7 +322,7 @@ function LeaveRatingComponent({
 }: {
   bookIsbn: string;
   memberReview: BookReview | undefined;
-  setMemberReview: Function;
+  setMemberReview: React.Dispatch<React.SetStateAction<BookReview | undefined>>;
 }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [rating, setRating] = useState(0);
@@ -332,73 +332,64 @@ function LeaveRatingComponent({
     memberReview?.rating && setRating(+memberReview.rating);
   }, [memberReview]);
   return userInfo.isSignIn ? (
-    <>
-      <LeaveRatingBox>
-        <MemberReviewTitle>您的評價</MemberReviewTitle>
-        {[...Array(5)].map((_, index) => {
-          index += 1;
-          return (
-            <LeaveRatingButton
-              type="button"
-              key={`start-${index}`}
-              index={index}
-              hover={hover}
-              rating={rating}
-              onClick={() => {
-                setRating(index);
-                userInfo.uid && bookRating(userInfo.uid, bookIsbn, index);
-              }}
-              onMouseEnter={() => setHover(index)}
-              onMouseLeave={() => setHover(rating)}
-            >
-              <LeaveRatingStar>&#9733;</LeaveRatingStar>
-            </LeaveRatingButton>
-          );
-        })}
+    <LeaveRatingBox>
+      <MemberReviewTitle>您的評價</MemberReviewTitle>
+      {[...Array(5)].map((_, index) => {
+        index += 1;
+        return (
+          <LeaveRatingButton
+            type="button"
+            key={`start-${index}`}
+            index={index}
+            hover={hover}
+            rating={rating}
+            onClick={() => {
+              setRating(index);
+              bookRating(userInfo.uid!, bookIsbn, index);
+            }}
+            onMouseEnter={() => setHover(index)}
+            onMouseLeave={() => setHover(rating)}
+          >
+            <LeaveRatingStar>&#9733;</LeaveRatingStar>
+          </LeaveRatingButton>
+        );
+      })}
 
-        {rating > 0 && (
-          <>
-            <RemoveRatingButton
-              onClick={() => {
+      {rating > 0 && (
+        <RemoveRatingButton
+          onClick={() => {
+            Swal.fire({
+              title: "確定要刪除嗎？",
+              text: "評價 / 評論會一起刪除喔！",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+              confirmButtonText: "確認刪除",
+              cancelButtonText: "取消",
+            }).then((result) => {
+              if (result.isConfirmed) {
                 Swal.fire({
-                  title: "確定要刪除嗎？",
-                  text: "評價 / 評論會一起刪除喔！",
-                  icon: "warning",
-                  showCancelButton: true,
-                  confirmButtonColor: "#3085d6",
-                  cancelButtonColor: "#d33",
-                  confirmButtonText: "確認刪除",
-                  cancelButtonText: "取消",
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    Swal.fire({
-                      icon: "success",
-                      title: "刪除成功！",
-                      text: "成功刪除評價 / 評論。",
-                      showConfirmButton: false,
-                      timer: 1500,
-                    });
-                    if (userInfo.uid && memberReview) {
-                      removeBookRating(
-                        userInfo.uid,
-                        bookIsbn,
-                        rating,
-                        memberReview
-                      );
-                      setRating(0);
-                      setHover(0);
-                      setMemberReview(undefined);
-                    }
-                  }
+                  icon: "success",
+                  title: "刪除成功！",
+                  text: "成功刪除評價 / 評論。",
+                  showConfirmButton: false,
+                  timer: 1500,
                 });
-              }}
-            >
-              刪除評論
-            </RemoveRatingButton>
-          </>
-        )}
-      </LeaveRatingBox>
-    </>
+                if (userInfo.uid && memberReview) {
+                  removeBookRating(userInfo.uid, bookIsbn);
+                  setRating(0);
+                  setHover(0);
+                  setMemberReview(undefined);
+                }
+              }
+            });
+          }}
+        >
+          刪除評論
+        </RemoveRatingButton>
+      )}
+    </LeaveRatingBox>
   ) : (
     <LeaveRatingBox>
       <SignMessage>加入會員分享你的想法！</SignMessage>
@@ -409,36 +400,36 @@ function LeaveRatingComponent({
 
 function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
   const [isEdit, setIsEdit] = useState(false);
-  const [titlevalue, setTitleValue] = useState(memberReview.title);
-  const [contentvalue, setContentValue] = useState(memberReview.content);
+  const [titleValue, setTitleValue] = useState(memberReview.title);
+  const [contentValue, setContentValue] = useState(memberReview.content);
   const [showMore, setShowMore] = useState(false);
 
   return isEdit ? (
     <MemberReviewBox>
       <MemberReviewTitleBox>
         <Title>標題</Title>
-        <EditTitle theme="bubble" value={titlevalue} onChange={setTitleValue} />
+        <EditTitle theme="bubble" value={titleValue} onChange={setTitleValue} />
       </MemberReviewTitleBox>
       <MemberReviewContentBox>
         <LeaveReviewTitle>內容</LeaveReviewTitle>
         <EditContent
           theme="bubble"
-          value={contentvalue}
+          value={contentValue}
           onChange={setContentValue}
         />
       </MemberReviewContentBox>
       <EditReviewButton
         onClick={() => {
           if (
-            memberReview.title === titlevalue &&
-            contentvalue === memberReview.content
+            memberReview.title === titleValue &&
+            contentValue === memberReview.content
           ) {
             setIsEdit(false);
           } else if (
-            titlevalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
-            contentvalue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
+            titleValue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            contentValue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
           ) {
-            editReview(memberReview, titlevalue!, contentvalue!);
+            editReview(memberReview, titleValue!, contentValue!);
             Swal.fire({
               title: "感謝您的評論",
               icon: "success",
@@ -453,7 +444,6 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
               timer: 1000,
               showConfirmButton: false,
             });
-            setIsEdit(false);
           }
         }}
       >
@@ -496,8 +486,8 @@ function MemberReviewComponent({ memberReview }: { memberReview: BookReview }) {
 }
 function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [titlevalue, setTitleValue] = useState("");
-  const [contentvalue, setContentValue] = useState("");
+  const [titleValue, setTitleValue] = useState("");
+  const [contentValue, setContentValue] = useState("");
 
   return userInfo.isSignIn ? (
     <LeaveReviewBox>
@@ -505,7 +495,7 @@ function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
         <LeaveReviewTitle>標題</LeaveReviewTitle>
         <LeaveReviewContentTitle
           theme="bubble"
-          value={titlevalue}
+          value={titleValue}
           onChange={setTitleValue}
         />
       </LeaveInputBox>
@@ -513,22 +503,22 @@ function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
         <LeaveReviewTitle>內容</LeaveReviewTitle>
         <LeaveReviewTextContent
           theme="bubble"
-          value={contentvalue}
+          value={contentValue}
           onChange={setContentValue}
         />
       </LeaveInputBox>
       <SubmitReviewBtn
         onClick={() => {
           if (
-            titlevalue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
-            contentvalue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            titleValue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
+            contentValue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
             userInfo.uid
           ) {
             addBookReview(
               userInfo.uid,
               bookIsbn,
-              titlevalue.trim(),
-              contentvalue.trim()
+              titleValue.trim(),
+              contentValue.trim()
             );
           } else {
             Swal.fire({
@@ -543,9 +533,7 @@ function LeaveCommentComponent({ bookIsbn }: { bookIsbn: string }) {
         送出
       </SubmitReviewBtn>
     </LeaveReviewBox>
-  ) : (
-    <></>
-  );
+  ) : null;
 }
 function SubReviewComponent({ review }: { review: BookReview }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
@@ -553,7 +541,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
   const [subReviews, setSubReviews] = useState<SubReview[]>();
   const [reviewValue, setReviewValue] = useState("");
   useEffect(() => {
-    let unsubscribe: Function;
+    let unsubscribe: Unsubscribe;
     const getSubReviewsData = async () => {
       const reviewId = review.reviewId;
       const reviewQuery = query(
@@ -561,10 +549,10 @@ function SubReviewComponent({ review }: { review: BookReview }) {
         orderBy("likeCount", "desc")
       );
       unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
-        const subreviewsArr: SubReview[] = [];
+        const subReviewsArr: SubReview[] = [];
         const userIds: string[] = [];
         querySnapshot.forEach((doc) => {
-          subreviewsArr.push(doc.data());
+          subReviewsArr.push(doc.data());
           userIds.push(doc.data().commentUser);
         });
         const requests = userIds.map(async (userId) => {
@@ -572,13 +560,13 @@ function SubReviewComponent({ review }: { review: BookReview }) {
           return docData.data();
         });
         const allMemberInfo = (await Promise.all(requests)) as MemberInfo[];
-        const newSubreviews = subreviewsArr.map((subreview) => {
+        const newSubReview = subReviewsArr.map((subReview) => {
           const userData = allMemberInfo.find(
-            (member) => member.uid === subreview.commentUser
+            (member) => member.uid === subReview.commentUser
           );
-          return { ...subreview, memberData: userData };
+          return { ...subReview, memberData: userData };
         });
-        setSubReviews(newSubreviews);
+        setSubReviews(newSubReview);
       });
     };
     getSubReviewsData();
@@ -600,52 +588,42 @@ function SubReviewComponent({ review }: { review: BookReview }) {
       </ShowSubReviewButton>
       <SubReviewsBox>
         {subReviews &&
-          subReviews.map((subreview) => {
-            const ReviewDate = new Date(
-              subreview.time ? subreview.time.seconds * 1000 : ""
-            );
+          subReviews.map((subReview) => {
+            const ReviewDate = new Date(subReview.time!.seconds * 1000);
             const year = ReviewDate.getFullYear();
             const month = ReviewDate.getMonth() + 1;
             const date = ReviewDate.getDate();
             return (
-              <SubReviewBox key={subreview.reviewId}>
-                <Gotomember
+              <SubReviewBox key={subReview.reviewId}>
+                <GotoMemberPage
                   href={
-                    subreview.memberData!.uid === userInfo.uid!
+                    subReview.memberData!.uid === userInfo.uid!
                       ? "/profile"
-                      : `/member/id:${subreview.memberData!.uid}`
+                      : `/member/id:${subReview.memberData!.uid}`
                   }
                 >
                   <SubMemberImg
-                    src={
-                      subreview.memberData && subreview.memberData.img
-                        ? subreview.memberData.img
-                        : male
-                    }
-                    alt={
-                      subreview.memberData && subreview.memberData.name
-                        ? subreview.memberData.name
-                        : "user Img"
-                    }
+                    src={subReview.memberData?.img || male}
+                    alt="member Img"
                     width={25}
                     height={25}
                   />
                   <SubReviewMemberName>
-                    {subreview.memberData?.name}
+                    {subReview.memberData?.name}
                   </SubReviewMemberName>
-                </Gotomember>
-                <SubReviewContent>{parse(subreview.content!)}</SubReviewContent>
+                </GotoMemberPage>
+                <SubReviewContent>{parse(subReview.content!)}</SubReviewContent>
                 <SubReviewLikes>
                   <LikeButton
                     onClick={() => {
                       userInfo.uid &&
-                        likeSubReview(review, subreview, userInfo.uid);
+                        likeSubReview(review, subReview, userInfo.uid);
                     }}
                   >
                     {userInfo.uid ? (
                       <Image
                         src={
-                          subreview.like?.includes(userInfo.uid) ? liked : like
+                          subReview.like?.includes(userInfo.uid) ? liked : like
                         }
                         alt="likeBtn"
                         width={20}
@@ -655,7 +633,7 @@ function SubReviewComponent({ review }: { review: BookReview }) {
                       <Image src={like} alt="likeBtn" width={20} height={20} />
                     )}
                   </LikeButton>
-                  <LikeCount>{subreview.likeCount}</LikeCount>
+                  <LikeCount>{subReview.likeCount}</LikeCount>
                 </SubReviewLikes>
                 <SubReviewTime>{`${year}-${month}-${date}`}</SubReviewTime>
               </SubReviewBox>
@@ -821,7 +799,7 @@ const BookReviewRatingUpper = styled.div`
   display: inline-block;
   height: 30px;
   width: 40px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
 `;
 const BookReviewRatingLower = styled(BookReviewRatingUpper)`
   clip-path: polygon(0 0, 50% 60%, 100% 0);
@@ -854,131 +832,119 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
   const [showMore, setShowMore] = useState(false);
   const router = useRouter();
   return (
-    <>
-      <BookReviewWrap key={review.reviewId}>
-        <BookReviewHead>
-          <BookReviewRatingWrap>
-            <BookReviewRatingUpper
-              onClick={() => {
-                if (userInfo && !userInfo.isSignIn) {
-                  Swal.fire({
-                    icon: "info",
-                    title: "請先登入喔！",
-                    confirmButtonText: "前往登入",
-                  }).then((result) => {
-                    result.isConfirmed && router.push("/profile");
-                  });
-                } else if (
-                  review.liked?.includes(userInfo.uid!) ||
-                  review.disliked?.includes(userInfo.uid!)
-                ) {
-                  Swal.fire({
-                    icon: "warning",
-                    title: "已經評分過了喔！",
-                    showConfirmButton: false,
-                    timer: 1000,
-                  });
-                } else if (userInfo.uid && review) {
-                  Swal.fire({
-                    icon: "success",
-                    title: "成功評分！",
-                    showConfirmButton: false,
-                    timer: 1000,
-                  });
-                  upperReview(userInfo.uid, review);
-                }
-              }}
-            />
-            <BookReviewRatingNumber>
-              {review.reviewRating}
-            </BookReviewRatingNumber>
-            <BookReviewRatingLower
-              onClick={() => {
-                if (userInfo && !userInfo.isSignIn) {
-                  Swal.fire({
-                    icon: "info",
-                    title: "請先登入喔！",
-                    confirmButtonText: "前往登入",
-                  }).then((result) => {
-                    result.isConfirmed && router.push("/profile");
-                  });
-                } else if (
-                  review.liked?.includes(userInfo.uid!) ||
-                  review.disliked?.includes(userInfo.uid!)
-                ) {
-                  Swal.fire({
-                    icon: "warning",
-                    title: "已經評分過了喔！",
-                    showConfirmButton: false,
-                    timer: 1000,
-                  });
-                } else if (userInfo.uid && review) {
-                  Swal.fire({
-                    icon: "success",
-                    title: "成功評分！",
-                    showConfirmButton: false,
-                    timer: 1000,
-                  });
-                  lowerReview(userInfo.uid, review);
-                }
-              }}
-            />
-          </BookReviewRatingWrap>
-          <BookReviewMemberImgWrap>
-            <BookReviewMemberLink
-              href={
-                review.memberId! === userInfo.uid!
-                  ? "/profile"
-                  : `/member/id:${review.memberId}`
+    <BookReviewWrap key={review.reviewId}>
+      <BookReviewHead>
+        <BookReviewRatingWrap>
+          <BookReviewRatingUpper
+            onClick={() => {
+              if (userInfo && !userInfo.isSignIn) {
+                Swal.fire({
+                  icon: "info",
+                  title: "請先登入喔！",
+                  confirmButtonText: "前往登入",
+                }).then((result) => {
+                  result.isConfirmed && router.push("/profile");
+                });
+              } else if (
+                review.liked?.includes(userInfo.uid!) ||
+                review.disliked?.includes(userInfo.uid!)
+              ) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "已經評分過了喔！",
+                  showConfirmButton: false,
+                  timer: 1000,
+                });
+              } else if (userInfo.uid && review) {
+                Swal.fire({
+                  icon: "success",
+                  title: "成功評分！",
+                  showConfirmButton: false,
+                  timer: 1000,
+                });
+                upperReview(userInfo.uid, review);
               }
-            >
-              <BookReviewMemberImg
-                src={
-                  review.memberData && review.memberData.img
-                    ? review.memberData.img
-                    : male
-                }
-                alt={
-                  review.memberData && review.memberData.name
-                    ? review.memberData.name
-                    : "user Img"
-                }
-                width={80}
-                height={80}
-              />
-            </BookReviewMemberLink>
-          </BookReviewMemberImgWrap>
-          <BookReviewMemberWrap>
-            <BookReviewMemberName>
-              {review.memberData && review.memberData.name}
-            </BookReviewMemberName>
-            <BookReviewMemberRate>
-              <BookReviewMemberRateStart>&#9733;</BookReviewMemberRateStart>
-              {review.rating}
-            </BookReviewMemberRate>
-            <BookReviewMemberDate>
-              {`${year}-${month}-${date}`}
-            </BookReviewMemberDate>
-            <BookReviewTitle>{parse(review.title!)}</BookReviewTitle>
-          </BookReviewMemberWrap>
-        </BookReviewHead>
-        <BookReviewContent showMore={showMore}>
-          {parse(review.content!)}
-        </BookReviewContent>
-        <ButtonsWrap>
-          {review.content!.split("<p>").length > 5 && (
-            <SeeMoreBtn
-              onClick={() => {
-                setShowMore((prev) => !prev);
-              }}
-            >
-              {showMore ? "顯示較少" : "顯示全部"}
-            </SeeMoreBtn>
-          )}
-          <SubReviewComponent review={review} />
-        </ButtonsWrap>
-      </BookReviewWrap>
-    </>
+            }}
+          />
+          <BookReviewRatingNumber>{review.reviewRating}</BookReviewRatingNumber>
+          <BookReviewRatingLower
+            onClick={() => {
+              if (userInfo && !userInfo.isSignIn) {
+                Swal.fire({
+                  icon: "info",
+                  title: "請先登入喔！",
+                  confirmButtonText: "前往登入",
+                }).then((result) => {
+                  result.isConfirmed && router.push("/profile");
+                });
+              } else if (
+                review.liked?.includes(userInfo.uid!) ||
+                review.disliked?.includes(userInfo.uid!)
+              ) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "已經評分過了喔！",
+                  showConfirmButton: false,
+                  timer: 1000,
+                });
+              } else if (userInfo.uid && review) {
+                Swal.fire({
+                  icon: "success",
+                  title: "成功評分！",
+                  showConfirmButton: false,
+                  timer: 1000,
+                });
+                lowerReview(userInfo.uid, review);
+              }
+            }}
+          />
+        </BookReviewRatingWrap>
+        <BookReviewMemberImgWrap>
+          <BookReviewMemberLink
+            href={
+              review.memberId! === userInfo.uid!
+                ? "/profile"
+                : `/member/id:${review.memberId}`
+            }
+          >
+            <BookReviewMemberImg
+              src={review.memberData?.img || male}
+              alt="Member Img"
+              width={80}
+              height={80}
+            />
+          </BookReviewMemberLink>
+        </BookReviewMemberImgWrap>
+        <BookReviewMemberWrap>
+          <BookReviewMemberName>
+            {review.memberData && review.memberData.name}
+          </BookReviewMemberName>
+          <BookReviewMemberRate>
+            <BookReviewMemberRateStart>&#9733;</BookReviewMemberRateStart>
+            {review.rating}
+          </BookReviewMemberRate>
+          <BookReviewMemberDate>
+            {`${year}-${month}-${date}`}
+          </BookReviewMemberDate>
+          <BookReviewTitle>{parse(review.title!)}</BookReviewTitle>
+        </BookReviewMemberWrap>
+      </BookReviewHead>
+      <BookReviewContent showMore={showMore}>
+        {parse(review.content!)}
+      </BookReviewContent>
+      <ButtonsWrap>
+        {review.content!.split("<p>").length > 5 && (
+          <SeeMoreBtn
+            onClick={() => {
+              setShowMore((prev) => !prev);
+            }}
+          >
+            {showMore ? "顯示較少" : "顯示全部"}
+          </SeeMoreBtn>
+        )}
+        <SubReviewComponent review={review} />
+      </ButtonsWrap>
+    </BookReviewWrap>
   );
 }
 
@@ -994,7 +960,7 @@ export function ReviewsComponent({
   const [memberReview, setMemberReview] = useState<BookReview>();
 
   useEffect(() => {
-    let unsubscribe: Function;
+    let unsubscribe: Unsubscribe;
     const getReviewsData = async () => {
       const reviewQuery = query(
         reviewsRef,
@@ -1039,8 +1005,7 @@ export function ReviewsComponent({
         bookIsbn={bookIsbn}
         setMemberReview={setMemberReview}
       />
-
-      {memberReview && memberReview.title && memberReview.title.length > 0 ? (
+      {memberReview?.title && memberReview.title.length > 0 ? (
         <MemberReviewComponent memberReview={memberReview} />
       ) : (
         <LeaveCommentComponent bookIsbn={bookIsbn} />
@@ -1048,9 +1013,7 @@ export function ReviewsComponent({
       <BookReviewsBox>
         {reviews.length > 0 && reviews[0]?.title?.length! > 0 ? (
           reviews.map((review) => {
-            const ReviewDate = new Date(
-              review.time ? review.time?.seconds * 1000 : ""
-            );
+            const ReviewDate = new Date(review.time?.seconds! * 1000);
             const year = ReviewDate.getFullYear();
             const month = ReviewDate.getMonth() + 1;
             const date = ReviewDate.getDate();

@@ -1,5 +1,6 @@
-import { initializeApp } from "firebase/app";
 import produce from "immer";
+import { initializeApp } from "firebase/app";
+import Swal from "sweetalert2";
 import {
   deleteDoc,
   doc,
@@ -8,8 +9,6 @@ import {
   orderBy,
   setDoc,
   Timestamp,
-} from "firebase/firestore";
-import {
   getFirestore,
   collection,
   getDocs,
@@ -27,7 +26,6 @@ import {
   signOut,
 } from "firebase/auth";
 import { userSignIn } from "../slices/userInfoSlice";
-import Swal from "sweetalert2";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -45,7 +43,6 @@ export const db = getFirestore(app);
 export const firestore = getFirestore(app);
 const auth = getAuth();
 export const reviewsRef = collection(db, "book_reviews");
-export const memersRef = collection(db, "members");
 export const booksRef = collection(db, "books");
 export const friendRequestRef = collection(db, "friends_requests");
 export const noticeRef = collection(db, "notices");
@@ -127,39 +124,6 @@ export interface NoticeData {
   time: Date;
   posterInfo?: MemberInfo;
 }
-
-export const addBooksData = async (bookIsbn: string) => {
-  if (bookIsbn.length !== 13) {
-    return;
-  } else {
-    const bookRes = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${bookIsbn}`
-    );
-
-    const { items } = await bookRes.json();
-
-    try {
-      const bookInfo: BookInfo = {
-        isbn: bookIsbn,
-        title: items[0].volumeInfo.title || "",
-        subtitle: items[0].volumeInfo.subtitle || "",
-        authors: items[0].volumeInfo.authors || "",
-        categories: items[0].volumeInfo.categories || "",
-        thumbnail: items[0].volumeInfo.imageLinks.thumbnail || "",
-        smallThumbnail: items[0].volumeInfo.imageLinks.smallThumbnail || "",
-        textSnippet: items[0].searchInfo.textSnippet || "",
-        description: items[0].volumeInfo.description || "",
-        publisher: items[0].volumeInfo.publisher || "",
-        publishedDate: items[0].volumeInfo.publishedDate || "",
-        infoLink: items[0].volumeInfo.infoLink || "",
-        ratingMember: [],
-        ratingCount: 0,
-        reviewCount: 0,
-      };
-      await setDoc(doc(db, "books", bookIsbn), bookInfo);
-    } catch (e) {}
-  }
-};
 
 export const loadBooks = async (
   page: number,
@@ -389,12 +353,7 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     await setDoc(doc(db, "book_reviews", reviewData.reviewId), reviewData);
   }
 };
-export const removeBookRating = async (
-  uid: string,
-  isbn: string,
-  rating: number,
-  review: BookReview
-) => {
+export const removeBookRating = async (uid: string, isbn: string) => {
   const docData = await getDoc(doc(db, "books", isbn));
 
   const memberReviewData = (await getMemberReviews(uid, isbn)) as BookReview;
@@ -735,7 +694,7 @@ export const getBooks = async () => {
   return booksSnapshots.docs.map((doc) => doc.data());
 };
 
-export const addToshelf = async (isbn: string, uid: string) => {
+export const addBookToShelf = async (isbn: string, uid: string) => {
   const docData = await getDoc(doc(db, "members", uid));
   const memberData = docData.data();
   const newMemberData = produce(memberData, (draft: MemberInfo) => {
@@ -744,13 +703,12 @@ export const addToshelf = async (isbn: string, uid: string) => {
   await setDoc(doc(db, "members", uid), newMemberData);
 };
 
-export const getBookDatas = async (isbns: string[]) => {
-  const bookDatas = isbns.map(async (isbn) => {
+export const getBookData = async (isbns: string[]) => {
+  const bookData = isbns.map(async (isbn) => {
     const res = await getBookInfo(isbn);
     return res;
   });
-  const datas = await Promise.all(bookDatas);
-  return datas;
+  return (await Promise.all(bookData)) as BookInfo[];
 };
 
 export const removeBook = async (isbn: string, uid: string, shelf: string) => {

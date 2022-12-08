@@ -1,13 +1,3 @@
-import styled from "styled-components";
-import {
-  BookInfo,
-  getMemberData,
-  MemberInfo,
-  getFirstBook,
-  getFirstChat,
-  ChatMessage,
-} from "../../utils/firebaseFuncs";
-import { useRouter } from "next/router";
 import {
   useCallback,
   useEffect,
@@ -15,18 +5,15 @@ import {
   useState,
   VideoHTMLAttributes,
 } from "react";
-
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
+import { GetServerSideProps } from "next/types";
+import { useRouter } from "next/router";
+import { ParsedUrlQuery } from "querystring";
 import Link from "next/link";
 import Image from "next/image";
-import { BookComponent } from "../book/[id]";
-import ChatRoomComponent from "../../components/group_chat";
-import LinkImg from "../../public/img/open-book.png";
-import videoChat from "../../public/img/video-call.svg";
-import microPhone from "../../public/img/microphone.svg";
-import video from "../../public/img/video.svg";
-import phone from "../../public/img/hangup.png";
+
+import styled from "styled-components";
+import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
 import {
   getDatabase,
   ref,
@@ -37,14 +24,30 @@ import {
   remove,
 } from "firebase/database";
 import { rtcFireSession, RTCFireSession } from "../../utils/service";
-import { GetServerSideProps } from "next/types";
-import { ParsedUrlQuery } from "querystring";
-import Swal from "sweetalert2";
+
+import { RootState } from "../../store";
+import { BookComponent } from "../book/[id]";
+import ChatRoomComponent from "../../components/group_chat";
+import {
+  BookInfo,
+  getMemberData,
+  MemberInfo,
+  getFirstBook,
+  getFirstChat,
+  ChatMessage,
+} from "../../utils/firebaseFuncs";
+import {
+  openBook,
+  videoChat,
+  microPhone,
+  video,
+  phone,
+} from "../../utils/imgs";
 
 const GroupPage = styled.div`
   width: 100%;
   min-height: calc(100vh - 50px);
-  background-color: ${(props) => props.theme.lightWhite};
+  background-color: ${(props) => props.theme.grey};
   padding: 50px 30px;
 `;
 const GroupPageWrap = styled.div`
@@ -83,305 +86,38 @@ const Wrap = styled.div`
   position: fixed;
   margin-left: 20px;
   margin-bottom: 20px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
   opacity: 0.9;
   padding: 20px 10px;
   border-radius: 10px;
   color: ${(props) => props.theme.black};
 `;
-// const VideoBox = styled.div`
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-// `;
-// const Title3 = styled.h3``;
-// const Video = styled.video`
-//   width: 40vw;
-//   height: 30vw;
-//   margin: 2rem;
-//   background: rgb(44, 62, 80);
-//   margin: 0;
-// `;
-// const MyVideo = styled(Video)`
-//   transform: scaleX(-1);
-// `;
-// const StartButton = styled.button`
-//   padding: 5px 10px;
-//   border: solid 1px;
-//   cursor: pointer;
-// `;
-// const CreateButton = styled(StartButton)``;
-// const AnswerButton = styled(StartButton)``;
-// const HangupButton = styled(StartButton)``;
 
-// const RoomNumberInput = styled.input``;
 interface GroupProps {
   firstData: BookInfo;
   firstChat: string;
 }
 
-function Group({ firstData, firstChat }: GroupProps) {
-  // const userInfo = useSelector((state: RootState) => state.userInfo);
-
-  // const [showVideo, setShoeVideo] = useState<boolean>(false);
-  // const localVideoRef = useRef<HTMLVideoElement>(null);
-  // const remotoVideoRef = useRef<HTMLVideoElement>(null);
-  // const answeInputrRef = useRef<HTMLInputElement>(null);
-
-  // const webcamButton = useRef<HTMLButtonElement>(null);
-  // const webcamCreateButton = useRef<HTMLButtonElement>(null);
-  // const webcamAnswerButton = useRef<HTMLButtonElement>(null);
-  // const webcamHangupButton = useRef<HTMLButtonElement>(null);
-  // const pcRef = useRef<RTCPeerConnection>();
-  // useEffect(() => {
-  //   if (!localVideoRef.current) return;
-  //   const localRemove = localVideoRef.current;
-  //   if (!remotoVideoRef.current) return;
-  //   const remotoRemove = remotoVideoRef.current;
-
-  //   return () => {
-  //     if (pcRef.current && localRemove) {
-  //       (localRemove.srcObject as MediaStream)
-  //         .getTracks()
-  //         .forEach((track: { stop: () => void }) => track.stop());
-  //       if (pcRef.current && remotoRemove) {
-  //         (remotoRemove.srcObject as MediaStream)
-  //           .getTracks()
-  //           .forEach((track: { stop: () => void }) => track.stop());
-  //       }
-  //     }
-  //   };
-  // }, []);
-
-  // const start = async () => {
-  //   const servers = {
-  //     iceServers: [
-  //       {
-  //         urls: [
-  //           "stun:stun.l.google.com:19302",
-  //           "stun:stun1.l.google.com:19302",
-  //           "stun:stun2.l.google.com:19302",
-  //           "stun:stun3.l.google.com:19302",
-  //           "stun:stun4.l.google.com:19302",
-  //         ],
-  //       },
-  //     ],
-  //     iceCandidatePoolSize: 10,
-  //   };
-  //   const pc = new RTCPeerConnection(servers);
-  //   pcRef.current = pc;
-  //   setTimeout(async () => {
-  //     const webcamVideo = localVideoRef.current;
-  //     const remoteVideo = remotoVideoRef.current;
-  //     const templocalStream = await navigator.mediaDevices.getUserMedia({
-  //       video: true,
-  //       audio: true,
-  //     });
-  //     templocalStream.getTracks().forEach((track) => {
-  //       pcRef.current!.addTrack(track, templocalStream);
-  //     });
-
-  //     webcamVideo!.srcObject = templocalStream;
-
-  //     const tempremoteStream = new MediaStream();
-  //     pcRef.current!.ontrack = (event) => {
-  //       event.streams[0].getTracks().forEach((track) => {
-  //         tempremoteStream.addTrack(track);
-  //       });
-  //     };
-
-  //     remoteVideo!.srcObject = tempremoteStream;
-  //   });
-  // };
-  // const create = async () => {
-  //   const callDoc = doc(collection(db, "calls"));
-  //   answeInputrRef.current!.value = callDoc.id;
-
-  //   // Get candidates for caller, save to db
-  //   pcRef.current!.onicecandidate = async (event) => {
-  //     event.candidate &&
-  //       (await setDoc(
-  //         doc(collection(db, `calls/${callDoc.id}/offerCandidates`)),
-  //         event.candidate.toJSON()
-  //       ));
-  //   };
-
-  //   // Create offer
-  //   const offerDescription = await pcRef.current!.createOffer();
-  //   await pcRef.current!.setLocalDescription(offerDescription);
-
-  //   const offer = {
-  //     sdp: offerDescription.sdp,
-  //     type: offerDescription.type,
-  //   };
-
-  //   await setDoc(callDoc, { offer });
-
-  //   // Listen for remote answer
-  //   const unsubscribe1 = onSnapshot(callDoc, (snapshot) => {
-  //     const data = snapshot.data();
-  //     if (!pcRef.current!.currentRemoteDescription && data?.answer) {
-  //       const answerDescription = new RTCSessionDescription(data.answer);
-  //       pcRef.current!.setRemoteDescription(answerDescription);
-  //     }
-  //   });
-  //   // Listen for remote ICE candidates
-  //   const unsubscribe2 = onSnapshot(
-  //     collection(db, `calls/${callDoc.id}/answerCandidates`),
-  //     (snapshot) => {
-  //       snapshot.docChanges().forEach((change: any) => {
-  //         if (change.type === "added") {
-  //           console.log(change.doc.data());
-  //           const candidate = new RTCIceCandidate(change.doc.data());
-  //           pcRef.current!.addIceCandidate(candidate);
-  //         }
-  //       });
-  //     }
-  //   );
-  //   return () => {
-  //     unsubscribe1();
-  //     unsubscribe2();
-  //   };
-  // };
-  // const answer = async () => {
-  //   const callId = answeInputrRef.current!.value;
-  //   const callDoc = await getDoc(doc(db, "calls", callId));
-
-  //   pcRef.current!.onicecandidate = async (event) => {
-  //     console.log("onicecandidate");
-  //     event.candidate &&
-  //       (await setDoc(
-  //         doc(collection(db, `calls/${callDoc.id}/offerCandidates`)),
-  //         event.candidate.toJSON()
-  //       ));
-  //   };
-
-  //   const callData = callDoc.data();
-
-  //   const offerDescription = callData!.offer;
-  //   await pcRef.current!.setRemoteDescription(
-  //     new RTCSessionDescription(offerDescription)
-  //   );
-
-  //   const answerDescription = await pcRef.current!.createAnswer();
-  //   console.log("answerDescription", answerDescription);
-  //   await pcRef.current!.setLocalDescription(answerDescription);
-
-  //   const answer = {
-  //     type: answerDescription.type,
-  //     sdp: answerDescription.sdp,
-  //   };
-
-  //   await updateDoc(doc(db, "calls", callId), { answer });
-
-  //   // Listen to offer candidates
-
-  //   const unsubscribe3 = onSnapshot(
-  //     collection(db, `calls/${callDoc.id}/offerCandidates`),
-  //     (snapshot) => {
-  //       snapshot!
-  //         .docChanges()
-  //         .forEach((change: { type: string; doc: { data: () => any } }) => {
-  //           if (change.type === "added") {
-  //             let data = change.doc.data();
-  //             pcRef.current!.addIceCandidate(new RTCIceCandidate(data));
-  //           }
-  //         });
-  //     }
-  //   );
-  //   return () => {
-  //     unsubscribe3();
-  //   };
-  // };
-  // const hangup = async () => {
-  //   if (pcRef.current && localVideoRef.current && remotoVideoRef.current) {
-  //     (localVideoRef.current.srcObject as MediaStream)
-  //       .getTracks()
-  //       .forEach((track: { stop: () => void }) => track.stop());
-  //     (remotoVideoRef.current.srcObject as MediaStream)
-  //       .getTracks()
-  //       .forEach((track: { stop: () => void }) => track.stop());
-  //     setShoeVideo(false);
-  //   }
-  // };
-  const chatdata = JSON.parse(firstChat) as ChatMessage[];
+export default function Group({ firstData, firstChat }: GroupProps) {
+  const chatData = JSON.parse(firstChat) as ChatMessage[];
 
   return (
     <GroupPage>
       <GroupPageWrap>
         <Wrap>
           <GoToReviewBox href={`/book/id:${firstData.isbn}`}>
-            <GoToReviewImg src={LinkImg} alt="link" width={20} height={20} />
+            <GoToReviewImg src={openBook} alt="link" width={20} height={20} />
             <GoToReview>返回評論頁面</GoToReview>
           </GoToReviewBox>
         </Wrap>
         <BookComponent data={firstData} />
 
-        {/* <VideoBox>
-        {showVideo && (
-          <>
-            <Title3>Local Stream</Title3>
-            <br />
-            <MyVideo ref={localVideoRef} autoPlay playsInline muted />
-          </>
-        )}
-
-        {showVideo && (
-          <>
-            <Title3>Remote Stream</Title3>
-            <br />
-            <Video ref={remotoVideoRef} autoPlay playsInline />
-          </>
-        )}
-      </VideoBox>
-      {showVideo ? (
-        <>
-          <CreateButton
-            ref={webcamCreateButton}
-            onClick={() => {
-              create();
-            }}
-          >
-            開啟聊天室
-          </CreateButton>
-          <br />
-
-          <RoomNumberInput id="callInput" ref={answeInputrRef} />
-          <AnswerButton
-            ref={webcamAnswerButton}
-            onClick={() => {
-              answer();
-            }}
-          >
-            加入聊天室
-          </AnswerButton>
-          <br />
-          <HangupButton
-            ref={webcamHangupButton}
-            onClick={() => {
-              hangup();
-            }}
-          >
-            結束通話
-          </HangupButton>
-        </>
-      ) : (
-        <StartButton
-          ref={webcamButton}
-          onClick={() => {
-            setShoeVideo(true);
-            start();
-          }}
-        >
-          開啟 1 to 1 通話
-        </StartButton>
-      )} */}
         <VideoAndChatBox>
           {typeof firstData.isbn === "string" && (
             <LiveChat id={firstData.isbn} />
           )}
           {typeof firstData.isbn === "string" && (
-            <ChatRoomComponent id={firstData.isbn} chatdata={chatdata} />
+            <ChatRoomComponent id={firstData.isbn} chatData={chatData} />
           )}
         </VideoAndChatBox>
       </GroupPageWrap>
@@ -402,7 +138,7 @@ const OpenChatBTN = styled.button`
   cursor: pointer;
   padding: 10px 20px;
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow};
   }
 `;
 const MyVideoBox = styled.div`
@@ -454,7 +190,6 @@ const SoundControl = styled.div<SoundProps>`
   width: 30px;
   height: 30px;
   position: relative;
-  border: solid 1px ${(props) => props.theme.greyGreen};
   border-radius: 5px;
   background-color: ${(props) => props.theme.grey};
   cursor: pointer;
@@ -490,10 +225,10 @@ const Participants = styled.ul`
   flex-wrap: wrap;
   justify-content: space-between;
 `;
-interface ParticipentProps {
+interface ParticipantProps {
   length: number;
 }
-const Participant = styled.li<ParticipentProps>`
+const Participant = styled.li<ParticipantProps>`
   height: auto;
   width: ${(props) => {
     if (props.length === 1) {
@@ -521,7 +256,7 @@ const Participant = styled.li<ParticipentProps>`
 interface VideoProps extends VideoHTMLAttributes<HTMLVideoElement> {
   srcObject: MediaStream;
 }
-function VideoConponent({ srcObject, ...props }: VideoProps) {
+function VideoComponent({ srcObject, ...props }: VideoProps) {
   const refVideo = useCallback(
     (node: HTMLVideoElement) => {
       if (node) node.srcObject = srcObject;
@@ -540,23 +275,19 @@ function LiveChat({ id }: { id: string }) {
   const participantsRef = useRef<string[]>([]);
   const videoStreamsRef = useRef<{ [key: string]: MediaStream }>();
   const rtcSessionRef = useRef<RTCFireSession>();
-
   const allVideoStream = useRef<{
     [key: string]: MediaStream;
   }>();
-  const otherParticipant = useRef<string[]>([]);
-
+  const otherParticipantRef = useRef<string[]>([]);
   const [participants, setParticipants] = useState<MemberInfo[]>([]);
   const [videoStreams, setVideoStreams] = useState<{
     [key: string]: MediaStream;
   }>({});
-
   const [sound, setSound] = useState(false);
   const [camera, setCamera] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    console.log("group1");
     let tempVideoTag: HTMLVideoElement | null;
     if (myVideoRef) {
       tempVideoTag = myVideoRef.current;
@@ -570,27 +301,27 @@ function LiveChat({ id }: { id: string }) {
         remove(ref(db, `livechat/${id}/negotiations/${userInfo.uid}`));
       }
     };
-  }, [openChat]);
+  }, [db, id, openChat, userInfo.uid]);
 
   const updatePeers = async (
     participants: string[],
     videoStreams: { [key: string]: MediaStream }
   ) => {
-    const otherparticipant = participants.filter((pid) => pid !== userInfo.uid);
-    const requests = otherparticipant.map(async (pid: string) => {
+    const otherParticipant = participants.filter((pid) => pid !== userInfo.uid);
+    const requests = otherParticipant.map(async (pid: string) => {
       return await getMemberData(pid);
     });
     const newParticipants = (await Promise.all(requests)) as MemberInfo[];
-    otherParticipant.current = participants;
+    otherParticipantRef.current = participants;
     setParticipants(newParticipants);
     allVideoStream.current = videoStreams;
     setVideoStreams(videoStreams);
   };
 
   const setupVideo = async () => {
-    const livechatRef = ref(db, `livechat/${id}/participants`);
+    const liveChatRef = ref(db, `livechat/${id}/participants`);
     videoStreamsRef.current = {};
-    let meRef = child(livechatRef, userInfo.uid!);
+    let meRef = child(liveChatRef, userInfo.uid!);
     update(meRef, { joined: true });
     onDisconnect(meRef).set(null);
 
@@ -605,13 +336,13 @@ function LiveChat({ id }: { id: string }) {
         updatePeers(participantsRef.current, videoStreamsRef.current!);
       },
     });
-    onValue(livechatRef, (snap) => {
+    onValue(liveChatRef, (snap) => {
       participantsRef.current = Object.keys(snap.val() || {});
       rtcSessionRef.current!.participants = participantsRef.current;
       updatePeers(participantsRef.current, videoStreamsRef.current!);
     });
   };
-  const hanUp = () => {
+  const hangUp = () => {
     (myVideoRef.current!.srcObject as MediaStream)
       .getTracks()
       .forEach((track: { stop: () => void }) => track.stop());
@@ -641,14 +372,14 @@ function LiveChat({ id }: { id: string }) {
             {participants &&
               participants.map((participant: MemberInfo) => (
                 <Participant length={participants.length} key={participant.uid}>
-                  <VideoConponent srcObject={videoStreams[participant.uid!]} />
+                  <VideoComponent srcObject={videoStreams[participant.uid!]} />
                   <VideoChatName>{participant.name}</VideoChatName>
                 </Participant>
               ))}
           </Participants>
           <MyVideoBox>
             <MyLocalVideo
-              key="myvideo"
+              key="myVideo"
               ref={myVideoRef}
               muted
               autoPlay
@@ -667,7 +398,7 @@ function LiveChat({ id }: { id: string }) {
                   }).then((result) => {
                     if (result.isConfirmed) {
                       setOpenChat(false);
-                      hanUp();
+                      hangUp();
                     }
                   });
                 }}
@@ -689,9 +420,7 @@ function LiveChat({ id }: { id: string }) {
             </VideoControls>
           </MyVideoBox>
         </VideosBox>
-      ) : (
-        ""
-      )}
+      ) : null}
       {openChat || (
         <OpenVideoBox>
           <OpenVideoImg
@@ -726,17 +455,18 @@ function LiveChat({ id }: { id: string }) {
   );
 }
 
-import { withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
-
-export const getServerSideProps: GetServerSideProps = withAuthUserTokenSSR({})(
-  async ({ params }) => {
-    const url = (params as ParsedUrlQuery).id as string;
-    const bookIsbn = url.split("id:")[1];
-    const firstData = await getFirstBook(bookIsbn);
-    const firstChat = await getFirstChat(bookIsbn);
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const url = (params as ParsedUrlQuery).id as string;
+  const bookIsbn = url.split("id:")[1];
+  const firstData = await getFirstBook(bookIsbn);
+  const firstChat = await getFirstChat(bookIsbn);
+  if (firstData) {
     return {
       props: { firstData, firstChat: JSON.stringify(firstChat) },
     };
+  } else {
+    return {
+      notFound: true,
+    };
   }
-);
-export default withAuthUser<GroupProps>()(Group);
+};
