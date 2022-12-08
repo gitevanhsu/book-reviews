@@ -39,6 +39,7 @@ import {
   lowerReview,
   MemberInfo,
   sentNotice,
+  BookInfo,
 } from "../../utils/firebaseFuncs";
 
 const BookReviewsBox = styled.div`
@@ -951,23 +952,25 @@ function ReviewComponent({ review, year, month, date }: ReviewProps) {
 export function ReviewsComponent({
   bookIsbn,
   firstReview,
+  bookData,
 }: {
   bookIsbn: string;
   firstReview: BookReview[];
+  bookData: BookInfo;
 }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   const [reviews, setReviews] = useState<BookReview[]>(firstReview);
   const [memberReview, setMemberReview] = useState<BookReview>();
 
   useEffect(() => {
-    let unsubscribe: Unsubscribe;
-    const getReviewsData = async () => {
-      const reviewQuery = query(
-        reviewsRef,
-        where("reviewRating", ">", -999999),
-        orderBy("reviewRating", "desc")
-      );
-      unsubscribe = onSnapshot(reviewQuery, async (querySnapshot) => {
+    const reviewQuery = query(
+      reviewsRef,
+      where("reviewRating", ">", -999999),
+      orderBy("reviewRating", "desc")
+    );
+    const unsubscribeReviews = onSnapshot(
+      reviewQuery,
+      async (querySnapshot) => {
         const reviewsArr: BookReview[] = [];
         const userIds: string[] = [];
         querySnapshot.forEach((review) => {
@@ -989,13 +992,11 @@ export function ReviewsComponent({
           return { ...review, memberData: userData };
         });
         setReviews(newReviewsArr);
-      });
-    };
-    getReviewsData();
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
       }
+    );
+
+    return () => {
+      unsubscribeReviews();
     };
   }, [bookIsbn, userInfo.uid]);
   return (
@@ -1011,7 +1012,7 @@ export function ReviewsComponent({
         <LeaveCommentComponent bookIsbn={bookIsbn} />
       )}
       <BookReviewsBox>
-        {reviews.length > 0 && reviews[0]?.title?.length! > 0 ? (
+        {reviews.length > 0 && bookData.reviewCount! > 0 ? (
           reviews.map((review) => {
             const ReviewDate = new Date(review.time?.seconds! * 1000);
             const year = ReviewDate.getFullYear();

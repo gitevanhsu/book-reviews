@@ -381,6 +381,7 @@ export default function Post({ firstData, firstReview }: PostProps) {
         <ReviewsComponent
           bookIsbn={firstData.isbn!}
           firstReview={JSON.parse(firstReview)}
+          bookData={bookData}
         />
       </BookPageWrap>
       {userInfo.isSignIn && (
