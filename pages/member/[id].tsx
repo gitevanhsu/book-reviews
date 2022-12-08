@@ -1,23 +1,25 @@
-import styled from "styled-components";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
+import Link from "next/link";
+import { GetServerSideProps } from "next/types";
+import { ParsedUrlQuery } from "querystring";
+
+import styled from "styled-components";
+import { useSelector } from "react-redux";
+import Swal from "sweetalert2";
+
+import { RootState } from "../../store";
+import { wait, bookCover, isFriendImg, addFriendImg } from "../../utils/imgs";
 import {
   acceptFriendRequest,
   BookInfo,
   friendStateChecker,
-  getBookDatas,
+  getBookData,
   getMemberData,
   MemberInfo,
   sentFriendRequest,
 } from "../../utils/firebaseFuncs";
-import Image from "next/image";
-import { RootState } from "../../store";
-import { useSelector } from "react-redux";
-import Link from "next/link";
-import bookcover from "/public/img/bookcover.jpeg";
-import isFriendImg from "/public/img/friend.png";
-import addFriendImg from "/public/img/add-friend.png";
-import wait from "/public/img/wait.png";
 
 const MemberPage = styled.div`
   overflow: hidden;
@@ -33,9 +35,9 @@ const MemberPageWrap = styled.div`
   max-width: 1280px;
   margin: 0 auto;
 `;
-const BookShelfs = styled.div`
+const BookShelves = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   @media screen and (max-width: 992px) {
     flex-direction: column;
   }
@@ -43,8 +45,7 @@ const BookShelfs = styled.div`
 const BookShelf = styled.div`
   display: inline-block;
   width: 30%;
-  border: solid 5px ${(props) => props.theme.grey};
-  background-color: ${(props) => props.theme.yellow2};
+  background-color: ${(props) => props.theme.yellow};
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -66,7 +67,7 @@ const ShelfTitle = styled.h2`
   width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
-  background-color: #ecbe48;
+  background-color: ${(props) => props.theme.darkYellow};
   font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   padding: 10px;
@@ -83,7 +84,7 @@ const Book = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 1px solid #efc991;
+  border-bottom: 1px solid ${(props) => props.theme.grey};
   padding-bottom: 5px;
   margin-bottom: 10px;
 `;
@@ -102,7 +103,7 @@ const BookData = styled.div``;
 const BookAuthor = styled.h4`
   font-size: ${(props) => props.theme.fz4};
 `;
-const NoimgTitle = styled.p`
+const NoImgTitle = styled.p`
   font-size: ${(props) => props.theme.fz5};
   line-height: ${(props) => props.theme.fz4};
   position: absolute;
@@ -142,7 +143,7 @@ const AcceptRequest = styled.button`
   border-radius: 20px;
   font-size: ${(props) => props.theme.fz4};
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow2};
   }
 `;
 const SentRequest = styled.button`
@@ -156,12 +157,12 @@ const SentRequest = styled.button`
   border-radius: 20px;
   cursor: pointer;
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow2};
   }
 `;
 const OtherRequest = styled.div`
   font-size: ${(props) => props.theme.fz4};
-  background-color: ${(props) => props.theme.greyGreen};
+  background-color: ${(props) => props.theme.yellow};
   color: ${(props) => props.theme.black};
   border-radius: 20px;
   display: flex;
@@ -171,7 +172,7 @@ const OtherRequest = styled.div`
 `;
 const WaitRequest = styled.div`
   font-size: ${(props) => props.theme.fz4};
-  background-color: ${(props) => props.theme.greyGreen};
+  background-color: ${(props) => props.theme.darkYellow};
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -185,6 +186,10 @@ const UserDetail = styled.div`
   margin-left: 40px;
   @media screen and (max-width: 992px) {
     max-width: 300px;
+  }
+  @media screen and (max-width: 768px) {
+    text-align: center;
+    margin-left: 0px;
   }
 `;
 const UserName = styled.h2`
@@ -220,7 +225,7 @@ const UserIntro = styled.p`
 const UserInfoBox = styled.div`
   position: relative;
   margin: 0 auto;
-  width: 90%;
+  width: 100%;
   display: flex;
   margin-bottom: 50px;
   align-items: center;
@@ -248,81 +253,89 @@ const ShelfIcon = styled.div`
   text-align: center;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow2};
   border-radius: 5px;
-  color: #fff;
+  color: ${(props) => props.theme.white};
 `;
 
-export default function MemberPageComponent() {
+function BookComponent({ books }: { books: BookInfo[] }) {
+  return (
+    <>
+      {books.map((book) => (
+        <Book key={book.isbn}>
+          <BookLink href={`/book/id:${book.isbn}`}>
+            <BookImg
+              src={book.smallThumbnail || bookCover}
+              alt={`${book.title}`}
+              width={80}
+              height={120}
+              priority
+            ></BookImg>
+          </BookLink>
+          <BookData>
+            {!book.smallThumbnail && <NoImgTitle>{book.title}</NoImgTitle>}
+            <BookTitle>{book.title}</BookTitle>
+            <br />
+            {book.authors!.length > 0 && (
+              <BookAuthor>{book.authors![0]}</BookAuthor>
+            )}
+          </BookData>
+        </Book>
+      ))}
+    </>
+  );
+}
+
+export default function MemberPageComponent({
+  memberData: member,
+  finishData: books,
+  readingData: reading,
+  booksData: finish,
+}: {
+  memberData: MemberInfo;
+  booksData: BookInfo[];
+  readingData: BookInfo[];
+  finishData: BookInfo[];
+}) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [member, setMember] = useState<MemberInfo>({});
   const router = useRouter();
-  const { id } = router.query;
-  const [books, setBooks] = useState<BookInfo[]>([]);
-  const [reading, setReading] = useState<BookInfo[]>([]);
-  const [finish, setFinish] = useState<BookInfo[]>([]);
   const [friendState, setFriendState] = useState<string>("");
   const [isFriend, setIsFriend] = useState<boolean>(false);
-
   useEffect(() => {
-    const memberData = async () => {
-      if (typeof id === "string") {
-        const data = (await getMemberData(id.replace("id:", ""))) as MemberInfo;
-        setMember(data);
-        if (data && userInfo) {
-          const state = await friendStateChecker(data.uid!, userInfo.uid!);
-          if (state) {
-            if (state.includes("accept")) {
-              setIsFriend(true);
-            } else if (state.includes("pending")) {
-              setFriendState(state);
-            }
+    const isFriend = async () => {
+      if (member && userInfo) {
+        const state = await friendStateChecker(member.uid!, userInfo.uid!);
+        if (state) {
+          if (state.includes("accept")) {
+            setIsFriend(true);
+          } else if (state.includes("pending")) {
+            setFriendState(state);
           }
         }
       }
     };
-    const getBooks = async () => {
-      if (typeof id === "string") {
-        const memberData = (await getMemberData(
-          id.replace("id:", "")
-        )) as MemberInfo;
-        if (memberData.books && memberData.reading && memberData.finish) {
-          const booksDatas = await getBookDatas(memberData.books);
-          booksDatas.length && setBooks(booksDatas as BookInfo[]);
-          const readingDatas = await getBookDatas(memberData.reading);
-          readingDatas.length && setReading(readingDatas as BookInfo[]);
-          const finishDatas = await getBookDatas(memberData.finish);
-          finishDatas.length && setFinish(finishDatas as BookInfo[]);
-        }
-      }
-    };
-    getBooks();
-    memberData();
-  }, [id, userInfo]);
+    isFriend();
+  }, [member, userInfo]);
 
   return (
     <MemberPage>
       <MemberPageWrap>
         <UserInfoBox>
-          {member.img && (
-            <UserAvatar
-              src={member.img}
-              alt="memberAvatar"
-              width={100}
-              height={100}
-            ></UserAvatar>
-          )}
+          <UserAvatar
+            src={member.img!}
+            alt="memberAvatar"
+            width={100}
+            height={100}
+          />
           <UserDetail>
             <UserName>{member.name}</UserName>
-            <UserIntro>
-              {member.intro ? member.intro : "很高興認識大家🤗🤗🤗"}
-            </UserIntro>
+            <UserIntro>{member.intro || "很高興認識大家🤗🤗🤗"}</UserIntro>
           </UserDetail>
           <FriendRequestBox>
             {friendState ? (
               friendState.includes("wait") ? (
                 <WaitRequest>
-                  <FriendStateImg src={wait} alt="Friend" />
+                  <FriendStateImg src={wait} alt="Wait" />
                   等待回覆
                 </WaitRequest>
               ) : (
@@ -349,51 +362,30 @@ export default function MemberPageComponent() {
                   if (userInfo.uid && member.uid) {
                     sentFriendRequest(userInfo.uid, member.uid);
                     setFriendState("wait");
+                  } else {
+                    Swal.fire({
+                      icon: "info",
+                      title: "請先登入喔！",
+                      confirmButtonText: "前往登入",
+                    }).then((result) => {
+                      result.isConfirmed && router.push("/profile");
+                    });
                   }
                 }}
               >
-                <FriendStateImg src={addFriendImg} alt="AddFriend" />
+                <FriendStateImg src={addFriendImg} alt="SentRequest" />
                 送出好友邀請
               </SentRequest>
             )}
           </FriendRequestBox>
         </UserInfoBox>
-        <BookShelfs>
+        <BookShelves>
           <BookShelf>
             <ShelfTitle>
               <ShelfIcon>C</ShelfIcon>ollection / 收藏
             </ShelfTitle>
             <Books>
-              {books?.map(
-                (book) =>
-                  book.isbn && (
-                    <Book key={book.isbn}>
-                      <BookLink href={`/book/id:${book.isbn}`}>
-                        <BookImg
-                          src={
-                            book.smallThumbnail
-                              ? book.smallThumbnail
-                              : bookcover
-                          }
-                          alt={`${book.title}`}
-                          width={80}
-                          height={120}
-                          priority
-                        ></BookImg>
-                      </BookLink>
-                      <BookData>
-                        {!book.smallThumbnail && (
-                          <NoimgTitle>{book.title}</NoimgTitle>
-                        )}
-                        <BookTitle>{book.title}</BookTitle>
-                        <br />
-                        {book.authors!.length > 0 && (
-                          <BookAuthor>{book.authors![0]}</BookAuthor>
-                        )}
-                      </BookData>
-                    </Book>
-                  )
-              )}
+              <BookComponent books={books} />
             </Books>
           </BookShelf>
           <BookShelf>
@@ -401,36 +393,7 @@ export default function MemberPageComponent() {
               <ShelfIcon>R</ShelfIcon>eading / 閱讀
             </ShelfTitle>
             <Books>
-              {reading?.map(
-                (book) =>
-                  book.isbn && (
-                    <Book key={book.isbn}>
-                      <BookLink href={`/book/id:${book.isbn}`}>
-                        <BookImg
-                          src={
-                            book.smallThumbnail
-                              ? book.smallThumbnail
-                              : bookcover
-                          }
-                          alt={`${book.title}`}
-                          width={80}
-                          height={120}
-                          priority
-                        ></BookImg>
-                      </BookLink>
-                      <BookData>
-                        {!book.smallThumbnail && (
-                          <NoimgTitle>{book.title}</NoimgTitle>
-                        )}
-                        <BookTitle>{book.title}</BookTitle>
-                        <br />
-                        {book.authors!.length > 0 && (
-                          <BookAuthor>{book.authors![0]}</BookAuthor>
-                        )}
-                      </BookData>
-                    </Book>
-                  )
-              )}
+              <BookComponent books={reading} />
             </Books>
           </BookShelf>
           <BookShelf>
@@ -438,40 +401,29 @@ export default function MemberPageComponent() {
               <ShelfIcon>F</ShelfIcon>inish / 完成
             </ShelfTitle>
             <Books>
-              {finish?.map(
-                (book) =>
-                  book.isbn && (
-                    <Book key={book.isbn}>
-                      <BookLink href={`/book/id:${book.isbn}`}>
-                        <BookImg
-                          src={
-                            book.smallThumbnail
-                              ? book.smallThumbnail
-                              : bookcover
-                          }
-                          alt={`${book.title}`}
-                          width={80}
-                          height={120}
-                          priority
-                        ></BookImg>
-                      </BookLink>
-                      <BookData>
-                        {!book.smallThumbnail && (
-                          <NoimgTitle>{book.title}</NoimgTitle>
-                        )}
-                        <BookTitle>{book.title}</BookTitle>
-                        <br />
-                        {book.authors!.length > 0 && (
-                          <BookAuthor>{book.authors![0]}</BookAuthor>
-                        )}
-                      </BookData>
-                    </Book>
-                  )
-              )}
+              <BookComponent books={finish} />
             </Books>
           </BookShelf>
-        </BookShelfs>
+        </BookShelves>
       </MemberPageWrap>
     </MemberPage>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  const url = (params as ParsedUrlQuery).id as string;
+  const uid = url.split("id:")[1];
+  const memberData = (await getMemberData(uid)) as MemberInfo;
+  if (memberData) {
+    const booksData = await getBookData(memberData.books!);
+    const readingData = await getBookData(memberData.reading!);
+    const finishData = await getBookData(memberData.finish!);
+    return {
+      props: { memberData, finishData, readingData, booksData },
+    };
+  } else {
+    return {
+      notFound: true,
+    };
+  }
+};

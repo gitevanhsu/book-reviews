@@ -1,12 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+
 import styled from "styled-components";
+import produce from "immer";
+import Swal from "sweetalert2";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
+
+import { RootState } from "../../store";
+import { userSignOut } from "../../slices/userInfoSlice";
 import {
   emailSignIn,
   signout,
   BookInfo,
-  getBookDatas,
+  getBookData,
   removeBook,
   MemberInfo,
   updateBooks,
@@ -14,28 +27,24 @@ import {
   editMemberInfo,
   emailSignUp,
 } from "../../utils/firebaseFuncs";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
-import { useDispatch } from "react-redux";
-import { userSignOut } from "../../slices/userInfoSlice";
-import bookcover from "/public/img/bookcover.jpeg";
 import {
-  DragDropContext,
-  Draggable,
-  Droppable,
-  DropResult,
-} from "react-beautiful-dnd";
-import male from "/public/img/reading-male.png";
-import male2 from "/public/img/reading-male2.png";
-import female from "/public/img/reading-female.png";
-import female2 from "/public/img/reading-female2.png";
-import books from "/public/img/book-stack.png";
-import kid from "/public/img/reading-kid.png";
-import pen from "/public/img/pen.svg";
-import signOut from "/public/img/sign-out.svg";
-import produce from "immer";
-import library from "/public/img/library.jpg";
-import Swal from "sweetalert2";
+  booksUrl,
+  bookCover,
+  female2Url,
+  femaleUrl,
+  kidUrl,
+  male2Url,
+  maleUrl,
+  male,
+  male2,
+  female,
+  female2,
+  books,
+  kid,
+  pen,
+  signOut,
+  library,
+} from "../../utils/imgs";
 
 const InputTitle = styled.p`
   font-size: ${(props) => props.theme.fz3};
@@ -56,7 +65,7 @@ const InputContent = styled.input`
     outline: 4px solid ${(props) => props.theme.red};
   }
 `;
-const Inputbox = styled.div`
+const InputBox = styled.div`
   margin: 0 auto;
   @media screen and (max-width: 440px) {
     & > br {
@@ -66,7 +75,7 @@ const Inputbox = styled.div`
 `;
 const SignArea = styled.div`
   margin-top: 50px;
-  & > ${Inputbox} {
+  & > ${InputBox} {
     display: flex;
     width: 300px;
     margin: 0 auto;
@@ -86,7 +95,7 @@ const SignArea = styled.div`
       border: none;
       outline: none;
       background-color: transparent;
-      border-bottom: 2px solid ${(props) => props.theme.greyBlue};
+      border-bottom: 2px solid ${(props) => props.theme.darkYellow};
       font-size: ${(props) => props.theme.fz4};
     }
   }
@@ -111,7 +120,7 @@ const SubmitButton = styled.button`
   background-color: ${(props) => props.theme.yellow};
   font-size: ${(props) => props.theme.fz4};
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow};
   }
 `;
 const SignInBtnBox = styled.div`
@@ -141,33 +150,33 @@ const SignUpArea = styled.div`
     width: 300px;
   }
 `;
-const SignupInputbox = styled.div`
+const SignUpInputBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 10px 0;
 `;
-const SignupInputTitle = styled.h4`
+const SignUpInputTitle = styled.h4`
   width: 140px;
   text-align: start;
   font-size: ${(props) => props.theme.fz4};
   line-height: ${(props) => props.theme.fz4};
 `;
-const SignupIntrobox = styled(SignupInputbox)`
+const SignUpIntroBox = styled(SignUpInputBox)`
   flex-wrap: wrap;
   text-align: center;
-  & > ${SignupInputTitle} {
+  & > ${SignUpInputTitle} {
     text-align: center;
     margin-top: 20px;
     width: 100%;
   }
 `;
-const SignupInputContent = styled.input`
+const SignUpInputContent = styled.input`
   outline: none;
   border: none;
   padding: 5px 10px;
   font-size: ${(props) => props.theme.fz4};
-  border-bottom: 2px solid ${(props) => props.theme.greyBlue};
+  border-bottom: 2px solid ${(props) => props.theme.darkYellow};
   width: 100%;
   background-color: ${(props) => props.theme.white};
   @media screen (max-width: 576px) {
@@ -188,7 +197,7 @@ const SignupInputContent = styled.input`
     outline: 2px solid ${(props) => props.theme.red};
   }
 `;
-const SignupInputTextArea = styled.textarea`
+const SignUpInputTextArea = styled.textarea`
   font-family: Arial;
   border: 1px solid ${(props) => props.theme.black};
   border-radius: 5px;
@@ -202,7 +211,7 @@ const SignupInputTextArea = styled.textarea`
   }
 `;
 
-const SignupSubmitButton = styled.button`
+const SignUpSubmitButton = styled.button`
   width: 100px;
   padding: 5px 10px;
   margin: 10px 0;
@@ -216,31 +225,35 @@ const SignupSubmitButton = styled.button`
   }
 `;
 
-const SignupLabel = styled.label``;
-const SignupUserAvatar = styled(Image)`
+const SignUpLabel = styled.label``;
+const SignUpUserAvatar = styled(Image)`
   border-radius: 50%;
 `;
-function SignupComponent({ setSignUp }: { setSignUp: Function }) {
-  const signupNameRef = useRef<HTMLInputElement>(null);
-  const signupEmailRef = useRef<HTMLInputElement>(null);
+function SignUpComponent({
+  setSignUp,
+}: {
+  setSignUp: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const signUpNameRef = useRef<HTMLInputElement>(null);
+  const signUpEmailRef = useRef<HTMLInputElement>(null);
   const signPasswordRef = useRef<HTMLInputElement>(null);
-  const signupIntroRef = useRef<HTMLTextAreaElement>(null);
+  const signUpIntroRef = useRef<HTMLTextAreaElement>(null);
   const [avatar, setAvatar] = useState("books");
 
   const isRadioSelect = (value: string): boolean => avatar === value;
   const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
     setAvatar(e.currentTarget.value);
-  const signup = () => {
+  const signUp = () => {
     if (
-      signupNameRef.current &&
-      signupEmailRef.current &&
+      signUpNameRef.current &&
+      signUpEmailRef.current &&
       signPasswordRef.current &&
-      signupIntroRef.current
+      signUpIntroRef.current
     ) {
-      const name = signupNameRef.current.value;
-      const email = signupEmailRef.current.value;
+      const name = signUpNameRef.current.value;
+      const email = signUpEmailRef.current.value;
       const password = signPasswordRef.current.value;
-      const intro = signupIntroRef.current.value;
+      const intro = signUpIntroRef.current.value;
       if (
         password.trim().length < 6 ||
         name.trim().length === 0 ||
@@ -252,187 +265,176 @@ function SignupComponent({ setSignUp }: { setSignUp: Function }) {
           text: "密碼至少六個字喔",
         });
       } else if (avatar === "books") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        const img = booksUrl;
         emailSignUp(name, email, password, intro, img);
       } else if (avatar === "male") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male.png?alt=media&token=4966e0d4-b850-4c33-a3eb-88f2a9d9238b";
+        const img = maleUrl;
         emailSignUp(name, email, password, intro, img);
       } else if (avatar === "male2") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male2.png?alt=media&token=225beacb-0954-4f29-849e-1cdaa4fb359b";
+        const img = male2Url;
         emailSignUp(name, email, password, intro, img);
       } else if (avatar === "female") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female.png?alt=media&token=cd1fbeef-0d9e-4d34-9217-0c0921e24bd6";
+        const img = femaleUrl;
         emailSignUp(name, email, password, intro, img);
       } else if (avatar === "female2") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female2.png?alt=media&token=26bba03e-f92f-4068-b2ba-8dfc56313553";
+        const img = female2Url;
         emailSignUp(name, email, password, intro, img);
       } else if (avatar === "kid") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-kid.png?alt=media&token=6ad7ec20-5fc7-4076-8972-52ca4c6b3bfa";
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "books") {
-        const img =
-          "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+        const img = kidUrl;
         emailSignUp(name, email, password, intro, img);
       }
-
-      signupNameRef.current.value = "";
-      signupEmailRef.current.value = "";
+      signUpNameRef.current.value = "";
+      signUpEmailRef.current.value = "";
       signPasswordRef.current.value = "";
-      signupIntroRef.current.value = "";
+      signUpIntroRef.current.value = "";
     }
   };
 
   return (
     <SignUpArea>
-      <SignupInputbox>
-        <SignupInputTitle>名字: </SignupInputTitle>
-        <SignupInputContent
+      <SignUpInputBox>
+        <SignUpInputTitle>名字: </SignUpInputTitle>
+        <SignUpInputContent
           key="signUpName"
-          ref={signupNameRef}
+          ref={signUpNameRef}
           type="text"
-        ></SignupInputContent>
-      </SignupInputbox>
-      <SignupInputbox>
-        <SignupInputTitle>Email: </SignupInputTitle>
-        <SignupInputContent
+        ></SignUpInputContent>
+      </SignUpInputBox>
+      <SignUpInputBox>
+        <SignUpInputTitle>Email: </SignUpInputTitle>
+        <SignUpInputContent
           key="signUpEmail"
-          ref={signupEmailRef}
+          ref={signUpEmailRef}
           type="email"
-        ></SignupInputContent>
-      </SignupInputbox>
-      <SignupInputbox>
-        <SignupInputTitle>密碼: </SignupInputTitle>
-        <SignupInputContent
+        ></SignUpInputContent>
+      </SignUpInputBox>
+      <SignUpInputBox>
+        <SignUpInputTitle>密碼: </SignUpInputTitle>
+        <SignUpInputContent
           key="signUpPassword"
           ref={signPasswordRef}
           type="password"
-        ></SignupInputContent>
-      </SignupInputbox>
-      <SignupIntrobox>
-        <SignupInputTitle>自我介紹: </SignupInputTitle>
-        <SignupInputTextArea
+        ></SignUpInputContent>
+      </SignUpInputBox>
+      <SignUpIntroBox>
+        <SignUpInputTitle>自我介紹: </SignUpInputTitle>
+        <SignUpInputTextArea
           key="signUpIntro"
-          ref={signupIntroRef}
-        ></SignupInputTextArea>
-      </SignupIntrobox>
-      <SignupIntrobox>
-        <SignupInputTitle>選擇您喜歡的頭像</SignupInputTitle>
-        <SignupLabel>
-          <SignupInputContent
+          ref={signUpIntroRef}
+        ></SignUpInputTextArea>
+      </SignUpIntroBox>
+      <SignUpIntroBox>
+        <SignUpInputTitle>選擇您喜歡的頭像</SignUpInputTitle>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="male"
             checked={isRadioSelect("male")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar
+          <SignUpUserAvatar
             src={male}
             alt="maleAvatar"
             width={50}
             height={50}
           />
-        </SignupLabel>
-        <SignupLabel>
-          <SignupInputContent
+        </SignUpLabel>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="male2"
             checked={isRadioSelect("male2")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar
+          <SignUpUserAvatar
             src={male2}
             alt="maleAvatar2"
             width={50}
             height={50}
           />
-        </SignupLabel>
-        <SignupLabel>
-          <SignupInputContent
+        </SignUpLabel>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="female"
             checked={isRadioSelect("female")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar
+          <SignUpUserAvatar
             src={female}
             alt="femaleAvatar"
             width={50}
             height={50}
           />
-        </SignupLabel>
-        <SignupLabel>
-          <SignupInputContent
+        </SignUpLabel>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="female2"
             checked={isRadioSelect("female2")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar
+          <SignUpUserAvatar
             src={female2}
             alt="femaleAvatar2"
             width={50}
             height={50}
           />
-        </SignupLabel>
-        <SignupLabel>
-          <SignupInputContent
+        </SignUpLabel>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="kid"
             checked={isRadioSelect("kid")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar
+          <SignUpUserAvatar
             src={kid}
             alt="femaleAvatar2"
             width={50}
             height={50}
           />
-        </SignupLabel>
-        <SignupLabel>
-          <SignupInputContent
+        </SignUpLabel>
+        <SignUpLabel>
+          <SignUpInputContent
             type="radio"
             name="avatar"
             value="books"
             checked={isRadioSelect("books")}
             onChange={avatarSelector}
           />
-          <SignupUserAvatar src={books} alt="upload" width={50} height={50} />
-        </SignupLabel>
-      </SignupIntrobox>
-      <SignupSubmitButton
+          <SignUpUserAvatar src={books} alt="upload" width={50} height={50} />
+        </SignUpLabel>
+      </SignUpIntroBox>
+      <SignUpSubmitButton
         onClick={() => {
-          signup();
+          signUp();
         }}
       >
         註冊
-      </SignupSubmitButton>{" "}
+      </SignUpSubmitButton>
       <br />
-      <SignupSubmitButton
+      <SignUpSubmitButton
         onClick={() => {
           setSignUp(false);
         }}
       >
         返回登入
-      </SignupSubmitButton>
+      </SignUpSubmitButton>
     </SignUpArea>
   );
 }
 
-function SigninComponent() {
+function SignInComponent() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const [showSignup, setSignUp] = useState(false);
-  const signin = () => {
+  const [showSignUp, setSignUp] = useState(false);
+  const signIn = () => {
     if (
       emailRef.current &&
       passwordRef.current &&
@@ -455,30 +457,30 @@ function SigninComponent() {
   };
   return (
     <>
-      {showSignup ? (
-        <SignupComponent setSignUp={setSignUp} />
+      {showSignUp ? (
+        <SignUpComponent setSignUp={setSignUp} />
       ) : (
         <>
           <SignArea>
-            <Inputbox>
+            <InputBox>
               <InputTitle>Email: </InputTitle>
               <InputContent
                 key="signInEmail"
                 ref={emailRef}
                 type="email"
               ></InputContent>
-            </Inputbox>
-            <Inputbox>
+            </InputBox>
+            <InputBox>
               <InputTitle>Password: </InputTitle>
               <InputContent
                 key="signInPassword"
                 ref={passwordRef}
                 type="password"
               ></InputContent>
-            </Inputbox>
+            </InputBox>
           </SignArea>
           <SignInBtnBox>
-            <SubmitButton onClick={signin}>登入</SubmitButton>
+            <SubmitButton onClick={signIn}>登入</SubmitButton>
             <br />
             <SubmitButton onClick={() => setSignUp(true)}>
               馬上註冊
@@ -500,7 +502,7 @@ const MoveBook = styled.div`
   text-align: center;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow};
   color: ${(props) => props.theme.white};
   border-radius: 5px;
   cursor: pointer;
@@ -513,13 +515,14 @@ const MobileRemove = styled(MoveBook)`
   background-color: ${(props) => props.theme.red};
 `;
 const DeskRemove = styled(MobileRemove)`
-  display: none;
+  min-width: 20px;
+  opacity: 0;
   margin-left: auto;
 `;
 
-const BookShelfs = styled.div`
+const BookShelves = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   @media screen and (max-width: 992px) {
     display: none;
   }
@@ -527,8 +530,7 @@ const BookShelfs = styled.div`
 const BookShelf = styled.div`
   display: inline-block;
   width: 30%;
-  border: solid 5px ${(props) => props.theme.grey};
-  background-color: ${(props) => props.theme.yellow2};
+  background-color: ${(props) => props.theme.yellow};
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -545,7 +547,7 @@ const ShelfTitle = styled.h2`
   width: 100%;
   top: 0;
   color: ${(props) => props.theme.black};
-  background-color: #ecbe48;
+  background-color: ${(props) => props.theme.darkYellow};
   font-size: ${(props) => props.theme.fz4};
   letter-spacing: 2px;
   padding: 10px;
@@ -559,11 +561,13 @@ const Book = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  border-bottom: 1px solid #efc991;
-  padding-bottom: 5px;
-  margin-bottom: 10px;
+  background-color: ${(props) => props.theme.yellow};
+  border-bottom: 1px solid ${(props) => props.theme.grey};
+  margin: 0 10px;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
   &:hover > ${DeskRemove} {
-    display: block;
+    opacity: 1;
   }
 `;
 const BookImg = styled(Image)`
@@ -573,7 +577,9 @@ const BookImg = styled(Image)`
 const BookLink = styled(Link)`
   display: inline-block;
 `;
-const BookData = styled.div``;
+const BookData = styled.div`
+  align-self: start;
+`;
 const BookTitle = styled.h3`
   font-size: ${(props) => props.theme.fz4};
   font-weight: 600;
@@ -581,7 +587,7 @@ const BookTitle = styled.h3`
 const BookAuthor = styled.h4`
   font-size: ${(props) => props.theme.fz4};
 `;
-const NoimgTitle = styled.p`
+const NoImgTitle = styled.p`
   font-size: ${(props) => props.theme.fz5};
   line-height: ${(props) => props.theme.fz4};
   position: absolute;
@@ -687,6 +693,10 @@ const UserDetail = styled.div`
   @media screen and (max-width: 992px) {
     max-width: 300px;
   }
+  @media screen and (max-width: 768px) {
+    text-align: center;
+    margin-left: 0px;
+  }
 `;
 const UserName = styled.h2`
   font-size: ${(props) => props.theme.fz2};
@@ -731,7 +741,7 @@ const BtnImg = styled(Image)`
 const UserInfoBox = styled.div`
   position: relative;
   margin: 0 auto;
-  width: 90%;
+  width: 100%;
   display: flex;
   margin-bottom: 50px;
   align-items: center;
@@ -755,9 +765,9 @@ interface MobileProps {
   books: BookInfo[];
   reading: BookInfo[];
   finish: BookInfo[];
-  setBooks: Function;
-  setReading: Function;
-  setFinish: Function;
+  setBooks: React.Dispatch<React.SetStateAction<BookInfo[]>>;
+  setReading: React.Dispatch<React.SetStateAction<BookInfo[]>>;
+  setFinish: React.Dispatch<React.SetStateAction<BookInfo[]>>;
 }
 interface MobileFuncProps {
   books: {
@@ -769,7 +779,7 @@ interface MobileFuncProps {
   from: string;
   to: string;
 }
-const MobileBookShelfs = styled(BookShelfs)`
+const MobileBookShelves = styled(BookShelves)`
   display: none;
   flex-direction: column;
   & > ${BookShelf} {
@@ -803,7 +813,7 @@ const ShelfIcon = styled.div`
   text-align: center;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.theme.greyBlue};
+  background-color: ${(props) => props.theme.darkYellow2};
   border-radius: 5px;
   color: #fff;
 `;
@@ -853,214 +863,206 @@ function MobileBookShelfComponent({
   };
 
   return (
-    <>
-      <MobileBookShelfs>
-        <BookShelf>
-          <ShelfTitle>
-            <ShelfIcon>C</ShelfIcon>ollection / 收藏
-          </ShelfTitle>
-          <Books>
-            {books?.map((book, index) => (
-              <Book key={book.isbn}>
-                <BookLink href={`/book/id:${book.isbn}`}>
-                  <BookImg
-                    src={book.smallThumbnail ? book.smallThumbnail : bookcover}
-                    alt={`${book.title}`}
-                    width={80}
-                    height={120}
-                    priority
-                  ></BookImg>
-                </BookLink>
-                <BookData>
-                  {!book.smallThumbnail && (
-                    <NoimgTitle>{book.title}</NoimgTitle>
-                  )}
-                  <BookTitle>{book.title}</BookTitle>
-                  <br />
-                  {book.authors!.length > 0 && (
-                    <BookAuthor>{book.authors![0]}</BookAuthor>
-                  )}
-                </BookData>
-                <MobileBtnBox>
-                  <MobileRemove
-                    onClick={() => {
-                      if (book.isbn && books) {
-                        setBooks((prev: BookInfo[]) =>
-                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
-                        );
-                        removeBook(book.isbn, userInfo.uid!, "books");
-                      }
-                    }}
-                  >
-                    X
-                  </MobileRemove>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "books",
-                        to: "reading",
-                      });
-                    }}
-                  >
-                    R
-                  </MoveBook>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "books",
-                        to: "finish",
-                      });
-                    }}
-                  >
-                    F
-                  </MoveBook>
-                </MobileBtnBox>
-              </Book>
-            ))}
-          </Books>
-        </BookShelf>
-        <BookShelf>
-          <ShelfTitle>
-            <ShelfIcon>R</ShelfIcon>eading / 閱讀
-          </ShelfTitle>
-          <Books>
-            {reading?.map((book, index) => (
-              <Book key={book.isbn}>
-                <BookLink href={`/book/id:${book.isbn}`}>
-                  <BookImg
-                    src={book.smallThumbnail ? book.smallThumbnail : bookcover}
-                    alt={`${book.title}`}
-                    width={80}
-                    height={120}
-                    priority
-                  ></BookImg>
-                </BookLink>
-                <BookData>
-                  {!book.smallThumbnail && (
-                    <NoimgTitle>{book.title}</NoimgTitle>
-                  )}
-                  <BookTitle>{book.title}</BookTitle>
-                  <br />
-                  {book.authors!.length > 0 && (
-                    <BookAuthor>{book.authors![0]}</BookAuthor>
-                  )}
-                </BookData>
-                <MobileBtnBox>
-                  <MobileRemove
-                    onClick={() => {
-                      if (book.isbn && books) {
-                        setBooks((prev: BookInfo[]) =>
-                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
-                        );
-                        removeBook(book.isbn, userInfo.uid!, "books");
-                      }
-                    }}
-                  >
-                    X
-                  </MobileRemove>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "reading",
-                        to: "books",
-                      });
-                    }}
-                  >
-                    C
-                  </MoveBook>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "reading",
-                        to: "finish",
-                      });
-                    }}
-                  >
-                    F
-                  </MoveBook>
-                </MobileBtnBox>
-              </Book>
-            ))}
-          </Books>
-        </BookShelf>
-        <BookShelf>
-          <ShelfTitle>
-            <ShelfIcon>F</ShelfIcon>inish / 完成
-          </ShelfTitle>
-          <Books>
-            {finish?.map((book, index) => (
-              <Book key={book.isbn}>
-                <BookLink href={`/book/id:${book.isbn}`}>
-                  <BookImg
-                    src={book.smallThumbnail ? book.smallThumbnail : bookcover}
-                    alt={`${book.title}`}
-                    width={80}
-                    height={120}
-                    priority
-                  ></BookImg>
-                </BookLink>
-                <BookData>
-                  {!book.smallThumbnail && (
-                    <NoimgTitle>{book.title}</NoimgTitle>
-                  )}
-                  <BookTitle>{book.title}</BookTitle>
-                  <br />
-                  {book.authors!.length > 0 && (
-                    <BookAuthor>{book.authors![0]}</BookAuthor>
-                  )}
-                </BookData>
-                <MobileBtnBox>
-                  <MobileRemove
-                    onClick={() => {
-                      if (book.isbn && books) {
-                        setBooks((prev: BookInfo[]) =>
-                          prev.filter((bookinfo) => bookinfo.isbn !== book.isbn)
-                        );
-                        removeBook(book.isbn, userInfo.uid!, "books");
-                      }
-                    }}
-                  >
-                    X
-                  </MobileRemove>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "finish",
-                        to: "books",
-                      });
-                    }}
-                  >
-                    C
-                  </MoveBook>
-                  <MoveBook
-                    onClick={() => {
-                      UpdateBooks({
-                        books: { books, reading, finish },
-                        index,
-                        from: "finish",
-                        to: "reading",
-                      });
-                    }}
-                  >
-                    R
-                  </MoveBook>
-                </MobileBtnBox>
-              </Book>
-            ))}
-          </Books>
-        </BookShelf>
-      </MobileBookShelfs>
-    </>
+    <MobileBookShelves>
+      <BookShelf>
+        <ShelfTitle>
+          <ShelfIcon>C</ShelfIcon>ollection / 收藏
+        </ShelfTitle>
+        <Books>
+          {books.map((book, index) => (
+            <Book key={book.isbn}>
+              <BookLink href={`/book/id:${book.isbn}`}>
+                <BookImg
+                  src={book.smallThumbnail || bookCover}
+                  alt={`${book.title}`}
+                  width={80}
+                  height={120}
+                  priority
+                ></BookImg>
+              </BookLink>
+              <BookData>
+                {!book.smallThumbnail && <NoImgTitle>{book.title}</NoImgTitle>}
+                <BookTitle>{book.title}</BookTitle>
+                <br />
+                {book.authors!.length > 0 && (
+                  <BookAuthor>{book.authors![0]}</BookAuthor>
+                )}
+              </BookData>
+              <MobileBtnBox>
+                <MobileRemove
+                  onClick={() => {
+                    if (book.isbn && books) {
+                      setBooks((prev: BookInfo[]) =>
+                        prev.filter((bookInfo) => bookInfo.isbn !== book.isbn)
+                      );
+                      removeBook(book.isbn, userInfo.uid!, "books");
+                    }
+                  }}
+                >
+                  X
+                </MobileRemove>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "books",
+                      to: "reading",
+                    });
+                  }}
+                >
+                  R
+                </MoveBook>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "books",
+                      to: "finish",
+                    });
+                  }}
+                >
+                  F
+                </MoveBook>
+              </MobileBtnBox>
+            </Book>
+          ))}
+        </Books>
+      </BookShelf>
+      <BookShelf>
+        <ShelfTitle>
+          <ShelfIcon>R</ShelfIcon>eading / 閱讀
+        </ShelfTitle>
+        <Books>
+          {reading.map((book, index) => (
+            <Book key={book.isbn}>
+              <BookLink href={`/book/id:${book.isbn}`}>
+                <BookImg
+                  src={book.smallThumbnail || bookCover}
+                  alt={`${book.title}`}
+                  width={80}
+                  height={120}
+                  priority
+                ></BookImg>
+              </BookLink>
+              <BookData>
+                {!book.smallThumbnail && <NoImgTitle>{book.title}</NoImgTitle>}
+                <BookTitle>{book.title}</BookTitle>
+                <br />
+                {book.authors!.length > 0 && (
+                  <BookAuthor>{book.authors![0]}</BookAuthor>
+                )}
+              </BookData>
+              <MobileBtnBox>
+                <MobileRemove
+                  onClick={() => {
+                    if (book.isbn && books) {
+                      setReading((prev: BookInfo[]) =>
+                        prev.filter((bookInfo) => bookInfo.isbn !== book.isbn)
+                      );
+                      removeBook(book.isbn, userInfo.uid!, "reading");
+                    }
+                  }}
+                >
+                  X
+                </MobileRemove>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "reading",
+                      to: "books",
+                    });
+                  }}
+                >
+                  C
+                </MoveBook>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "reading",
+                      to: "finish",
+                    });
+                  }}
+                >
+                  F
+                </MoveBook>
+              </MobileBtnBox>
+            </Book>
+          ))}
+        </Books>
+      </BookShelf>
+      <BookShelf>
+        <ShelfTitle>
+          <ShelfIcon>F</ShelfIcon>inish / 完成
+        </ShelfTitle>
+        <Books>
+          {finish.map((book, index) => (
+            <Book key={book.isbn}>
+              <BookLink href={`/book/id:${book.isbn}`}>
+                <BookImg
+                  src={book.smallThumbnail || bookCover}
+                  alt={`${book.title}`}
+                  width={80}
+                  height={120}
+                  priority
+                ></BookImg>
+              </BookLink>
+              <BookData>
+                {!book.smallThumbnail && <NoImgTitle>{book.title}</NoImgTitle>}
+                <BookTitle>{book.title}</BookTitle>
+                <br />
+                {book.authors!.length > 0 && (
+                  <BookAuthor>{book.authors![0]}</BookAuthor>
+                )}
+              </BookData>
+              <MobileBtnBox>
+                <MobileRemove
+                  onClick={() => {
+                    if (book.isbn && books) {
+                      setFinish((prev: BookInfo[]) =>
+                        prev.filter((bookInfo) => bookInfo.isbn !== book.isbn)
+                      );
+                      removeBook(book.isbn, userInfo.uid!, "finish");
+                    }
+                  }}
+                >
+                  X
+                </MobileRemove>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "finish",
+                      to: "books",
+                    });
+                  }}
+                >
+                  C
+                </MoveBook>
+                <MoveBook
+                  onClick={() => {
+                    UpdateBooks({
+                      books: { books, reading, finish },
+                      index,
+                      from: "finish",
+                      to: "reading",
+                    });
+                  }}
+                >
+                  R
+                </MoveBook>
+              </MobileBtnBox>
+            </Book>
+          ))}
+        </Books>
+      </BookShelf>
+    </MobileBookShelves>
   );
 }
 
@@ -1074,12 +1076,12 @@ function BookShelfComponent() {
       if (userInfo.uid) {
         const memberData = (await getMemberData(userInfo.uid)) as MemberInfo;
         if (memberData?.books && memberData?.reading && memberData?.finish) {
-          const booksDatas = await getBookDatas(memberData.books);
-          booksDatas.length && setBooks(booksDatas as BookInfo[]);
-          const readingDatas = await getBookDatas(memberData.reading);
-          readingDatas.length && setReading(readingDatas as BookInfo[]);
-          const finishDatas = await getBookDatas(memberData.finish);
-          finishDatas.length && setFinish(finishDatas as BookInfo[]);
+          const booksData = await getBookData(memberData.books);
+          booksData.length && setBooks(booksData as BookInfo[]);
+          const readingData = await getBookData(memberData.reading);
+          readingData.length && setReading(readingData as BookInfo[]);
+          const finishData = await getBookData(memberData.finish);
+          finishData.length && setFinish(finishData as BookInfo[]);
         }
       }
     };
@@ -1087,7 +1089,7 @@ function BookShelfComponent() {
   }, [userInfo.uid]);
 
   const onDragEnd = async (event: DropResult) => {
-    const { source, destination, draggableId: isbn } = event;
+    const { source, destination } = event;
     if (!destination) {
       return;
     }
@@ -1122,7 +1124,7 @@ function BookShelfComponent() {
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <BookShelfs>
+        <BookShelves>
           <BookShelf>
             <ShelfTitle>
               <ShelfIcon>C</ShelfIcon>ollection / 收藏
@@ -1130,7 +1132,7 @@ function BookShelfComponent() {
             <Droppable droppableId="books">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
-                  {books?.map(
+                  {books.map(
                     (book, index) =>
                       book.isbn && (
                         <Draggable
@@ -1147,11 +1149,7 @@ function BookShelfComponent() {
                             >
                               <BookLink href={`/book/id:${book.isbn}`}>
                                 <BookImg
-                                  src={
-                                    book.smallThumbnail
-                                      ? book.smallThumbnail
-                                      : bookcover
-                                  }
+                                  src={book.smallThumbnail || bookCover}
                                   alt={`${book.title}`}
                                   width={80}
                                   height={120}
@@ -1160,7 +1158,7 @@ function BookShelfComponent() {
                               </BookLink>
                               <BookData>
                                 {!book.smallThumbnail && (
-                                  <NoimgTitle>{book.title}</NoimgTitle>
+                                  <NoImgTitle>{book.title}</NoImgTitle>
                                 )}
                                 <BookTitle>{book.title}</BookTitle>
                                 <br />
@@ -1173,8 +1171,8 @@ function BookShelfComponent() {
                                   if (book.isbn && books) {
                                     setBooks((prev) =>
                                       prev.filter(
-                                        (bookinfo) =>
-                                          bookinfo.isbn !== book.isbn
+                                        (bookInfo) =>
+                                          bookInfo.isbn !== book.isbn
                                       )
                                     );
                                     removeBook(
@@ -1204,7 +1202,7 @@ function BookShelfComponent() {
             <Droppable droppableId="reading">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
-                  {reading?.map(
+                  {reading.map(
                     (book, index) =>
                       book.isbn && (
                         <Draggable
@@ -1221,11 +1219,7 @@ function BookShelfComponent() {
                             >
                               <BookLink href={`/book/id:${book.isbn}`}>
                                 <BookImg
-                                  src={
-                                    book.smallThumbnail
-                                      ? book.smallThumbnail
-                                      : bookcover
-                                  }
+                                  src={book.smallThumbnail || bookCover}
                                   alt={`${book.title}`}
                                   width={80}
                                   height={120}
@@ -1234,7 +1228,7 @@ function BookShelfComponent() {
                               </BookLink>
                               <BookData>
                                 {!book.smallThumbnail && (
-                                  <NoimgTitle>{book.title}</NoimgTitle>
+                                  <NoImgTitle>{book.title}</NoImgTitle>
                                 )}
                                 <BookTitle>{book.title}</BookTitle>
                                 <br />
@@ -1245,16 +1239,16 @@ function BookShelfComponent() {
                               <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setBooks((prev) =>
+                                    setReading((prev) =>
                                       prev.filter(
-                                        (bookinfo) =>
-                                          bookinfo.isbn !== book.isbn
+                                        (bookInfo) =>
+                                          bookInfo.isbn !== book.isbn
                                       )
                                     );
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "reading"
                                     );
                                   }
                                 }}
@@ -1278,7 +1272,7 @@ function BookShelfComponent() {
             <Droppable droppableId="finish">
               {(provided) => (
                 <Books ref={provided.innerRef} {...provided.droppableProps}>
-                  {finish?.map(
+                  {finish.map(
                     (book, index) =>
                       book.isbn && (
                         <Draggable
@@ -1295,11 +1289,7 @@ function BookShelfComponent() {
                             >
                               <BookLink href={`/book/id:${book.isbn}`}>
                                 <BookImg
-                                  src={
-                                    book.smallThumbnail
-                                      ? book.smallThumbnail
-                                      : bookcover
-                                  }
+                                  src={book.smallThumbnail || bookCover}
                                   alt={`${book.title}`}
                                   width={80}
                                   height={120}
@@ -1308,7 +1298,7 @@ function BookShelfComponent() {
                               </BookLink>
                               <BookData>
                                 {!book.smallThumbnail && (
-                                  <NoimgTitle>{book.title}</NoimgTitle>
+                                  <NoImgTitle>{book.title}</NoImgTitle>
                                 )}
                                 <BookTitle>{book.title}</BookTitle>
                                 <br />
@@ -1319,16 +1309,16 @@ function BookShelfComponent() {
                               <DeskRemove
                                 onClick={() => {
                                   if (book.isbn && books) {
-                                    setBooks((prev) =>
+                                    setFinish((prev) =>
                                       prev.filter(
-                                        (bookinfo) =>
-                                          bookinfo.isbn !== book.isbn
+                                        (bookInfo) =>
+                                          bookInfo.isbn !== book.isbn
                                       )
                                     );
                                     removeBook(
                                       book.isbn,
                                       userInfo.uid!,
-                                      "books"
+                                      "finish"
                                     );
                                   }
                                 }}
@@ -1345,7 +1335,7 @@ function BookShelfComponent() {
               )}
             </Droppable>
           </BookShelf>
-        </BookShelfs>
+        </BookShelves>
       </DragDropContext>
       <MobileBookShelfComponent
         userInfo={userInfo}
@@ -1366,9 +1356,7 @@ export default function Profile() {
   const [edit, setEdit] = useState(false);
   const editNameRef = useRef<HTMLInputElement>(null);
   const editIntroRef = useRef<HTMLTextAreaElement>(null);
-
   const [avatar, setAvatar] = useState("books");
-
   const isRadioSelect = (value: string): boolean => avatar === value;
   const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
     setAvatar(e.currentTarget.value);
@@ -1447,7 +1435,7 @@ export default function Profile() {
               </ButtonBox>
               {edit && (
                 <EditBox>
-                  <Inputbox>
+                  <InputBox>
                     <InputTitle>頭像</InputTitle>
                     <Label>
                       <InputContent
@@ -1510,7 +1498,7 @@ export default function Profile() {
                       />
                       <UserAvatar src={books} alt="upload" />
                     </Label>
-                  </Inputbox>
+                  </InputBox>
                   <EditBoxDetail>
                     <EditTitle>姓名</EditTitle>
                     <TitleInput
@@ -1535,14 +1523,11 @@ export default function Profile() {
                     <SubmitButton
                       onClick={() => {
                         if (
-                          editNameRef &&
-                          editNameRef.current &&
-                          editIntroRef &&
+                          editNameRef.current?.value.trim() &&
                           editIntroRef.current
                         ) {
                           if (avatar === "books") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+                            const img = booksUrl;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1552,8 +1537,7 @@ export default function Profile() {
                             );
                             setEdit(false);
                           } else if (avatar === "male") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male.png?alt=media&token=4966e0d4-b850-4c33-a3eb-88f2a9d9238b";
+                            const img = maleUrl;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1563,8 +1547,7 @@ export default function Profile() {
                             );
                             setEdit(false);
                           } else if (avatar === "male2") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-male2.png?alt=media&token=225beacb-0954-4f29-849e-1cdaa4fb359b";
+                            const img = male2Url;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1574,8 +1557,7 @@ export default function Profile() {
                             );
                             setEdit(false);
                           } else if (avatar === "female") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female.png?alt=media&token=cd1fbeef-0d9e-4d34-9217-0c0921e24bd6";
+                            const img = femaleUrl;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1585,8 +1567,7 @@ export default function Profile() {
                             );
                             setEdit(false);
                           } else if (avatar === "female2") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-female2.png?alt=media&token=26bba03e-f92f-4068-b2ba-8dfc56313553";
+                            const img = female2Url;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1596,19 +1577,7 @@ export default function Profile() {
                             );
                             setEdit(false);
                           } else if (avatar === "kid") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/reading-kid.png?alt=media&token=6ad7ec20-5fc7-4076-8972-52ca4c6b3bfa";
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "books") {
-                            const img =
-                              "https://firebasestorage.googleapis.com/v0/b/book-reviews-87d66.appspot.com/o/book-stack.png?alt=media&token=16d3a52f-862d-4908-977f-68f7f8af783a";
+                            const img = kidUrl;
                             editMemberInfo(
                               userInfo,
                               editNameRef.current.value,
@@ -1618,6 +1587,11 @@ export default function Profile() {
                             );
                             setEdit(false);
                           }
+                        } else {
+                          Swal.fire({
+                            icon: "warning",
+                            title: "請輸入名字喔！",
+                          });
                         }
                       }}
                     >
@@ -1630,7 +1604,7 @@ export default function Profile() {
             <BookShelfComponent />
           </>
         ) : (
-          <SigninComponent />
+          <SignInComponent />
         )}
       </ProfilePageWrap>
     </ProfilePage>

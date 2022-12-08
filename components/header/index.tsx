@@ -1,9 +1,16 @@
-import male from "/public/img/reading-male.png";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
-import styled from "styled-components";
-import { useEffect, useState } from "react";
+
+import { useDispatch, useSelector } from "react-redux";
+import { doc, onSnapshot, query, where } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import styled from "styled-components";
+import Swal from "sweetalert2";
+
+import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
+import { RootState } from "../../store";
 import {
   getMemberData,
   friendRequestRef,
@@ -16,29 +23,16 @@ import {
   signout,
   db,
 } from "../../utils/firebaseFuncs";
-import { useDispatch, useSelector } from "react-redux";
-import { userSignIn, userSignOut } from "../../slices/userInfoSlice";
-import { doc, onSnapshot, query, where } from "firebase/firestore";
-import { RootState } from "../../store";
-import { useRouter } from "next/router";
-import acceptImg from "../../public/img/accept.svg";
-import rejectImg from "../../public/img/reject.svg";
-import linkImg from "../../public/img/new-link.svg";
-import menu from "../../public/img/user.png";
-import bell from "/public/img/bell.png";
-import Friends from "/public/img/multiple-users.png";
-import Swal from "sweetalert2";
+import {
+  male,
+  acceptImg,
+  rejectImg,
+  newLinkImg,
+  menu,
+  bell,
+  friends,
+} from "../../utils/imgs";
 
-interface MesProps {
-  mesCount?: number;
-}
-interface MesBoxProps {
-  isOpen?: boolean;
-  notice?: number;
-}
-interface LiProps {
-  nowpath: boolean;
-}
 const NoticeContent = styled.div`
   white-space: nowrap;
   display: flex;
@@ -55,6 +49,9 @@ const NoNoticeContent = styled(NoticeContent)`
   transition: 0.3s;
   height: 0;
 `;
+interface MesProps {
+  mesCount?: number;
+}
 const MesBox = styled.div<MesProps>`
   margin-right: 20px;
   position: relative;
@@ -96,6 +93,9 @@ const Ul = styled.ul`
   height: 100%;
   overflow: hidden;
 `;
+interface LiProps {
+  nowPath: boolean;
+}
 const Li = styled.li<LiProps>`
   list-style: none;
   display: inline-block;
@@ -105,13 +105,13 @@ const Li = styled.li<LiProps>`
   text-indent: 10px;
   font-weight: 500;
   background-color: ${(props) =>
-    props.nowpath ? props.theme.greyBlue : props.theme.grey};
+    props.nowPath ? props.theme.darkYellow : props.theme.grey};
   display: flex;
   align-items: center;
   border-radius: 10px 10px 0 0;
   font-size: ${(props) => props.theme.fz4};
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    filter: brightness(${(props) => (props.nowPath ? 1 : 0.9)});
   }
   & + & {
     margin-left: 20px;
@@ -137,18 +137,21 @@ const PageLink = styled(Link)`
   text-decoration: none;
   color: ${(props) => props.theme.black};
 `;
-
+interface MesBoxProps {
+  isOpen?: boolean;
+  notice?: number;
+}
 const NoticeBox = styled.div<MesBoxProps>`
   position: absolute;
-  top: calc(100% + 8px);
-  height: ${(props) => (props.isOpen ? `${props.notice! * 150}px` : "0px")};
+  top: calc(100% + 11px);
+  height: ${(props) => (props.isOpen ? `${props.notice! * 250}px` : "0px")};
   min-height: ${(props) => (props.isOpen ? "30px" : "0px")};
   right: -15px;
   border-radius: 0 0 10px 10px;
   overflow: auto;
   z-index: 10;
   background-color: ${(props) => props.theme.white};
-  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  box-shadow: 0px 2px 10px #00000030;
   transition: height 0.2s;
   color: ${(props) => props.theme.black};
 `;
@@ -168,7 +171,7 @@ const FriendRequestBox = styled.div`
   margin: 20px 0;
 `;
 
-const ResImgs = styled.div`
+const ResponseImages = styled.div`
   margin-left: auto;
   display: flex;
   width: 60px;
@@ -178,7 +181,7 @@ const ResImg1 = styled(Image)`
   cursor: pointer;
   border-radius: 5px;
   &:hover {
-    background-color: ${(props) => props.theme.greyBlue};
+    background-color: ${(props) => props.theme.darkYellow};
   }
 `;
 const ResImg2 = styled(ResImg1)`
@@ -201,6 +204,7 @@ const Notice = styled.div`
 `;
 const MemberName = styled.h3`
   letter-spacing: 2px;
+  margin-bottom: 10px;
   font-size: ${(props) => props.theme.fz3};
   @media screen and (max-width: 768px) {
     font-size: ${(props) => props.theme.fz4};
@@ -216,11 +220,10 @@ const NoticeMessage = styled.p`
 `;
 
 const ProfileUl = styled.ul`
-  border-top: 1px solid ${(props) => props.theme.grey};
   background-color: ${(props) => props.theme.white};
   position: absolute;
   border-radius: 0 0 10px 10px;
-  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  box-shadow: 0px 2px 10px #00000030;
   top: 100%;
   right: 0;
   width: 150px;
@@ -229,7 +232,7 @@ const ProfileUl = styled.ul`
 const ProfileLink = styled(Link)``;
 
 interface ProfileLiProps {
-  nowpath?: boolean;
+  nowPath?: boolean;
 }
 const ProfileLi = styled.li<ProfileLiProps>`
   padding: 0 10px;
@@ -244,11 +247,10 @@ const ProfileLi = styled.li<ProfileLiProps>`
   border-bottom: 1px solid ${(props) => props.theme.grey};
   transition: 0.3s;
   color: ${(props) => props.theme.black};
-  border-top: 1px solid ${(props) => props.theme.grey};
   background-color: ${(props) =>
-    props.nowpath ? props.theme.yellow : "transparent"};
+    props.nowPath ? props.theme.darkYellow : "transparent"};
   &:hover {
-    background-color: ${(props) => props.theme.yellow};
+    background-color: ${(props) => props.theme.darkYellow};
   }
   & > ${ProfileLink} {
     display: flex;
@@ -290,8 +292,8 @@ function FriendRequestComponent({ data }: { data: MemberInfo }) {
       {data.img && (
         <Link href={`/member/id:${data.uid}`}>
           <MemberImg
-            src={data && data?.img ? data?.img : male}
-            alt={data && data?.name ? data.name : "user Img"}
+            src={data?.img || male}
+            alt="number Img"
             width={40}
             height={40}
           />
@@ -301,7 +303,7 @@ function FriendRequestComponent({ data }: { data: MemberInfo }) {
         <MemberName>{data.name}</MemberName>
         <NoticeMessage>向您發出好友邀請</NoticeMessage>
       </NoticeContent>
-      <ResImgs>
+      <ResponseImages>
         <ResImg1
           src={acceptImg}
           alt="acceptImg"
@@ -323,7 +325,7 @@ function FriendRequestComponent({ data }: { data: MemberInfo }) {
             }
           }}
         />
-      </ResImgs>
+      </ResponseImages>
     </>
   );
 }
@@ -333,16 +335,8 @@ function CommentNoticeComponent({ data }: { data: NoticeData }) {
     <>
       <Link href={`/member/id:${data.poster}`}>
         <MemberImg
-          src={
-            data?.posterInfo && data?.posterInfo?.img
-              ? data?.posterInfo?.img
-              : male
-          }
-          alt={
-            data?.posterInfo && data?.posterInfo?.name
-              ? data?.posterInfo.name
-              : "user Img"
-          }
+          src={data.posterInfo?.img! || male}
+          alt="member Img"
           width={40}
           height={40}
         ></MemberImg>
@@ -351,9 +345,9 @@ function CommentNoticeComponent({ data }: { data: NoticeData }) {
         <MemberName>{data?.posterInfo?.name}</MemberName>
         <NoticeMessage>回應了您的評論</NoticeMessage>
       </NoticeContent>
-      <ResImgs>
+      <ResponseImages>
         <Link href={data?.postUrl}>
-          <ResImg3 src={linkImg} alt="delete" width={25} height={25} />
+          <ResImg3 src={newLinkImg} alt="delete" width={25} height={25} />
         </Link>
         <ResImg2
           src={rejectImg}
@@ -364,7 +358,7 @@ function CommentNoticeComponent({ data }: { data: NoticeData }) {
             removeNotice(data);
           }}
         />
-      </ResImgs>
+      </ResponseImages>
     </>
   );
 }
@@ -374,70 +368,59 @@ function NoticeComponent() {
   const [notices, setNotice] = useState<NoticeData[]>([]);
   const [friendRequest, setFriendRequest] = useState<MemberInfo[]>([]);
   const [openMsg, setOpenMsg] = useState(false);
-  const [allnotice, setAllnotice] = useState<(NoticeData | MemberInfo)[]>([]);
+  const [allNotice, setAllNotice] = useState<(NoticeData | MemberInfo)[]>([]);
   useEffect(() => {
-    let unsub1: Function;
-    let unsub2: Function;
+    let allNotices: (NoticeData | MemberInfo)[] = [];
+    const unSubscriptFriendRequest = onSnapshot(
+      query(
+        friendRequestRef,
+        where("receiver", "==", userInfo.uid),
+        where("state", "==", "pending")
+      ),
+      async (querySnapshot) => {
+        const inviters = querySnapshot.docs.map((doc) => doc.data().invitor);
+        const newInviterData = inviters.map(
+          async (inviter) => await getMemberData(inviter)
+        );
+        const inviterData = (await Promise.all(newInviterData)) as MemberInfo[];
+        allNotices.push(...inviterData);
+        setFriendRequest(inviterData);
+      }
+    );
+    const unSubscriptNotification = onSnapshot(
+      query(noticeRef, where("reciver", "==", userInfo.uid)),
+      async (querySnapshot) => {
+        const notices = querySnapshot.docs.map((doc) => doc.data());
+        const members = notices.map(
+          async (notice) => await getMemberData(notice.poster)
+        );
+        const memberData = (await Promise.all(members)) as MemberInfo[];
+        const newNotices = notices.map(
+          (notice, index) =>
+            ({
+              ...notice,
+              posterInfo: memberData[index],
+            } as NoticeData)
+        );
+        allNotices.push(...newNotices);
+        setNotice(newNotices);
+      }
+    );
 
-    const getAllNotice = async () => {
-      let allNotices: (NoticeData | MemberInfo)[] = [];
-      unsub1 = onSnapshot(
-        query(
-          friendRequestRef,
-          where("receiver", "==", userInfo.uid),
-          where("state", "==", "pending")
-        ),
-        async (querySnapshot) => {
-          const invitors = querySnapshot.docs.map((doc) => doc.data().invitor);
-          const newInviteData = invitors.map(
-            async (invitor) => await getMemberData(invitor)
-          );
-          const invitorData = (await Promise.all(
-            newInviteData
-          )) as MemberInfo[];
-          allNotices.push(...invitorData);
-          setFriendRequest(invitorData);
-        }
-      );
-      unsub2 = onSnapshot(
-        query(noticeRef, where("reciver", "==", userInfo.uid)),
-        async (querySnapshot) => {
-          const notices = querySnapshot.docs.map((doc) => doc.data());
-          const members = notices.map(
-            async (notice) => await getMemberData(notice.poster)
-          );
-          const memberDatas = (await Promise.all(members)) as MemberInfo[];
-          const newNotices = notices.map(
-            (notice, index) =>
-              ({
-                ...notice,
-                posterInfo: memberDatas[index],
-              } as NoticeData)
-          );
-          allNotices.push(...newNotices);
-          setNotice(newNotices);
-        }
-      );
-    };
-    getAllNotice();
     return () => {
-      if (unsub1) {
-        unsub1();
-      }
-      if (unsub2) {
-        unsub2();
-      }
+      unSubscriptFriendRequest();
+      unSubscriptNotification();
     };
   }, [userInfo.uid]);
 
   useEffect(() => {
-    setAllnotice([...notices, ...friendRequest]);
+    setAllNotice([...notices, ...friendRequest]);
   }, [notices, friendRequest]);
   return (
     <>
       {userInfo.isSignIn && (
         <MesBox
-          mesCount={notices.length + friendRequest.length}
+          mesCount={allNotice.length}
           onMouseEnter={() => {
             setOpenMsg(true);
           }}
@@ -446,15 +429,9 @@ function NoticeComponent() {
           }}
         >
           <MesImg src={bell} alt="Message" width={27} height={27} />
-          {allnotice.length > 0 ? (
-            <NoticeBox
-              isOpen={openMsg}
-              notice={
-                (notices.length > 0 ? 1 : 0) +
-                (friendRequest.length > 0 ? 1 : 0)
-              }
-            >
-              {allnotice.map((data) =>
+          {allNotice.length > 0 ? (
+            <NoticeBox isOpen={openMsg} notice={allNotice.length > 0 ? 1 : 0}>
+              {allNotice.map((data) =>
                 "noticeid" in data ? (
                   <Notice key={data.noticeid}>
                     <CommentNoticeComponent data={data} />
@@ -486,7 +463,7 @@ function MemberComponent() {
       <ProfileImgWrap>
         <ProfileImgImage src={menu} width={27} height={27} alt="MemberAvatar" />
         <ProfileUl>
-          <ProfileLi nowpath={router.asPath === "/profile"}>
+          <ProfileLi nowPath={router.asPath === "/profile"}>
             <ProfileLink href="/profile">
               {userInfo.isSignIn ? "個人頁面" : "登入"}
             </ProfileLink>
@@ -557,7 +534,7 @@ const FriendsUl = styled.ul`
   right: 0;
   top: 100%;
   background-color: ${(props) => props.theme.white};
-  box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  box-shadow: 0px 2px 10px #00000030;
   border-radius: 0 0 10px 10px;
   transition: height 0.2s;
   color: ${(props) => props.theme.black};
@@ -601,36 +578,27 @@ function FriendsComponent() {
   const [friendList, setFriendList] = useState<MemberInfo[]>([]);
   const router = useRouter();
   useEffect(() => {
-    let unSubscription: Function;
-    const getFriendList = async () => {
-      if (userInfo.uid)
-        unSubscription = onSnapshot(
-          doc(db, "members", userInfo.uid),
-          async (doc) => {
-            const memberInfo = doc.data() as MemberInfo;
-            if (memberInfo?.friends && memberInfo.friends.length > 0) {
-              const request = memberInfo.friends.map(async (uids) => {
-                const res = await getMemberData(uids);
-                return res as MemberInfo;
-              });
-              const allMemberInfo = await Promise.all(request);
-              setFriendList(allMemberInfo);
-            }
-          }
-        );
-    };
-    if (userInfo.isSignIn) {
-      getFriendList();
-    } else {
-      setFriendList([]);
-    }
-    return () => {
-      if (unSubscription) {
-        unSubscription();
+    const unSubscriptionFriendList = onSnapshot(
+      doc(db, "members", userInfo.uid!),
+      async (doc) => {
+        const memberInfo = doc.data() as MemberInfo;
+        if (memberInfo?.friends && memberInfo.friends.length > 0) {
+          const request = memberInfo.friends.map(async (uids) => {
+            const res = await getMemberData(uids);
+            return res as MemberInfo;
+          });
+          const allMemberInfo = await Promise.all(request);
+          setFriendList(allMemberInfo);
+        }
       }
+    );
+
+    if (!userInfo.isSignIn) setFriendList([]);
+    return () => {
+      unSubscriptionFriendList();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userInfo.uid]);
+  }, [userInfo.isSignIn, userInfo.uid]);
+
   const gotoMemberPage = (uid: string) => {
     uid
       ? router.push(`/member/id:${uid}`)
@@ -639,7 +607,7 @@ function FriendsComponent() {
   return (
     <FriendsBox>
       <FriendsWrap>
-        <FriendsImg src={Friends} width={27} height={27} alt="MemberAvatar" />
+        <FriendsImg src={friends} width={27} height={27} alt="MemberAvatar" />
         <FriendsUl>
           {friendList.length > 0 ? (
             friendList.map((friend) => {
@@ -647,7 +615,7 @@ function FriendsComponent() {
                 <FriendsLi
                   key={friend.uid}
                   onClick={() => {
-                    friend.uid && gotoMemberPage(friend.uid);
+                    gotoMemberPage(friend.uid!);
                   }}
                 >
                   <FriendsImg
@@ -661,11 +629,7 @@ function FriendsComponent() {
               );
             })
           ) : (
-            <FriendsLi
-              onClick={() => {
-                gotoMemberPage("");
-              }}
-            >
+            <FriendsLi>
               <NoFriends>去討論區認識新朋友吧！</NoFriends>
             </FriendsLi>
           )}
@@ -686,29 +650,31 @@ export function HeaderComponent() {
     const unSubscriptAuthState = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const uid = user.uid;
-        const userdata = await getMemberData(uid);
-        userdata && dispatch(userSignIn(userdata));
-      } else {
+        const userData = await getMemberData(uid);
+        userData && dispatch(userSignIn(userData));
       }
     });
     return () => {
       unSubscriptAuthState();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch]);
   return (
     <Header>
       <Ul>
-        <Li nowpath={path === "/"}>
+        <Li nowPath={path === "/"}>
           <PageLink href="/">首頁</PageLink>
         </Li>
-        <Li nowpath={path === "/books"}>
+        <Li nowPath={path === "/books"}>
           <PageLink href="/books">書籍</PageLink>
         </Li>
       </Ul>
       <MemberComponent />
-      {userInfo.isSignIn && <FriendsComponent />}
-      <NoticeComponent />
+      {userInfo.isSignIn && (
+        <>
+          <FriendsComponent />
+          <NoticeComponent />
+        </>
+      )}
     </Header>
   );
 }

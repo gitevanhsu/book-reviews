@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+
+import { onSnapshot, query, collection } from "firebase/firestore";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
+import Swal from "sweetalert2";
+
+import { RootState } from "../../store";
+import { male } from "../../utils/imgs";
 import {
   db,
   MemberInfo,
@@ -8,25 +17,16 @@ import {
   sentMessage,
   ChatMessage,
 } from "../../utils/firebaseFuncs";
-import { RootState } from "../../store";
-
-import male from "/public/img/reading-male.png";
-import { useSelector } from "react-redux";
-import { onSnapshot, query, collection } from "firebase/firestore";
-import Link from "next/link";
-import Swal from "sweetalert2";
-import { useRouter } from "next/router";
 
 const ChatRoom = styled.div`
   position: relative;
   width: 600px;
   margin-top: 20px;
-  background-color: ${(props) => props.theme.lightWhite};
-  border: 1px solid ${(props) => props.theme.greyBlue};
+  background-color: ;
   overflow: hidden;
   border-radius: 10px;
   max-height: 500px;
-  box-shadow: 0px 0px 3px ${(props) => props.theme.black};
+  background-color: ${(props) => props.theme.white};
   @media screen and (max-width: 768px) {
     width: 100%;
   }
@@ -73,10 +73,11 @@ const InputBox = styled.div`
 const MessageInput = styled.input`
   width: 100%;
   border-radius: 5px;
-  padding: 5px 10px;
+  padding: 15px 10px;
   border: none;
   outline: none;
-  border-top: 1px solid ${(props) => props.theme.grey};
+  border-top: 1px solid ${(props) => props.theme.darkYellow};
+  background-color: ${(props) => props.theme.white};
   font-size: ${(props) => props.theme.fz4};
 `;
 const ChatDate = styled.p`
@@ -99,62 +100,56 @@ const ChatRoomTitle = styled.h3`
   top: 0;
   letter-spacing: 3px;
   padding: 10px 0;
-  box-shadow: 5px 0px 5px ${(props) => props.theme.black};
   position: sticky;
   text-align: center;
   font-size: ${(props) => props.theme.fz3};
-  background-color: ${(props) => props.theme.yellow}; ;
+  background-color: ${(props) => props.theme.darkYellow};
 `;
 
-const Nomessage = styled(MemberContent)`
+const NoMessage = styled(MemberContent)`
   width: 100%;
   text-align: center;
 `;
 
 export default function ChatRoomComponent({
   id,
-  chatdata,
+  chatData,
 }: {
   id: string;
-  chatdata: ChatMessage[];
+  chatData: ChatMessage[];
 }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [chats, setChats] = useState<ChatMessage[]>(chatdata);
+  const [chats, setChats] = useState<ChatMessage[]>(chatData);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatBox = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    let unsub: Function;
-    if (id) {
-      unsub = onSnapshot(
-        query(collection(db, `books/${id}/chat_room`)),
-        async (querySnapshot) => {
-          const ids: string[] = [];
-          const allChat = querySnapshot.docs.map((doc) => {
-            ids.push(doc.data().uid);
-            return doc.data();
-          });
-          const requests = ids.map(async (id) => {
-            const docData = await getMemberData(id);
-            return docData;
-          });
-          const allMemberInfo = (await Promise.all(requests)) as MemberInfo[];
-
-          const newAllChat = allChat.map((chat) => {
-            const memberData = allMemberInfo.find(
-              (member) => member.uid === chat.uid
-            );
-            return { ...chat, memberData } as ChatMessage;
-          });
-          setChats(newAllChat);
-        }
-      );
-    }
-    return () => {
-      if (unsub) {
-        unsub();
+    const unSubscriptChat = onSnapshot(
+      query(collection(db, `books/${id}/chat_room`)),
+      async (querySnapshot) => {
+        const ids: string[] = [];
+        const allChat = querySnapshot.docs.map((doc) => {
+          ids.push(doc.data().uid);
+          return doc.data();
+        });
+        const requests = ids.map(async (id) => {
+          const docData = await getMemberData(id);
+          return docData;
+        });
+        const allMemberInfo = (await Promise.all(requests)) as MemberInfo[];
+        const newAllChat = allChat.map((chat) => {
+          const memberData = allMemberInfo.find(
+            (member) => member.uid === chat.uid
+          );
+          return { ...chat, memberData } as ChatMessage;
+        });
+        setChats(newAllChat);
       }
+    );
+
+    return () => {
+      unSubscriptChat();
     };
   }, [id]);
 
@@ -168,9 +163,7 @@ export default function ChatRoomComponent({
       <ChatContent ref={chatBox}>
         {chats.length > 0 ? (
           chats.map((chat) => {
-            const chatDate = new Date(
-              chat.time ? chat.time?.seconds * 1000 : ""
-            );
+            const chatDate = new Date(chat.time?.seconds * 1000);
             const year = chatDate.getFullYear();
             const month = chatDate.getMonth() + 1;
             const date = chatDate.getDate();
@@ -187,16 +180,8 @@ export default function ChatRoomComponent({
                   <Member>
                     <Link href={`/member/id:${chat.memberData?.uid}`}>
                       <MemberImg
-                        src={
-                          chat.memberData && chat.memberData.img
-                            ? chat.memberData.img
-                            : male
-                        }
-                        alt={
-                          chat.memberData && chat.memberData.name
-                            ? chat.memberData.name
-                            : "user Img"
-                        }
+                        src={chat?.memberData?.img || male}
+                        alt="member Img"
                         width={25}
                         height={25}
                       />
@@ -210,7 +195,7 @@ export default function ChatRoomComponent({
             }
           })
         ) : (
-          <Nomessage>趕快跟大家分享你的想法吧！</Nomessage>
+          <NoMessage>趕快跟大家分享你的想法吧！</NoMessage>
         )}
       </ChatContent>
       <InputBox>
@@ -218,7 +203,7 @@ export default function ChatRoomComponent({
           ref={inputRef}
           placeholder="留下評論......"
           onKeyPress={(e) => {
-            if (!userInfo.isSignIn) {
+            if (!userInfo.isSignIn)
               Swal.fire({
                 icon: "info",
                 title: "請先登入喔！",
@@ -226,13 +211,7 @@ export default function ChatRoomComponent({
               }).then((result) => {
                 result.isConfirmed && router.push("/profile");
               });
-            } else if (
-              e.code === "Enter" &&
-              inputRef &&
-              inputRef.current &&
-              inputRef.current.value.trim() &&
-              userInfo
-            ) {
+            else if (e.code === "Enter" && inputRef?.current?.value.trim()) {
               sentMessage(id, userInfo, inputRef.current.value);
               inputRef.current.value = "";
             }

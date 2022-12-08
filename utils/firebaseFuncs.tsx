@@ -1,5 +1,6 @@
-import { initializeApp } from "firebase/app";
 import produce from "immer";
+import { initializeApp } from "firebase/app";
+import Swal from "sweetalert2";
 import {
   deleteDoc,
   doc,
@@ -8,8 +9,6 @@ import {
   orderBy,
   setDoc,
   Timestamp,
-} from "firebase/firestore";
-import {
   getFirestore,
   collection,
   getDocs,
@@ -27,7 +26,6 @@ import {
   signOut,
 } from "firebase/auth";
 import { userSignIn } from "../slices/userInfoSlice";
-import Swal from "sweetalert2";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -45,7 +43,6 @@ export const db = getFirestore(app);
 export const firestore = getFirestore(app);
 const auth = getAuth();
 export const reviewsRef = collection(db, "book_reviews");
-export const memersRef = collection(db, "members");
 export const booksRef = collection(db, "books");
 export const friendRequestRef = collection(db, "friends_requests");
 export const noticeRef = collection(db, "notices");
@@ -128,39 +125,6 @@ export interface NoticeData {
   posterInfo?: MemberInfo;
 }
 
-export const addBooksData = async (bookIsbn: string) => {
-  if (bookIsbn.length !== 13) {
-    return;
-  } else {
-    const bookRes = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${bookIsbn}`
-    );
-
-    const { items } = await bookRes.json();
-
-    try {
-      const bookInfo: BookInfo = {
-        isbn: bookIsbn,
-        title: items[0].volumeInfo.title || "",
-        subtitle: items[0].volumeInfo.subtitle || "",
-        authors: items[0].volumeInfo.authors || "",
-        categories: items[0].volumeInfo.categories || "",
-        thumbnail: items[0].volumeInfo.imageLinks.thumbnail || "",
-        smallThumbnail: items[0].volumeInfo.imageLinks.smallThumbnail || "",
-        textSnippet: items[0].searchInfo.textSnippet || "",
-        description: items[0].volumeInfo.description || "",
-        publisher: items[0].volumeInfo.publisher || "",
-        publishedDate: items[0].volumeInfo.publishedDate || "",
-        infoLink: items[0].volumeInfo.infoLink || "",
-        ratingMember: [],
-        ratingCount: 0,
-        reviewCount: 0,
-      };
-      await setDoc(doc(db, "books", bookIsbn), bookInfo);
-    } catch (e) {}
-  }
-};
-
 export const loadBooks = async (
   page: number,
   pageRef: DocumentData | undefined
@@ -186,9 +150,7 @@ export const loadBooks = async (
   }
 };
 
-export const getBookInfo = async (
-  bookISBN: string
-): Promise<BookInfo | undefined> => {
+const getBookInfo = async (bookISBN: string): Promise<BookInfo | undefined> => {
   const docSnap = await getDoc(doc(db, "books", bookISBN));
   return docSnap.data();
 };
@@ -302,43 +264,14 @@ export const getMemberData = async (
   return docData.data();
 };
 
-export const getBookReviews = async (isbn: string) => {
-  const reviewsArr: BookReview[] = [];
-  const userIds: string[] = [];
-  const reviews = await getDocs(
-    query(reviewsRef, where("booksIsbn", "==", isbn))
-  );
-  reviews.forEach((review) => {
-    reviewsArr.push(review.data());
-    userIds.push(review.data().memberId);
-  });
-
-  const requests = userIds.map(async (userId) => {
-    const docData = await getDoc(doc(db, "members", userId));
-    return docData.data();
-  });
-  const allMemberInfo = await Promise.all(requests);
-
-  const newReviewsArr = reviewsArr.map((review) => {
-    const userData = allMemberInfo.find(
-      (member) => member?.uid === review.memberId
-    );
-    return { ...review, memberData: userData };
-  });
-
-  return newReviewsArr;
-};
-
-export const getMemberReviews = async (uid: string, isbn: string) => {
+const getMemberReviews = async (uid: string, isbn: string) => {
   const reviewQuery = query(
     reviewsRef,
     where("booksIsbn", "==", isbn),
     where("memberId", "==", uid)
   );
   const reviews = await getDocs(reviewQuery);
-  let returnReview: DocumentData[] = [];
-  reviews.forEach((review) => returnReview.push(review.data()));
-  return returnReview[0];
+  return reviews.docs[0]?.data();
 };
 
 export const bookRating = async (uid: string, isbn: string, rating: number) => {
@@ -352,27 +285,22 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     return;
   }
   const docData = await getDoc(doc(db, "books", isbn));
-  const bookData = docData.data();
+  const bookData = docData.data() as BookInfo;
   const review = (await getMemberReviews(uid, isbn)) as BookReview;
-  if (
-    bookData &&
-    review &&
-    review.rating &&
-    bookData.ratingMember.includes(uid)
-  ) {
+  if (bookData && review?.rating && bookData.ratingMember!.includes(uid)) {
     const oldReviewDoc = await getDoc(
       doc(db, "book_reviews", review.reviewId!)
     );
     const oldReview = oldReviewDoc.data();
     const newReview = { ...review, rating };
     const ratingDiff = rating - oldReview?.rating;
-    bookData.ratingCount += ratingDiff;
-    await setDoc(doc(db, "books", bookData.isbn), bookData);
+    bookData.ratingCount! += ratingDiff;
+    await setDoc(doc(db, "books", bookData.isbn!), bookData);
     await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
-  } else if (bookData) {
-    bookData.ratingMember.push(uid);
-    bookData.ratingCount += rating;
-    await setDoc(doc(db, "books", bookData.isbn), bookData);
+  } else {
+    bookData.ratingMember!.push(uid);
+    bookData.ratingCount! += rating;
+    await setDoc(doc(db, "books", bookData.isbn!), bookData);
     const reviewData = {
       reviewId: `${+new Date()}`,
       booksIsbn: isbn,
@@ -389,14 +317,9 @@ export const bookRating = async (uid: string, isbn: string, rating: number) => {
     await setDoc(doc(db, "book_reviews", reviewData.reviewId), reviewData);
   }
 };
-export const removeBookRating = async (
-  uid: string,
-  isbn: string,
-  rating: number,
-  review: BookReview
-) => {
-  const docData = await getDoc(doc(db, "books", isbn));
 
+export const removeBookRating = async (uid: string, isbn: string) => {
+  const docData = await getDoc(doc(db, "books", isbn));
   const memberReviewData = (await getMemberReviews(uid, isbn)) as BookReview;
   const bookData = docData.data();
   if (
@@ -474,36 +397,6 @@ export const editReview = async (
   await setDoc(doc(db, "book_reviews", newReview.reviewId!), newReview);
 };
 
-export const showSubReview = async (review: BookReview) => {
-  const reviewId = review.reviewId;
-  const subreviewsArr: SubReview[] = [];
-  const userIds: string[] = [];
-  const subreviewDocs = await getDocs(
-    query(collection(db, `book_reviews/${reviewId}/subreviews`))
-  );
-  subreviewDocs.forEach((doc) => {
-    subreviewsArr.push(doc.data());
-    userIds.push(doc.data().commentUser);
-  });
-  const requests = userIds.map(async (userId) => {
-    const docData = await getDoc(doc(db, "members", userId));
-    return docData.data();
-  });
-  const allMemberInfo = (await Promise.all(requests)) as {
-    uid?: string;
-    name?: string;
-    img?: string;
-    url?: string;
-  }[];
-  const newSubreviews = subreviewsArr.map((subreview) => {
-    const userData = allMemberInfo.find(
-      (member) => member.uid === subreview.commentUser
-    );
-    return { ...subreview, memberData: userData };
-  });
-  return newSubreviews;
-};
-
 export const sentSubReview = async (
   review: BookReview,
   input: string,
@@ -518,9 +411,6 @@ export const sentSubReview = async (
     });
     return;
   }
-  const newSubReviewRef = doc(
-    collection(db, `book_reviews/${review.reviewId}/subreviews`)
-  );
 
   const subReviewData = {
     reviewId: `${+new Date()}`,
@@ -548,17 +438,16 @@ export const sentSubReview = async (
 
 export const likeSubReview = async (
   review: BookReview,
-  subreview: SubReview,
+  subReview: SubReview,
   uid: string
 ) => {
-  if (subreview.reviewId) {
+  if (subReview.reviewId) {
     const docData = await getDoc(
-      doc(db, `book_reviews/${review.reviewId}/subreviews`, subreview.reviewId)
+      doc(db, `book_reviews/${review.reviewId}/subreviews`, subReview.reviewId)
     );
-    const subreviewData = docData.data();
-
-    if (subreviewData && subreviewData.like.includes(uid)) {
-      const NewSubreviewData = produce(subreviewData, (draft) => {
+    const subReviewData = docData.data();
+    if (subReviewData && subReviewData.like.includes(uid)) {
+      const NewSubReviewData = produce(subReviewData, (draft) => {
         const newLikes = draft.like.filter(
           (dataUid: string) => dataUid !== uid
         );
@@ -568,12 +457,12 @@ export const likeSubReview = async (
         doc(
           db,
           `book_reviews/${review.reviewId}/subreviews`,
-          subreview.reviewId
+          subReview.reviewId
         ),
-        NewSubreviewData
+        NewSubReviewData
       );
-    } else if (subreviewData) {
-      const newSubreviewData: SubReview = produce(subreviewData, (draft) => {
+    } else if (subReviewData) {
+      const newSubReviewData: SubReview = produce(subReviewData, (draft) => {
         draft.like.push(uid);
         draft.likeCount = draft.like.length;
       });
@@ -581,9 +470,9 @@ export const likeSubReview = async (
         doc(
           db,
           `book_reviews/${review.reviewId}/subreviews`,
-          subreview.reviewId
+          subReview.reviewId
         ),
-        newSubreviewData
+        newSubReviewData
       );
     }
   }
@@ -641,9 +530,8 @@ export const sentFriendRequest = async (
     where("receiver", "==", receiverUid)
   );
   const querySnapshot = await getDocs(q);
-  let requestDataArr: FriendRequest[] = [];
-  querySnapshot.forEach((request) =>
-    requestDataArr.push(request.data() as FriendRequest)
+  const requestDataArr: FriendRequest[] = querySnapshot.docs.map(
+    (requestDoc) => requestDoc.data() as FriendRequest
   );
 
   if (requestDataArr[0] && requestDataArr[0].state === "pending") {
@@ -684,14 +572,14 @@ export const acceptFriendRequest = async (
   );
   const receiverMemberDocRef = await getDoc(doc(db, "members", receiverUid));
   const invitorMemberDocRef = await getDoc(doc(db, "members", invitorUid));
-  const reciverData = receiverMemberDocRef.data() as MemberInfo;
+  const receiverData = receiverMemberDocRef.data() as MemberInfo;
   const invitorData = invitorMemberDocRef.data() as MemberInfo;
-  const newReciverFriends = [...reciverData.friends!, invitorUid];
-  const newInvitorFriends = [...invitorData.friends!, receiverUid];
-  const newReceiverData = { ...reciverData, friends: newReciverFriends };
-  const newInvitorData = { ...invitorData, friends: newInvitorFriends };
+  const newReceiverFriends = [...receiverData.friends!, invitorUid];
+  const newInviterFriends = [...invitorData.friends!, receiverUid];
+  const newReceiverData = { ...receiverData, friends: newReceiverFriends };
+  const newInviterData = { ...invitorData, friends: newInviterFriends };
   const newRequests = { ...requestDocRef.data(), state: "accept" };
-  await setDoc(doc(db, "members", invitorUid), newInvitorData);
+  await setDoc(doc(db, "members", invitorUid), newInviterData);
   await setDoc(doc(db, "members", receiverUid), newReceiverData);
   await setDoc(
     doc(db, "friends_requests", invitorUid + receiverUid),
@@ -735,7 +623,7 @@ export const getBooks = async () => {
   return booksSnapshots.docs.map((doc) => doc.data());
 };
 
-export const addToshelf = async (isbn: string, uid: string) => {
+export const addBookToShelf = async (isbn: string, uid: string) => {
   const docData = await getDoc(doc(db, "members", uid));
   const memberData = docData.data();
   const newMemberData = produce(memberData, (draft: MemberInfo) => {
@@ -744,30 +632,29 @@ export const addToshelf = async (isbn: string, uid: string) => {
   await setDoc(doc(db, "members", uid), newMemberData);
 };
 
-export const getBookDatas = async (isbns: string[]) => {
-  const bookDatas = isbns.map(async (isbn) => {
+export const getBookData = async (isbns: string[]) => {
+  const bookData = isbns.map(async (isbn) => {
     const res = await getBookInfo(isbn);
     return res;
   });
-  const datas = await Promise.all(bookDatas);
-  return datas;
+  return (await Promise.all(bookData)) as BookInfo[];
 };
 
 export const removeBook = async (isbn: string, uid: string, shelf: string) => {
   const userData = await getMemberData(uid);
   if (userData && shelf === "books") {
     const newUserData = produce(userData, (data) => {
-      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+      data[shelf] = data[shelf]!.filter((bookIsbn) => bookIsbn !== isbn);
     });
     await setDoc(doc(db, "members", uid), newUserData);
   } else if (userData && shelf === "reading") {
     const newUserData = produce(userData, (data) => {
-      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+      data[shelf] = data[shelf]!.filter((bookIsbn) => bookIsbn !== isbn);
     });
     await setDoc(doc(db, "members", uid), newUserData);
   } else if (userData && shelf === "finish") {
     const newUserData = produce(userData, (data) => {
-      data[shelf] = data[shelf]!.filter((booksibn) => booksibn !== isbn);
+      data[shelf] = data[shelf]!.filter((bookIsbn) => bookIsbn !== isbn);
     });
     await setDoc(doc(db, "members", uid), newUserData);
   }
@@ -800,11 +687,11 @@ export const sentNotice = async (
   uid: string
 ) => {
   const url = `/book/id:${review.booksIsbn}`;
-  const reciver = review.memberId;
-  if (reciver === uid) return;
+  const receiver = review.memberId;
+  if (receiver === uid) return;
   const noticeData = {
     noticeid: `${+new Date()}`,
-    reciver: reciver,
+    reciver: receiver,
     content: input,
     postUrl: url,
     poster: uid,
@@ -834,24 +721,14 @@ export const editMemberInfo = async (
   dispatch(userSignIn(newUserInfo));
 };
 
-export const friendStateChecker = async (memberuid: string, myuid: string) => {
-  const result1 = await getDoc(doc(db, "friends_requests", memberuid + myuid));
-  const result2 = await getDoc(doc(db, "friends_requests", myuid + memberuid));
+export const friendStateChecker = async (memberUid: string, myUid: string) => {
+  const result1 = await getDoc(doc(db, "friends_requests", memberUid + myUid));
+  const result2 = await getDoc(doc(db, "friends_requests", myUid + memberUid));
   if (result1.data()) {
     return "replay" + (result1.data() as FriendRequest).state;
   } else if (result2.data()) {
     return "wait" + (result2.data() as FriendRequest).state;
   }
-};
-
-export const getRandomBooks = async () => {
-  const tagarr = ["ratingCount", "raviewCount", "isbn", "subtitle"];
-  const number = Math.floor(Math.random() * tagarr.length);
-  const booksQuery = query(booksRef, orderBy(tagarr[number]), limit(4));
-  const booksData = await getDocs(booksQuery);
-  const books = booksData.docs.map((book) => book.data());
-
-  return books;
 };
 
 export const getFirstBook = async (bookIsbn: string) => {
