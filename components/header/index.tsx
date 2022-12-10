@@ -14,24 +14,16 @@ import { RootState } from "../../store";
 import {
   getMemberData,
   friendRequestRef,
-  acceptFriendRequest,
-  rejectFriendRequest,
   MemberInfo,
   noticeRef,
   NoticeData,
-  removeNotice,
   signout,
   db,
 } from "../../utils/firebaseFuncs";
-import {
-  male,
-  acceptImg,
-  rejectImg,
-  newLinkImg,
-  menu,
-  bell,
-  friends,
-} from "../../utils/imgs";
+import { menu, bell } from "../../utils/imgs";
+import FriendRequestComponent from "./friendRequest";
+import CommentNoticeComponent from "./commentNotice";
+import FriendsListComponent from "./friendsList";
 
 const NoticeContent = styled.div`
   white-space: nowrap;
@@ -171,30 +163,6 @@ const FriendRequestBox = styled.div`
   margin: 20px 0;
 `;
 
-const ResponseImages = styled.div`
-  margin-left: auto;
-  display: flex;
-  width: 60px;
-`;
-const ResImg1 = styled(Image)`
-  background-color: ${(props) => props.theme.yellow};
-  cursor: pointer;
-  border-radius: 5px;
-  &:hover {
-    background-color: ${(props) => props.theme.darkYellow};
-  }
-`;
-const ResImg2 = styled(ResImg1)`
-  margin-left: 10px;
-  background-color: ${(props) => props.theme.red};
-  &:hover {
-    background-color: ${(props) => props.theme.red};
-  }
-`;
-const ResImg3 = styled(ResImg1)`
-  background-color: ${(props) => props.theme.yellow};
-`;
-
 const Notice = styled.div`
   padding: 0 10px;
   display: flex;
@@ -202,23 +170,6 @@ const Notice = styled.div`
   align-items: center;
   margin: 20px 0;
 `;
-const MemberName = styled.h3`
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-  font-size: ${(props) => props.theme.fz3};
-  @media screen and (max-width: 768px) {
-    font-size: ${(props) => props.theme.fz4};
-  }
-`;
-const MemberImg = styled(Image)`
-  margin-right: 20px;
-  border-radius: 50%;
-`;
-const NoticeMessage = styled.p`
-  font-size: ${(props) => props.theme.fz5};
-  letter-spacing: 2px;
-`;
-
 const ProfileUl = styled.ul`
   background-color: ${(props) => props.theme.white};
   position: absolute;
@@ -284,84 +235,6 @@ const ProfileImgImage = styled(Image)`
   display: inline-block;
   padding-top: 10px;
 `;
-
-function FriendRequestComponent({ data }: { data: MemberInfo }) {
-  const userInfo = useSelector((state: RootState) => state.userInfo);
-  return (
-    <>
-      {data.img && (
-        <Link href={`/member/id:${data.uid}`}>
-          <MemberImg
-            src={data?.img || male}
-            alt="number Img"
-            width={40}
-            height={40}
-          />
-        </Link>
-      )}
-      <NoticeContent>
-        <MemberName>{data.name}</MemberName>
-        <NoticeMessage>向您發出好友邀請</NoticeMessage>
-      </NoticeContent>
-      <ResponseImages>
-        <ResImg1
-          src={acceptImg}
-          alt="acceptImg"
-          width={25}
-          height={25}
-          onClick={() => {
-            if (userInfo.uid && data.uid)
-              acceptFriendRequest(userInfo.uid, data.uid);
-          }}
-        />
-        <ResImg2
-          src={rejectImg}
-          alt="rejectImg"
-          width={25}
-          height={25}
-          onClick={() => {
-            if (userInfo.uid && data.uid) {
-              rejectFriendRequest(userInfo.uid, data.uid);
-            }
-          }}
-        />
-      </ResponseImages>
-    </>
-  );
-}
-
-function CommentNoticeComponent({ data }: { data: NoticeData }) {
-  return (
-    <>
-      <Link href={`/member/id:${data.poster}`}>
-        <MemberImg
-          src={data.posterInfo?.img! || male}
-          alt="member Img"
-          width={40}
-          height={40}
-        ></MemberImg>
-      </Link>
-      <NoticeContent>
-        <MemberName>{data?.posterInfo?.name}</MemberName>
-        <NoticeMessage>回應了您的評論</NoticeMessage>
-      </NoticeContent>
-      <ResponseImages>
-        <Link href={data?.postUrl}>
-          <ResImg3 src={newLinkImg} alt="delete" width={25} height={25} />
-        </Link>
-        <ResImg2
-          src={rejectImg}
-          alt="delete"
-          width={25}
-          height={25}
-          onClick={() => {
-            removeNotice(data);
-          }}
-        />
-      </ResponseImages>
-    </>
-  );
-}
 
 function NoticeComponent() {
   const userInfo = useSelector((state: RootState) => state.userInfo);
@@ -510,135 +383,6 @@ function MemberComponent() {
   );
 }
 
-const FriendsImg = styled(Image)`
-  height: 100%;
-  display: inline-block;
-  padding-top: 10px;
-  border-radius: 50%;
-`;
-const FriendsName = styled.p`
-  font-size: ${(props) => props.theme.fz3};
-  margin-left: 10px;
-  @media screen and (max-width: 768px) {
-    font-size: ${(props) => props.theme.fz4};
-  }
-`;
-const NoFriends = styled.p`
-  font-size: ${(props) => props.theme.fz4};
-  width: 100%;
-  text-align: center;
-`;
-const FriendsUl = styled.ul`
-  overflow: hidden;
-  position: absolute;
-  right: 0;
-  top: 100%;
-  background-color: ${(props) => props.theme.white};
-  box-shadow: 0px 2px 10px #00000030;
-  border-radius: 0 0 10px 10px;
-  transition: height 0.2s;
-  color: ${(props) => props.theme.black};
-`;
-
-const FriendsLi = styled.li`
-  padding: 0px 10px;
-  align-items: center;
-  display: flex;
-  width: 210px;
-  font-size: ${(props) => props.theme.fz4};
-  border-bottom: 1px solid ${(props) => props.theme.grey};
-  color: ${(props) => props.theme.black};
-  height: 0;
-  opacity: 0;
-  cursor: pointer;
-  &:hover {
-    background-color: ${(props) => props.theme.yellow};
-  }
-`;
-const FriendsBox = styled.div`
-  position: relative;
-  height: 100%;
-  z-index: 5;
-  margin-right: 20px;
-  overflow: hidden;
-  &:hover {
-    overflow: visible;
-  }
-  &:hover ${FriendsLi} {
-    padding: 10px 10px;
-    height: 70px;
-    transition: 0.3s;
-    opacity: 1;
-  }
-`;
-const FriendsWrap = styled.div``;
-
-function FriendsComponent() {
-  const userInfo = useSelector((state: RootState) => state.userInfo);
-  const [friendList, setFriendList] = useState<MemberInfo[]>([]);
-  const router = useRouter();
-  useEffect(() => {
-    const unSubscriptionFriendList = onSnapshot(
-      doc(db, "members", userInfo.uid!),
-      async (doc) => {
-        const memberInfo = doc.data() as MemberInfo;
-        if (memberInfo?.friends && memberInfo.friends.length > 0) {
-          const request = memberInfo.friends.map(async (uids) => {
-            const res = await getMemberData(uids);
-            return res as MemberInfo;
-          });
-          const allMemberInfo = await Promise.all(request);
-          setFriendList(allMemberInfo);
-        }
-      }
-    );
-
-    if (!userInfo.isSignIn) setFriendList([]);
-    return () => {
-      unSubscriptionFriendList();
-    };
-  }, [userInfo.isSignIn, userInfo.uid]);
-
-  const gotoMemberPage = (uid: string) => {
-    uid
-      ? router.push(`/member/id:${uid}`)
-      : router.push(`/book/id:9781473537804`);
-  };
-  return (
-    <FriendsBox>
-      <FriendsWrap>
-        <FriendsImg src={friends} width={27} height={27} alt="MemberAvatar" />
-        <FriendsUl>
-          {friendList.length > 0 ? (
-            friendList.map((friend) => {
-              return (
-                <FriendsLi
-                  key={friend.uid}
-                  onClick={() => {
-                    gotoMemberPage(friend.uid!);
-                  }}
-                >
-                  <FriendsImg
-                    src={friend.img!}
-                    alt="memberImg"
-                    width={40}
-                    height={40}
-                  />
-                  <FriendsName>{friend.name}</FriendsName>
-                </FriendsLi>
-              );
-            })
-          ) : (
-            <FriendsLi>
-              <NoFriends>去討論區認識新朋友吧！</NoFriends>
-            </FriendsLi>
-          )}
-        </FriendsUl>
-      </FriendsWrap>
-    </FriendsBox>
-  );
-}
-
 export function HeaderComponent() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -671,7 +415,7 @@ export function HeaderComponent() {
       <MemberComponent />
       {userInfo.isSignIn && (
         <>
-          <FriendsComponent />
+          <FriendsListComponent />
           <NoticeComponent />
         </>
       )}

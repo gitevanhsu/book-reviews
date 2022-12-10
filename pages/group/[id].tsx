@@ -26,7 +26,7 @@ import {
 import { rtcFireSession, RTCFireSession } from "../../utils/service";
 
 import { RootState } from "../../store";
-import { BookComponent } from "../book/[id]";
+import BookComponent from "../../components/book";
 import ChatRoomComponent from "../../components/group_chat";
 import {
   BookInfo,
