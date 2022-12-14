@@ -20,7 +20,7 @@ import phone from "/public/img/hangup.png";
 import isFriendImg from "/public/img/friend.png";
 import addFriendImg from "/public/img/add-friend.png";
 import wait from "/public/img/wait.png";
-import book from "../public/img/book.jpg";
+import book from "/public/img/book.jpg";
 import hpBooks from "/public/img/hp-books.png";
 import friendsI from "/public/img/hp-friend.png";
 import rating from "/public/img/hp-reiew-rating.png";

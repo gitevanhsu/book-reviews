@@ -6,6 +6,13 @@ import styled from "styled-components";
 import { NoticeData, removeNotice } from "../../utils/firebaseFuncs";
 import { male, rejectImg, newLinkImg } from "../../utils/imgs";
 
+const Notice = styled.div`
+  padding: 0 10px;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  margin: 20px 0;
+`;
 const NoticeContent = styled.div`
   white-space: nowrap;
   display: flex;
@@ -24,9 +31,10 @@ const ResImg1 = styled(Image)`
     background-color: ${(props) => props.theme.darkYellow};
   }
 `;
-const ResImg2 = styled(ResImg1)`
+export const ResImg2 = styled(ResImg1)`
   margin-left: 10px;
   background-color: ${(props) => props.theme.red};
+  cursor: pointer;
   &:hover {
     background-color: ${(props) => props.theme.red};
   }
@@ -53,7 +61,7 @@ const NoticeMessage = styled.p`
 
 export default function CommentNoticeComponent({ data }: { data: NoticeData }) {
   return (
-    <>
+    <Notice>
       <Link href={`/member/id:${data.poster}`}>
         <MemberImg
           src={data.posterInfo?.img! || male}
@@ -80,6 +88,6 @@ export default function CommentNoticeComponent({ data }: { data: NoticeData }) {
           }}
         />
       </ResponseImages>
-    </>
+    </Notice>
   );
 }

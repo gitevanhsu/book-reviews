@@ -12,6 +12,13 @@ import {
 } from "../../utils/firebaseFuncs";
 import { male, acceptImg, rejectImg } from "../../utils/imgs";
 
+const FriendRequestBox = styled.div`
+  padding: 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+`;
 const NoticeContent = styled.div`
   white-space: nowrap;
   display: flex;
@@ -59,7 +66,7 @@ const NoticeMessage = styled.p`
 export default function FriendRequestComponent({ data }: { data: MemberInfo }) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   return (
-    <>
+    <FriendRequestBox>
       {data.img && (
         <Link href={`/member/id:${data.uid}`}>
           <MemberImg
@@ -97,6 +104,6 @@ export default function FriendRequestComponent({ data }: { data: MemberInfo }) {
           }}
         />
       </ResponseImages>
-    </>
+    </FriendRequestBox>
   );
 }

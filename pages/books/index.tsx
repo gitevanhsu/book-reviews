@@ -24,7 +24,7 @@ const BooksPage = styled.div`
   min-height: calc(100vh - 60px);
 `;
 
-const Books = styled.div`
+export const Books = styled.div`
   width: 100%;
   display: flex;
   flex-wrap: wrap;
@@ -39,7 +39,7 @@ const BookData = styled.div`
     width: 100%;
   }
 `;
-const BookTitle = styled.h2`
+export const BookTitle = styled.h2`
   padding: 0 40px;
   margin-bottom: 15px;
   font-size: ${(props) => props.theme.fz3};
@@ -48,13 +48,13 @@ const BookTitle = styled.h2`
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
-const BookAuthor = styled.h4`
+export const BookAuthor = styled.h4`
   padding: 0 40px;
   margin-bottom: 5px;
   font-weight: 600;
   font-size: ${(props) => props.theme.fz4};
 `;
-const BookTextSnippet = styled.p`
+export const BookTextSnippet = styled.p`
   display: inline-block;
   padding: 0 40px;
   font-size: ${(props) => props.theme.fz5};
@@ -99,28 +99,28 @@ const PageNumber = styled.p`
   font-size: ${(props) => props.theme.fz3};
   margin: 0 20px;
 `;
-const Book = styled.div`
+export const Book = styled.div`
   padding: 40px 0;
   height: 100%;
   text-align: center;
   position: relative;
   border-bottom: 1px solid ${(props) => props.theme.darkYellow};
 `;
-const BookLink = styled.div`
+export const BookLink = styled.div`
   cursor: pointer;
   display: inline-block;
   position: relative;
 `;
-const BookImg = styled(Image)`
+export const BookImg = styled(Image)`
   box-shadow: 5px 5px 10px ${(props) => props.theme.black};
 `;
-const BookDetail = styled.div`
+export const BookDetail = styled.div`
   margin: 40px auto 0;
   max-width: 280px;
   text-align: left;
 `;
 
-const NoImgTitle = styled.h2`
+export const NoImgTitle = styled.h2`
   position: absolute;
   color: #fff;
   font-size: 16px;
@@ -135,22 +135,16 @@ const NoImgTitle = styled.h2`
   pointer-events: none;
 `;
 
-function BookComponent({ data }: { data: BookInfo }) {
-  const router = useRouter();
-  const move = async (data: BookInfo) => {
-    if (data.isbn) {
-      const docSnap = await getDoc(doc(db, "books", data.isbn));
-      if (docSnap.exists()) {
-        router.push(`/book/id:${data.isbn}`);
-      } else {
-        await setDoc(doc(db, "books", data.isbn), data);
-        router.push(`/book/id:${data.isbn}`);
-      }
-    }
-  };
+export function BookComponent({
+  data,
+  onMoveToBookPage,
+}: {
+  data: BookInfo;
+  onMoveToBookPage: (data: BookInfo) => void;
+}) {
   return (
     <Book>
-      <BookLink onClick={() => move(data)}>
+      <BookLink onClick={() => onMoveToBookPage(data)}>
         <BookImg
           src={data.smallThumbnail ? data.smallThumbnail : bookCover}
           alt={`${data.title}`}
@@ -274,6 +268,7 @@ export default function BooksComponent({
   const pageRef = useRef<DocumentData>();
   const inputRef = useRef<HTMLInputElement>(null);
   const noResultRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const lastIsbn = firstBook[firstBook.length - 1]?.isbn;
@@ -358,6 +353,17 @@ export default function BooksComponent({
       });
       localStorage.setItem("keyWord", JSON.stringify(newKeywords));
       setHistories(newKeywords);
+    }
+  };
+  const onMoveToBookPage = async (data: BookInfo) => {
+    if (data.isbn) {
+      const docSnap = await getDoc(doc(db, "books", data.isbn));
+      if (docSnap.exists()) {
+        router.push(`/book/id:${data.isbn}`);
+      } else {
+        await setDoc(doc(db, "books", data.isbn), data);
+        router.push(`/book/id:${data.isbn}`);
+      }
     }
   };
 
@@ -465,7 +471,10 @@ export default function BooksComponent({
               searchBooks.map((data, index) => {
                 return (
                   <BookData key={index}>
-                    <BookComponent data={data} />
+                    <BookComponent
+                      data={data}
+                      onMoveToBookPage={onMoveToBookPage}
+                    />
                   </BookData>
                 );
               })}
@@ -484,7 +493,10 @@ export default function BooksComponent({
               if (index >= page * 16 && index < page * 16 + 16) {
                 return (
                   <BookData key={book.isbn}>
-                    <BookComponent data={book} />
+                    <BookComponent
+                      data={book}
+                      onMoveToBookPage={onMoveToBookPage}
+                    />
                   </BookData>
                 );
               }

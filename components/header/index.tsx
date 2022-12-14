@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useDispatch, useSelector } from "react-redux";
-import { doc, onSnapshot, query, where } from "firebase/firestore";
+import { onSnapshot, query, where } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import styled from "styled-components";
 import Swal from "sweetalert2";
@@ -18,7 +18,6 @@ import {
   noticeRef,
   NoticeData,
   signout,
-  db,
 } from "../../utils/firebaseFuncs";
 import { menu, bell } from "../../utils/imgs";
 import FriendRequestComponent from "./friendRequest";
@@ -155,21 +154,6 @@ const MesImg = styled(Image)`
   }
 `;
 
-const FriendRequestBox = styled.div`
-  padding: 0 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 20px 0;
-`;
-
-const Notice = styled.div`
-  padding: 0 10px;
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  margin: 20px 0;
-`;
 const ProfileUl = styled.ul`
   background-color: ${(props) => props.theme.white};
   position: absolute;
@@ -306,13 +290,9 @@ function NoticeComponent() {
             <NoticeBox isOpen={openMsg} notice={allNotice.length > 0 ? 1 : 0}>
               {allNotice.map((data) =>
                 "noticeid" in data ? (
-                  <Notice key={data.noticeid}>
-                    <CommentNoticeComponent data={data} />
-                  </Notice>
+                  <CommentNoticeComponent key={data.noticeid} data={data} />
                 ) : (
-                  <FriendRequestBox key={data.uid}>
-                    <FriendRequestComponent data={data} />
-                  </FriendRequestBox>
+                  <FriendRequestComponent key={data.uid} data={data} />
                 )
               )}
             </NoticeBox>
