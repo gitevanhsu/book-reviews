@@ -8,7 +8,7 @@ import { Provider } from "react-redux";
 
 import store from "../store";
 import { HeaderComponent } from "../components/header";
-const theme = {
+export const theme = {
   red: "#E84545",
   darkYellow: "#f4d68b",
   darkYellow2: "#d3b874",
