@@ -1,34 +1,76 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# **Book Reviews!**
 
-## Getting Started
+_On this website, users can leave reviews, share their favorite books, and communicate via text messages or video chats._
 
-First, run the development server:
+[Home Page](https://book-reviews-three.vercel.app/)  
+[Demo Video](https://drive.google.com/file/d/1y_QbXU6-uk47eKR1fJkK0aSJ8lsn_fGB/view?usp=share_link)
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+**Test Account**
+| Account | Password |
+| ------------- |:-------------:|
+| mark@gmail.com | mark123 |
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## **Features**
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+- Managed variables and data types with [TypeScript](https://www.typescriptlang.org/).
+- Used [Next.js](https://nextjs.org/) [Server Side Render](https://nextjs.org/docs/basic-features/data-fetching/get-server-side-props) to avoid flickering pages while data fetching.
+- Implemented group video chat feature using [WebRTC](https://webrtc.org/).
+- Built the online chatroom to let members exchange thoughts about a book.
+- Built a rating/review system with sub-reviews to let users exchange their ideas.
+- Built a friend system that allows users to follow their friends' collections or reading status.
+- Notified users when their reviews have been replied to with [Firestore (onSnapShot)](https://firebase.google.com/docs/firestore/query-data/listen).
+- Connected to [Google Books APIs](https://developers.google.com/books) for book searching.
+- Integrated [Google Books APIs](https://developers.google.com/books) and [Firestore](https://firebase.google.com/products/firestore) to save and create new book data.
+- Used [Immer](https://immerjs.github.io/immer/) to update objects and keep them immutable.
+- Enabled users to manage their book collections and reading status by [React-Beautiful-DnD](https://www.npmjs.com/package/react-beautiful-dnd).
+- Managed members' login status and information with [React-Redux](https://react-redux.js.org/).
+- Applied [Storybook](https://storybook.js.org/) to display UIs with less effort and no flakes.
+- Created a member system with [Firebase Authentication](https://firebase.google.com/products/auth) and [Firestore](https://firebase.google.com/products/firestore).
+- Applied `RWD` for almost all sizes of (>320px) devices.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## **Packages**
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+- react
+- next
+- @reduxjs/toolkit
+- styled-components
+- firebase
+- immer
+- react-beautiful-dnd
+- react-quill
+- react-loading-skeleton
+- sweetalert2
+- typescript
+- storybook
+- eslint
 
-## Learn More
+### **Function Map**
 
-To learn more about Next.js, take a look at the following resources:
+![function map](https://user-images.githubusercontent.com/92194495/207792163-fdf2e8c6-afd1-4b4e-bb57-67de746530a9.png)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### **Architecture**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+![Architecture](https://user-images.githubusercontent.com/92194495/207827235-50a7300e-405a-4b39-a09e-1913b7be935d.jpg)
 
-## Deploy on Vercel
+### **Page Snapshots**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Home Page**\
+![homepage](https://user-images.githubusercontent.com/92194495/207792182-e263490e-c4b4-436e-9123-21a62e3c3d22.png)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+**Book Information**\
+![book info](https://user-images.githubusercontent.com/92194495/207792207-91d8fd63-250a-4add-937a-1d7923235ca9.png)
+
+**Book Review Page**\
+![review](https://user-images.githubusercontent.com/92194495/207792347-02ca90ef-3f74-494d-bdcb-614012764052.png)
+
+**Chat Room**\
+![text chat](https://user-images.githubusercontent.com/92194495/207792360-3a5b5aa3-2e02-4bdc-b946-7b459855eef2.png)
+
+**Video Chat Room**\
+![video chat](https://user-images.githubusercontent.com/92194495/207792442-a99cdff9-87d4-4053-ab52-b91ce7ddf0bc.png)
+
+**Profile Page**\
+![profile](https://user-images.githubusercontent.com/92194495/207792454-475eb76f-7923-44a9-a04b-19603b52b3cb.png)
+
+**Other Member Page**\
+![other member](https://user-images.githubusercontent.com/92194495/207792462-d785b460-9292-4ed0-8813-c6d14dc0e4bf.png)

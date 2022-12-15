@@ -373,6 +373,7 @@ function MemberComponent() {
                         intro: "",
                       })
                     );
+                    router.push("/");
                   }
                 });
               }}
