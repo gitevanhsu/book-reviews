@@ -45,6 +45,7 @@ import {
   signOut,
   library,
 } from "../../utils/imgs";
+import { useRouter } from "next/router";
 
 const InputTitle = styled.p`
   font-size: ${(props) => props.theme.fz3};
@@ -468,6 +469,7 @@ function SignInComponent() {
                 key="signInEmail"
                 ref={emailRef}
                 type="email"
+                defaultValue="mark@gmail.com"
               ></InputContent>
             </InputBox>
             <InputBox>
@@ -476,6 +478,7 @@ function SignInComponent() {
                 key="signInPassword"
                 ref={passwordRef}
                 type="password"
+                defaultValue="mark123"
               ></InputContent>
             </InputBox>
           </SignArea>
@@ -1360,6 +1363,7 @@ export default function Profile() {
   const isRadioSelect = (value: string): boolean => avatar === value;
   const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
     setAvatar(e.currentTarget.value);
+  const router = useRouter();
 
   return (
     <ProfilePage>
@@ -1425,6 +1429,7 @@ export default function Profile() {
                             intro: "",
                           })
                         );
+                        router.push("/");
                       }
                     });
                   }}
