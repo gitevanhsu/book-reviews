@@ -18,6 +18,9 @@ import {
   noticeRef,
   NoticeData,
   signout,
+  removeNotice,
+  acceptFriendRequest,
+  rejectFriendRequest,
 } from "../../utils/firebaseFuncs";
 import { menu, bell } from "../../utils/imgs";
 import FriendRequestComponent from "./friendRequest";
@@ -263,7 +266,6 @@ function NoticeComponent() {
         setNotice(newNotices);
       }
     );
-
     return () => {
       unSubscriptFriendRequest();
       unSubscriptNotification();
@@ -273,6 +275,18 @@ function NoticeComponent() {
   useEffect(() => {
     setAllNotice([...notices, ...friendRequest]);
   }, [notices, friendRequest]);
+
+  const onRemoveNotice = (data: NoticeData) => {
+    removeNotice(data);
+  };
+
+  const onAcceptFriendRequest = (userInfo: MemberInfo, data: MemberInfo) => {
+    if (userInfo.uid && data.uid) acceptFriendRequest(userInfo.uid, data.uid);
+  };
+  const onRejectFriendRequest = (userInfo: MemberInfo, data: MemberInfo) => {
+    if (userInfo.uid && data.uid) rejectFriendRequest(userInfo.uid, data.uid);
+  };
+
   return (
     <>
       {userInfo.isSignIn && (
@@ -290,9 +304,18 @@ function NoticeComponent() {
             <NoticeBox isOpen={openMsg} notice={allNotice.length > 0 ? 1 : 0}>
               {allNotice.map((data) =>
                 "noticeid" in data ? (
-                  <CommentNoticeComponent key={data.noticeid} data={data} />
+                  <CommentNoticeComponent
+                    key={data.noticeid}
+                    onRemoveNotice={onRemoveNotice}
+                    data={data}
+                  />
                 ) : (
-                  <FriendRequestComponent key={data.uid} data={data} />
+                  <FriendRequestComponent
+                    key={data.uid}
+                    data={data}
+                    onAcceptFriendRequest={onAcceptFriendRequest}
+                    onRejectFriendRequest={onRejectFriendRequest}
+                  />
                 )
               )}
             </NoticeBox>

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import styled from "styled-components";
 
-import { NoticeData, removeNotice } from "../../utils/firebaseFuncs";
+import { NoticeData } from "../../utils/firebaseFuncs";
 import { male, rejectImg, newLinkImg } from "../../utils/imgs";
 
 const Notice = styled.div`
@@ -59,7 +59,13 @@ const NoticeMessage = styled.p`
   letter-spacing: 2px;
 `;
 
-export default function CommentNoticeComponent({ data }: { data: NoticeData }) {
+export default function CommentNoticeComponent({
+  data,
+  onRemoveNotice,
+}: {
+  data: NoticeData;
+  onRemoveNotice: (data: NoticeData) => void;
+}) {
   return (
     <Notice>
       <Link href={`/member/id:${data.poster}`}>
@@ -68,7 +74,7 @@ export default function CommentNoticeComponent({ data }: { data: NoticeData }) {
           alt="member Img"
           width={40}
           height={40}
-        ></MemberImg>
+        />
       </Link>
       <NoticeContent>
         <MemberName>{data?.posterInfo?.name}</MemberName>
@@ -83,9 +89,7 @@ export default function CommentNoticeComponent({ data }: { data: NoticeData }) {
           alt="delete"
           width={25}
           height={25}
-          onClick={() => {
-            removeNotice(data);
-          }}
+          onClick={() => onRemoveNotice(data)}
         />
       </ResponseImages>
     </Notice>

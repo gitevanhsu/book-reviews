@@ -44,7 +44,6 @@ export default {
   title: "Book",
   component: BookComponent,
   parameters: { actions: { argTypesRegex: "^on.*" } },
-  argTypes: { onClick: { action: "clicked" } },
 } as ComponentMeta<typeof BookComponent>;
 
 const Template: ComponentStory<typeof BookComponent> = (args) => {
@@ -58,5 +57,4 @@ export const Normal = Template.bind({});
 
 Normal.args = {
   data,
-  onMoveToBookPage: () => {},
 };

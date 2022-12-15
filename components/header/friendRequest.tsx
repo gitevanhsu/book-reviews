@@ -5,11 +5,7 @@ import { useSelector } from "react-redux";
 import styled from "styled-components";
 
 import { RootState } from "../../store";
-import {
-  acceptFriendRequest,
-  rejectFriendRequest,
-  MemberInfo,
-} from "../../utils/firebaseFuncs";
+import { MemberInfo } from "../../utils/firebaseFuncs";
 import { male, acceptImg, rejectImg } from "../../utils/imgs";
 
 const FriendRequestBox = styled.div`
@@ -63,7 +59,15 @@ const NoticeMessage = styled.p`
   letter-spacing: 2px;
 `;
 
-export default function FriendRequestComponent({ data }: { data: MemberInfo }) {
+export default function FriendRequestComponent({
+  data,
+  onAcceptFriendRequest,
+  onRejectFriendRequest,
+}: {
+  data: MemberInfo;
+  onAcceptFriendRequest: (userInfo: MemberInfo, data: MemberInfo) => void;
+  onRejectFriendRequest: (userInfo: MemberInfo, data: MemberInfo) => void;
+}) {
   const userInfo = useSelector((state: RootState) => state.userInfo);
   return (
     <FriendRequestBox>
@@ -87,21 +91,14 @@ export default function FriendRequestComponent({ data }: { data: MemberInfo }) {
           alt="acceptImg"
           width={25}
           height={25}
-          onClick={() => {
-            if (userInfo.uid && data.uid)
-              acceptFriendRequest(userInfo.uid, data.uid);
-          }}
+          onClick={() => onAcceptFriendRequest(userInfo, data)}
         />
         <ResImg2
           src={rejectImg}
           alt="rejectImg"
           width={25}
           height={25}
-          onClick={() => {
-            if (userInfo.uid && data.uid) {
-              rejectFriendRequest(userInfo.uid, data.uid);
-            }
-          }}
+          onClick={() => onRejectFriendRequest(userInfo, data)}
         />
       </ResponseImages>
     </FriendRequestBox>

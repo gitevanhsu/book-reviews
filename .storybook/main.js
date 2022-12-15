@@ -9,6 +9,7 @@ module.exports = {
     "@storybook/addon-interactions",
     "storybook-addon-next-router",
     "storybook-addon-styled-component-theme/dist/preset",
+    "storybook-addon-next",
   ],
   framework: "@storybook/react",
   core: {
