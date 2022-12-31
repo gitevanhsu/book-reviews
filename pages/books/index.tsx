@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -200,12 +200,14 @@ const HistoryBox = styled.div`
 
 const History = styled.div`
   display: flex;
+  align-items: center;
   padding: 5px 10px;
   font-size: ${(props) => props.theme.fz5};
   cursor: pointer;
   border-radius: 10px;
   background-color: ${(props) => props.theme.yellow};
   margin: 5px;
+  line-height: ${(props) => props.theme.fz4};
   &:hover {
     background-color: ${(props) => props.theme.darkYellow};
   }
@@ -226,6 +228,19 @@ const SearchTitle = styled.h1`
   color: ${(props) => props.theme.black};
   & + & {
     margin: 5px auto 25px;
+  }
+`;
+
+const RemoveSearch = styled.button`
+  font-size: ${(props) => props.theme.fz5};
+  color: ${(props) => props.theme.red};
+  background-color: ${(props) => props.theme.white};
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin-left: 10px;
+  &:hover {
+    color: ${(props) => props.theme.white};
+    background-color: ${(props) => props.theme.red};
   }
 `;
 
@@ -367,6 +382,13 @@ export default function BooksComponent({
     }
   };
 
+  const removeStory = (e: MouseEvent, history: string) => {
+    e.stopPropagation();
+    const newHistories = histories.filter((item) => item !== history);
+    setHistories(newHistories);
+    localStorage.setItem("keyWord", JSON.stringify(newHistories));
+  };
+
   return (
     <BooksPage>
       <SearchBox>
@@ -429,18 +451,32 @@ export default function BooksComponent({
                 setSearchValue(history);
               }}
             >
-              {history}
+              {history.length > 20 ? `${history.substring(0, 20)}...` : history}
+              <RemoveSearch
+                onClick={(e: MouseEvent) => {
+                  removeStory(e, history);
+                }}
+              >
+                X
+              </RemoveSearch>
             </History>
           ))}
       </HistoryBox>
 
       {showSearch ? (
         <SearchBooks>
-          <SearchTitle>查詢關鍵字: {searchValue}</SearchTitle>
+          <SearchTitle>查詢關鍵字:</SearchTitle>
+          <SearchTitle>
+            {searchValue.length > 20
+              ? `${searchValue.substring(0, 20)}...`
+              : searchValue}
+          </SearchTitle>
           {loading ? (
             <SearchTitle>搜尋中...</SearchTitle>
           ) : (
-            <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            searchBooks.length >= 1 && (
+              <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            )
           )}
           <Books>
             {loading &&

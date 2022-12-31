@@ -8,6 +8,7 @@ import { Provider } from "react-redux";
 
 import store from "../store";
 import { HeaderComponent } from "../components/header";
+import FooterComponent from "../components/footer";
 export const theme = {
   red: "#E84545",
   darkYellow: "#f4d68b",
@@ -39,6 +40,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Provider store={store}>
           <HeaderComponent />
           <Component {...pageProps} />
+          <FooterComponent />
         </Provider>
       </ThemeProvider>
     </>
