@@ -8,6 +8,7 @@ import parse from "html-react-parser";
 import Swal from "sweetalert2";
 
 import { BookReview, editReview } from "../../utils/firebaseFuncs";
+import { removeBr } from "./index";
 
 const MemberReviewBox = styled.div`
   padding-bottom: 20px;
@@ -18,6 +19,7 @@ const Title = styled.p`
   width: 60px;
 `;
 const TitleContent = styled.h3`
+  word-break: break-all;
   letter-spacing: 1px;
   display: flex;
   align-items: center;
@@ -28,6 +30,7 @@ interface ContentProps {
   showMore: boolean;
 }
 const Content = styled.div<ContentProps>`
+  word-break: break-all;
   letter-spacing: 2px;
   width: 100%;
   font-size: ${(props) => props.theme.fz4};
@@ -123,7 +126,9 @@ export default function MemberReviewComponent({
             titleValue!.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
             contentValue!.replace(/<(.|\n)*?>/g, "").trim().length > 0
           ) {
-            editReview(memberReview, titleValue!, contentValue!);
+            const newTitleValue = removeBr(titleValue!);
+            const newContentValue = removeBr(contentValue!);
+            editReview(memberReview, newTitleValue, newContentValue);
             Swal.fire({
               title: "感謝您的評論",
               icon: "success",

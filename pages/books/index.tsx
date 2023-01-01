@@ -150,6 +150,7 @@ export function BookComponent({
           alt={`${data.title}`}
           width={128}
           height={193}
+          loading="lazy"
         />
         {!data.smallThumbnail && <NoImgTitle>{data.title}</NoImgTitle>}
       </BookLink>

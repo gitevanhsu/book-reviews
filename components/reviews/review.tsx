@@ -81,6 +81,7 @@ const BookReviewMemberDate = styled.div`
   }
 `;
 const BookReviewTitle = styled.div`
+  word-break: break-all;
   font-size: ${(props) => props.theme.fz4};
   margin-top: 30px;
   @media screen and (max-width: 576px) {
@@ -91,6 +92,7 @@ interface BookReviewContentProps {
   showMore: boolean;
 }
 const BookReviewContent = styled.div<BookReviewContentProps>`
+  word-break: break-all;
   max-height: ${(props) => (props.showMore ? "auto" : "160px")};
   overflow: hidden;
   padding: 20px 0 0 60px;

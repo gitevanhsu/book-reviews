@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 
 import { RootState } from "../../store";
 import { addBookReview } from "../../utils/firebaseFuncs";
+import { removeBr } from "./index";
 
 const LeaveReviewBox = styled.div`
   display: flex;
@@ -91,11 +92,13 @@ export default function LeaveCommentComponent({
             contentValue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
             userInfo.uid
           ) {
+            const newTitle = removeBr(titleValue);
+            const newContent = removeBr(contentValue);
             addBookReview(
               userInfo.uid,
               bookIsbn,
-              titleValue.trim(),
-              contentValue.trim()
+              newTitle.trim(),
+              newContent.trim()
             );
           } else {
             Swal.fire({
