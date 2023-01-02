@@ -60,6 +60,9 @@ const EditReviewButton = styled.button`
   & + & {
     margin-left: 20px;
   }
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 const LeaveReviewTitle = styled.h3`
   min-width: 55px;

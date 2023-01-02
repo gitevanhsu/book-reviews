@@ -351,6 +351,7 @@ export default function BooksComponent({
     setSearchBooks(books);
     setLoading(false);
   };
+
   const saveKeyword = (value: string) => {
     const localData = localStorage.getItem("keyWord");
     if (localData) {
@@ -383,7 +384,7 @@ export default function BooksComponent({
     }
   };
 
-  const removeStory = (e: MouseEvent, history: string) => {
+  const removeHistory = (e: MouseEvent, history: string) => {
     e.stopPropagation();
     const newHistories = histories.filter((item) => item !== history);
     setHistories(newHistories);
@@ -455,7 +456,7 @@ export default function BooksComponent({
               {history.length > 20 ? `${history.substring(0, 20)}...` : history}
               <RemoveSearch
                 onClick={(e: MouseEvent) => {
-                  removeStory(e, history);
+                  removeHistory(e, history);
                 }}
               >
                 X

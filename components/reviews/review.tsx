@@ -118,6 +118,9 @@ const BookReviewRatingUpper = styled.div`
   height: 30px;
   width: 40px;
   background-color: ${(props) => props.theme.darkYellow};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 const BookReviewRatingLower = styled(BookReviewRatingUpper)`
   clip-path: polygon(0 0, 50% 60%, 100% 0);

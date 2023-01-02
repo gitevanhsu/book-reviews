@@ -159,6 +159,9 @@ const SeeMoreBtn = styled.button`
   border-radius: 10px;
   background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 
 export default function BookComponent({ data }: { data: BookInfo }) {
