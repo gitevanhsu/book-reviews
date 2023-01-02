@@ -35,12 +35,6 @@ import {
   kidUrl,
   male2Url,
   maleUrl,
-  male,
-  male2,
-  female,
-  female2,
-  books,
-  kid,
   pen,
   signOut,
   library,
@@ -112,7 +106,7 @@ const Overlay = styled.div`
   z-index: 5;
 `;
 const SubmitButton = styled.button`
-  width: 100px;
+  width: 130px;
   padding: 5px 10px;
   cursor: pointer;
   border-radius: 20px;
@@ -120,12 +114,19 @@ const SubmitButton = styled.button`
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
   font-size: ${(props) => props.theme.fz4};
-  &:hover {
+  & + & {
+    margin-left: 20px;
+  }
+  &:first-of-type {
     background-color: ${(props) => props.theme.darkYellow};
+  }
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
   }
 `;
 const SignInBtnBox = styled.div`
-  text-align: center;
+  display: flex;
+  justify-content: center;
 `;
 
 const QuoteArea = styled.div`
@@ -211,16 +212,26 @@ const SignUpInputTextArea = styled.textarea`
     height: 50px;
   }
 `;
-
+const ButtonWrap = styled.div`
+  display: flex;
+  justify-content: center;
+`;
 const SignUpSubmitButton = styled.button`
-  width: 100px;
+  width: 130px;
   padding: 5px 10px;
   margin: 10px 0;
   cursor: pointer;
   font-size: ${(props) => props.theme.fz4};
   color: ${(props) => props.theme.black};
-  background-color: ${(props) => props.theme.yellow};
+  background-color: ${(props) => props.theme.darkYellow};
   border-radius: 20px;
+  & + & {
+    margin-left: 10px;
+    background-color: ${(props) => props.theme.yellow};
+  }
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
   @media screen (max-width: 576px) {
     padding: 5px 10px;
   }
@@ -239,7 +250,7 @@ function SignUpComponent({
   const signUpEmailRef = useRef<HTMLInputElement>(null);
   const signPasswordRef = useRef<HTMLInputElement>(null);
   const signUpIntroRef = useRef<HTMLTextAreaElement>(null);
-  const [avatar, setAvatar] = useState("books");
+  const [avatar, setAvatar] = useState(booksUrl);
 
   const isRadioSelect = (value: string): boolean => avatar === value;
   const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -265,29 +276,20 @@ function SignUpComponent({
           title: "請輸入正確資訊",
           text: "密碼至少六個字喔",
         });
-      } else if (avatar === "books") {
-        const img = booksUrl;
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "male") {
-        const img = maleUrl;
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "male2") {
-        const img = male2Url;
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "female") {
-        const img = femaleUrl;
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "female2") {
-        const img = female2Url;
-        emailSignUp(name, email, password, intro, img);
-      } else if (avatar === "kid") {
-        const img = kidUrl;
-        emailSignUp(name, email, password, intro, img);
+      } else {
+        Swal.fire({
+          title: "處理中......",
+          didOpen: async () => {
+            Swal.showLoading(null);
+            await emailSignUp(name, email, password, intro, avatar);
+            Swal.close();
+          },
+        });
+        signUpNameRef.current.value = "";
+        signUpEmailRef.current.value = "";
+        signPasswordRef.current.value = "";
+        signUpIntroRef.current.value = "";
       }
-      signUpNameRef.current.value = "";
-      signUpEmailRef.current.value = "";
-      signPasswordRef.current.value = "";
-      signUpIntroRef.current.value = "";
     }
   };
 
@@ -330,12 +332,12 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="male"
-            checked={isRadioSelect("male")}
+            value={maleUrl}
+            checked={isRadioSelect(maleUrl)}
             onChange={avatarSelector}
           />
           <SignUpUserAvatar
-            src={male}
+            src={maleUrl}
             alt="maleAvatar"
             width={50}
             height={50}
@@ -345,12 +347,12 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="male2"
-            checked={isRadioSelect("male2")}
+            value={male2Url}
+            checked={isRadioSelect(male2Url)}
             onChange={avatarSelector}
           />
           <SignUpUserAvatar
-            src={male2}
+            src={male2Url}
             alt="maleAvatar2"
             width={50}
             height={50}
@@ -360,12 +362,12 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="female"
-            checked={isRadioSelect("female")}
+            value={femaleUrl}
+            checked={isRadioSelect(femaleUrl)}
             onChange={avatarSelector}
           />
           <SignUpUserAvatar
-            src={female}
+            src={femaleUrl}
             alt="femaleAvatar"
             width={50}
             height={50}
@@ -375,12 +377,12 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="female2"
-            checked={isRadioSelect("female2")}
+            value={female2Url}
+            checked={isRadioSelect(female2Url)}
             onChange={avatarSelector}
           />
           <SignUpUserAvatar
-            src={female2}
+            src={female2Url}
             alt="femaleAvatar2"
             width={50}
             height={50}
@@ -390,12 +392,12 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="kid"
-            checked={isRadioSelect("kid")}
+            value={kidUrl}
+            checked={isRadioSelect(kidUrl)}
             onChange={avatarSelector}
           />
           <SignUpUserAvatar
-            src={kid}
+            src={kidUrl}
             alt="femaleAvatar2"
             width={50}
             height={50}
@@ -405,28 +407,34 @@ function SignUpComponent({
           <SignUpInputContent
             type="radio"
             name="avatar"
-            value="books"
-            checked={isRadioSelect("books")}
+            value={booksUrl}
+            checked={isRadioSelect(booksUrl)}
             onChange={avatarSelector}
           />
-          <SignUpUserAvatar src={books} alt="upload" width={50} height={50} />
+          <SignUpUserAvatar
+            src={booksUrl}
+            alt="upload"
+            width={50}
+            height={50}
+          />
         </SignUpLabel>
       </SignUpIntroBox>
-      <SignUpSubmitButton
-        onClick={() => {
-          signUp();
-        }}
-      >
-        註冊
-      </SignUpSubmitButton>
-      <br />
-      <SignUpSubmitButton
-        onClick={() => {
-          setSignUp(false);
-        }}
-      >
-        返回登入
-      </SignUpSubmitButton>
+      <ButtonWrap>
+        <SignUpSubmitButton
+          onClick={() => {
+            signUp();
+          }}
+        >
+          註冊
+        </SignUpSubmitButton>
+        <SignUpSubmitButton
+          onClick={() => {
+            setSignUp(false);
+          }}
+        >
+          返回登入
+        </SignUpSubmitButton>
+      </ButtonWrap>
     </SignUpArea>
   );
 }
@@ -484,8 +492,11 @@ function SignInComponent() {
           </SignArea>
           <SignInBtnBox>
             <SubmitButton onClick={signIn}>登入</SubmitButton>
-            <br />
-            <SubmitButton onClick={() => setSignUp(true)}>
+            <SubmitButton
+              onClick={() => {
+                setSignUp(true);
+              }}
+            >
               馬上註冊
             </SubmitButton>
           </SignInBtnBox>
@@ -832,6 +843,9 @@ const ProfileButton = styled.button`
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.yellow};
   font-size: ${(props) => props.theme.fz5};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
   @media screen and (max-width: 768px) {
     & + & {
       margin-left: 20px;
@@ -1359,11 +1373,15 @@ export default function Profile() {
   const [edit, setEdit] = useState(false);
   const editNameRef = useRef<HTMLInputElement>(null);
   const editIntroRef = useRef<HTMLTextAreaElement>(null);
-  const [avatar, setAvatar] = useState("books");
+  const [avatar, setAvatar] = useState(userInfo.img!);
   const isRadioSelect = (value: string): boolean => avatar === value;
+  const router = useRouter();
   const avatarSelector = (e: React.ChangeEvent<HTMLInputElement>): void =>
     setAvatar(e.currentTarget.value);
-  const router = useRouter();
+
+  useEffect(() => {
+    setAvatar(userInfo.img!);
+  }, [userInfo]);
 
   return (
     <ProfilePage>
@@ -1446,62 +1464,92 @@ export default function Profile() {
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="male"
-                        checked={isRadioSelect("male")}
+                        value={maleUrl}
+                        checked={isRadioSelect(maleUrl)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={male} alt="maleAvatar" />
+                      <UserAvatar
+                        src={maleUrl}
+                        alt="maleAvatar"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                     <Label>
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="male2"
-                        checked={isRadioSelect("male2")}
+                        value={male2Url}
+                        checked={isRadioSelect(male2Url)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={male2} alt="maleAvatar2" />
+                      <UserAvatar
+                        src={male2Url}
+                        alt="maleAvatar2"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                     <Label>
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="female"
-                        checked={isRadioSelect("female")}
+                        value={femaleUrl}
+                        checked={isRadioSelect(femaleUrl)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={female} alt="femaleAvatar" />
+                      <UserAvatar
+                        src={femaleUrl}
+                        alt="femaleAvatar"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                     <br />
                     <Label>
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="female2"
-                        checked={isRadioSelect("female2")}
+                        value={female2Url}
+                        checked={isRadioSelect(female2Url)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={female2} alt="femaleAvatar2" />
+                      <UserAvatar
+                        src={female2Url}
+                        alt="femaleAvatar2"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                     <Label>
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="kid"
-                        checked={isRadioSelect("kid")}
+                        value={kidUrl}
+                        checked={isRadioSelect(kidUrl)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={kid} alt="femaleAvatar2" />
+                      <UserAvatar
+                        src={kidUrl}
+                        alt="femaleAvatar2"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                     <Label>
                       <InputContent
                         type="radio"
                         name="avatar"
-                        value="books"
-                        checked={isRadioSelect("books")}
+                        value={booksUrl}
+                        checked={isRadioSelect(booksUrl)}
                         onChange={avatarSelector}
                       />
-                      <UserAvatar src={books} alt="upload" />
+                      <UserAvatar
+                        src={booksUrl}
+                        alt="upload"
+                        width={50}
+                        height={50}
+                      />
                     </Label>
                   </InputBox>
                   <EditBoxDetail>
@@ -1531,67 +1579,14 @@ export default function Profile() {
                           editNameRef.current?.value.trim() &&
                           editIntroRef.current
                         ) {
-                          if (avatar === "books") {
-                            const img = booksUrl;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "male") {
-                            const img = maleUrl;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "male2") {
-                            const img = male2Url;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "female") {
-                            const img = femaleUrl;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "female2") {
-                            const img = female2Url;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          } else if (avatar === "kid") {
-                            const img = kidUrl;
-                            editMemberInfo(
-                              userInfo,
-                              editNameRef.current.value,
-                              editIntroRef.current.value,
-                              img,
-                              dispatch
-                            );
-                            setEdit(false);
-                          }
+                          editMemberInfo(
+                            userInfo,
+                            editNameRef.current.value,
+                            editIntroRef.current.value,
+                            avatar,
+                            dispatch
+                          );
+                          setEdit(false);
                         } else {
                           Swal.fire({
                             icon: "warning",

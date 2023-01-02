@@ -252,9 +252,7 @@ export const emailSignIn = async (email: string, password: string) => {
 };
 
 export const signout = () => {
-  signOut(auth)
-    .then(() => {})
-    .catch((error) => {});
+  signOut(auth);
 };
 
 export const getMemberData = async (
