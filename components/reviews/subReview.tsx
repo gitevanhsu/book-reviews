@@ -30,6 +30,7 @@ import {
   MemberInfo,
   sentNotice,
 } from "../../utils/firebaseFuncs";
+import { removeBr } from "./index";
 
 const ShowReviewBtn = styled.button`
   margin-top: 15px;
@@ -70,6 +71,7 @@ const SubReviewLikes = styled.div`
   align-items: center;
 `;
 const SubReviewContent = styled.div`
+  word-break: break-all;
   font-size: ${(props) => props.theme.fz4};
   margin-left: 34px;
 `;
@@ -111,6 +113,9 @@ const SubmitReviewBtn = styled.button`
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.darkYellow};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 const ToLogin = styled(Link)`
   margin-left: 50px;
@@ -242,8 +247,9 @@ export default function SubReviewComponent({ review }: { review: BookReview }) {
                 reviewValue.replace(/<(.|\n)*?>/g, "").trim().length > 0 &&
                 userInfo.uid
               ) {
-                sentSubReview(review, reviewValue, userInfo.uid);
-                sentNotice(review, reviewValue, userInfo.uid);
+                const newReviewValue = removeBr(reviewValue);
+                sentSubReview(review, newReviewValue, userInfo.uid);
+                sentNotice(review, newReviewValue, userInfo.uid);
                 setReviewValue("");
                 Swal.fire({
                   title: "感謝您的回應",

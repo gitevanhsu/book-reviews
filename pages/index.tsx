@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -100,11 +100,11 @@ const Books = styled.div`
   }
 `;
 interface PageProps {
-  page: number;
+  page: { num: number; ani: boolean };
 }
 
 const BookWarp = styled.div<PageProps>`
-  transform: ${(props) => `translateX(${props.page * -100}%)`};
+  transform: ${(props) => `translateX(${props.page.num * -100}%)`};
   display: inline-block;
   position: relative;
   width: 20%;
@@ -112,7 +112,8 @@ const BookWarp = styled.div<PageProps>`
   vertical-align: middle;
   text-align: center;
   padding: 20px 0;
-  transition: 0.2s;
+  transition: ${(props) => (props.page.ani ? "transform 0.2s" : null)};
+
   @media screen and (max-width: 1280px) {
     width: 25%;
   }
@@ -132,19 +133,16 @@ const Book = styled.div`
 `;
 const BookImg = styled(Image)`
   box-shadow: 5px 5px 5px ${(props) => props.theme.black};
+  border-radius: 10px;
 `;
 
-interface ColorProps {
-  arrColor: boolean;
-}
-const ButtonRight = styled.div<ColorProps>`
+const ButtonRight = styled.div`
   clip-path: polygon(33% 0, 100% 50%, 33% 100%);
   width: 70px;
   height: 70px;
   display: inline-block;
   cursor: pointer;
-  background-color: ${(props) =>
-    props.arrColor ? props.theme.grey : props.theme.darkYellow};
+  background-color: ${(props) => props.theme.darkYellow};
   opacity: 0.7;
   &:hover {
     opacity: 1;
@@ -153,9 +151,7 @@ const ButtonRight = styled.div<ColorProps>`
     width: 50px;
   }
 `;
-const ButtonLeft = styled(ButtonRight)<ColorProps>`
-  background-color: ${(props) =>
-    props.arrColor ? props.theme.grey : props.theme.darkYellow};
+const ButtonLeft = styled(ButtonRight)`
   clip-path: polygon(67% 0, 0 50%, 67% 100%);
 `;
 const BookTitle = styled.h2`
@@ -283,8 +279,63 @@ function FeatureComponent() {
 interface HomeProps {
   books: BookInfo[];
 }
+
 export default function Home({ books }: HomeProps) {
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<{ num: number; ani: boolean }>({
+    num: 1,
+    ani: false,
+  });
+  const [displayBooks, setDisplayBooks] = useState<BookInfo[]>([
+    books.at(-3)!,
+    ...books.slice(0, 8),
+  ]);
+  const prevNum = useRef<number>(26);
+  const nextNum = useRef<number>(9);
+  const timer = useRef<NodeJS.Timeout>();
+
+  const pageHandler = (direction: boolean) => {
+    if (timer.current) return;
+    const newDisplay = [...displayBooks];
+    direction
+      ? setPage((p) => ({ ...p, num: p.num + 1, ani: true }))
+      : setPage((p) => ({ ...p, num: p.num - 1, ani: true }));
+    timer.current = setTimeout(() => {
+      if (direction) {
+        newDisplay.shift();
+        newDisplay.push(books[nextNum.current]);
+        if (nextNum.current === 29) {
+          nextNum.current = 0;
+        } else {
+          nextNum.current++;
+        }
+        if (prevNum.current === 29) {
+          prevNum.current = 0;
+        } else {
+          prevNum.current++;
+        }
+        setDisplayBooks(newDisplay);
+        setPage((p) => ({ num: p.num - 1, ani: false }));
+      } else {
+        newDisplay.pop();
+        newDisplay.unshift(books[prevNum.current]);
+        if (nextNum.current === 0) {
+          nextNum.current = 29;
+        } else {
+          nextNum.current--;
+        }
+        if (prevNum.current === 0) {
+          prevNum.current = 29;
+        } else {
+          prevNum.current--;
+        }
+        setDisplayBooks(newDisplay);
+        setPage((p) => ({ num: p.num + 1, ani: false }));
+      }
+      timer.current = undefined;
+      clearTimeout(timer.current);
+    }, 250);
+  };
+
   return (
     <>
       <HomeWelcome>
@@ -303,13 +354,12 @@ export default function Home({ books }: HomeProps) {
         <PageTitle>好書推薦</PageTitle>
         <BooksWrap>
           <ButtonLeft
-            arrColor={0 === page}
             onClick={() => {
-              setPage((prev) => (prev === 0 ? 0 : prev - 1));
+              pageHandler(false);
             }}
           />
           <Books>
-            {books.map((book) => {
+            {displayBooks.map((book) => {
               return (
                 <BookWarp key={book.isbn} page={page}>
                   <Book>
@@ -336,11 +386,8 @@ export default function Home({ books }: HomeProps) {
             })}
           </Books>
           <ButtonRight
-            arrColor={books?.length - 5 === page}
             onClick={() => {
-              setPage((prev) =>
-                prev === books!.length - 5 ? books!.length - 5 : prev + 1
-              );
+              pageHandler(true);
             }}
           />
         </BooksWrap>

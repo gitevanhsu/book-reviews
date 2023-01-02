@@ -81,6 +81,7 @@ const BookReviewMemberDate = styled.div`
   }
 `;
 const BookReviewTitle = styled.div`
+  word-break: break-all;
   font-size: ${(props) => props.theme.fz4};
   margin-top: 30px;
   @media screen and (max-width: 576px) {
@@ -91,6 +92,7 @@ interface BookReviewContentProps {
   showMore: boolean;
 }
 const BookReviewContent = styled.div<BookReviewContentProps>`
+  word-break: break-all;
   max-height: ${(props) => (props.showMore ? "auto" : "160px")};
   overflow: hidden;
   padding: 20px 0 0 60px;
@@ -116,6 +118,9 @@ const BookReviewRatingUpper = styled.div`
   height: 30px;
   width: 40px;
   background-color: ${(props) => props.theme.darkYellow};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 const BookReviewRatingLower = styled(BookReviewRatingUpper)`
   clip-path: polygon(0 0, 50% 60%, 100% 0);
@@ -133,6 +138,9 @@ const SeeMoreBtn = styled.button`
   background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
   margin-top: 20px;
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 
 const ButtonsWrap = styled.div`

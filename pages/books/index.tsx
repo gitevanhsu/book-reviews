@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -70,7 +70,10 @@ const ButtonBox = styled.div`
   margin: 20px auto;
   justify-content: center;
 `;
-const NextPage = styled.div`
+interface NextProps {
+  isMax?: boolean;
+}
+const NextPage = styled.div<NextProps>`
   width: 30px;
   height: 24px;
   border-radius: 30px;
@@ -78,17 +81,18 @@ const NextPage = styled.div`
   font-size: ${(props) => props.theme.fz4};
   text-align: center;
   border: 1px solid ${(props) => props.theme.grey};
-  color: ${(props) => props.theme.black};
-  cursor: pointer;
+  color: ${(props) => (props.isMax ? props.theme.black : props.theme.grey)};
+  cursor: ${(props) => (props.isMax ? "pointer" : "not-allowed")};
   &:hover {
-    background-color: ${(props) => props.theme.darkYellow};
+    background-color: ${(props) =>
+      props.isMax ? props.theme.darkYellow : "transparent"};
   }
 `;
 interface PrevProps {
   hasPrev: boolean;
 }
 const PrevPage = styled(NextPage)<PrevProps>`
-  color: ${(props) => (props.hasPrev ? props.theme.grey : "")};
+  color: ${(props) => (props.hasPrev ? props.theme.grey : props.theme.black)};
   cursor: ${(props) => (props.hasPrev ? "not-allowed" : "pointer")};
   &:hover {
     background-color: ${(props) =>
@@ -150,6 +154,7 @@ export function BookComponent({
           alt={`${data.title}`}
           width={128}
           height={193}
+          loading="lazy"
         />
         {!data.smallThumbnail && <NoImgTitle>{data.title}</NoImgTitle>}
       </BookLink>
@@ -200,12 +205,14 @@ const HistoryBox = styled.div`
 
 const History = styled.div`
   display: flex;
+  align-items: center;
   padding: 5px 10px;
   font-size: ${(props) => props.theme.fz5};
   cursor: pointer;
   border-radius: 10px;
   background-color: ${(props) => props.theme.yellow};
   margin: 5px;
+  line-height: ${(props) => props.theme.fz4};
   &:hover {
     background-color: ${(props) => props.theme.darkYellow};
   }
@@ -226,6 +233,19 @@ const SearchTitle = styled.h1`
   color: ${(props) => props.theme.black};
   & + & {
     margin: 5px auto 25px;
+  }
+`;
+
+const RemoveSearch = styled.button`
+  font-size: ${(props) => props.theme.fz5};
+  color: ${(props) => props.theme.red};
+  background-color: ${(props) => props.theme.white};
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin-left: 10px;
+  &:hover {
+    color: ${(props) => props.theme.white};
+    background-color: ${(props) => props.theme.red};
   }
 `;
 
@@ -264,6 +284,8 @@ export default function BooksComponent({
   const [histories, setHistories] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState<string>("");
   const [page, setPage] = useState<number>(0);
+  const [hasBooks, setHasBooks] = useState(true);
+  const [maxPageNum, setMaxPageNum] = useState(9999);
 
   const pageRef = useRef<DocumentData>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -280,13 +302,18 @@ export default function BooksComponent({
   }, [firstBook]);
 
   useEffect(() => {
-    if (page + 1 > bookData.length / 16) {
+    if (page + 1 > bookData.length / 16 && hasBooks) {
       loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
-        setBookData([...bookData, ...booksData]);
-        pageRef.current = lastVisible;
+        if (lastVisible) {
+          setBookData([...bookData, ...booksData]);
+          pageRef.current = lastVisible;
+        } else {
+          setHasBooks(false);
+          setMaxPageNum(page - 1);
+        }
       });
     }
-  }, [bookData, page]);
+  }, [bookData, page, hasBooks]);
 
   useEffect(() => {
     const localData = localStorage.getItem("keyWord");
@@ -335,6 +362,7 @@ export default function BooksComponent({
     setSearchBooks(books);
     setLoading(false);
   };
+
   const saveKeyword = (value: string) => {
     const localData = localStorage.getItem("keyWord");
     if (localData) {
@@ -365,6 +393,13 @@ export default function BooksComponent({
         router.push(`/book/id:${data.isbn}`);
       }
     }
+  };
+
+  const removeHistory = (e: MouseEvent, history: string) => {
+    e.stopPropagation();
+    const newHistories = histories.filter((item) => item !== history);
+    setHistories(newHistories);
+    localStorage.setItem("keyWord", JSON.stringify(newHistories));
   };
 
   return (
@@ -429,18 +464,32 @@ export default function BooksComponent({
                 setSearchValue(history);
               }}
             >
-              {history}
+              {history.length > 20 ? `${history.substring(0, 20)}...` : history}
+              <RemoveSearch
+                onClick={(e: MouseEvent) => {
+                  removeHistory(e, history);
+                }}
+              >
+                X
+              </RemoveSearch>
             </History>
           ))}
       </HistoryBox>
 
       {showSearch ? (
         <SearchBooks>
-          <SearchTitle>查詢關鍵字: {searchValue}</SearchTitle>
+          <SearchTitle>查詢關鍵字:</SearchTitle>
+          <SearchTitle>
+            {searchValue.length > 20
+              ? `${searchValue.substring(0, 20)}...`
+              : searchValue}
+          </SearchTitle>
           {loading ? (
             <SearchTitle>搜尋中...</SearchTitle>
           ) : (
-            <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            searchBooks.length >= 1 && (
+              <SearchTitle>查詢結果共 {searchBooks.length} 筆資料</SearchTitle>
+            )
           )}
           <Books>
             {loading &&
@@ -513,8 +562,9 @@ export default function BooksComponent({
             </PrevPage>
             <PageNumber>{page + 1}</PageNumber>
             <NextPage
+              isMax={maxPageNum >= page}
               onClick={() => {
-                setPage((prev) => prev + 1);
+                maxPageNum >= page && setPage((prev) => prev + 1);
               }}
             >
               ▶︎

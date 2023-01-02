@@ -129,7 +129,11 @@ export default function FriendsListComponent() {
               );
             })
           ) : (
-            <FriendsLi>
+            <FriendsLi
+              onClick={() => {
+                gotoMemberPage("");
+              }}
+            >
               <NoFriends>去討論區認識新朋友吧！</NoFriends>
             </FriendsLi>
           )}

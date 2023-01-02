@@ -34,6 +34,14 @@ const EmptyReview = styled.h2`
   font-size: ${(props) => props.theme.fz4};
 `;
 
+export const removeBr: (str: string) => string = (str) => {
+  if (str.includes("<p><br></p>")) {
+    return str.replaceAll("<p><br></p>", "");
+  } else {
+    return str;
+  }
+};
+
 export function ReviewsComponent({
   bookIsbn,
   firstReview,
