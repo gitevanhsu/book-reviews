@@ -138,6 +138,9 @@ const SeeMoreBtn = styled.button`
   background-color: ${(props) => props.theme.yellow};
   cursor: pointer;
   margin-top: 20px;
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 
 const ButtonsWrap = styled.div`

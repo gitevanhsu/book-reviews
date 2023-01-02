@@ -69,6 +69,9 @@ const SignButton = styled(Link)`
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.darkYellow};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 const MemberReviewTitle = styled.h3`
   min-width: 100px;

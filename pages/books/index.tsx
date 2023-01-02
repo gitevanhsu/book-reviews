@@ -70,7 +70,10 @@ const ButtonBox = styled.div`
   margin: 20px auto;
   justify-content: center;
 `;
-const NextPage = styled.div`
+interface NextProps {
+  isMax?: boolean;
+}
+const NextPage = styled.div<NextProps>`
   width: 30px;
   height: 24px;
   border-radius: 30px;
@@ -78,17 +81,18 @@ const NextPage = styled.div`
   font-size: ${(props) => props.theme.fz4};
   text-align: center;
   border: 1px solid ${(props) => props.theme.grey};
-  color: ${(props) => props.theme.black};
-  cursor: pointer;
+  color: ${(props) => (props.isMax ? props.theme.black : props.theme.grey)};
+  cursor: ${(props) => (props.isMax ? "pointer" : "not-allowed")};
   &:hover {
-    background-color: ${(props) => props.theme.darkYellow};
+    background-color: ${(props) =>
+      props.isMax ? props.theme.darkYellow : "transparent"};
   }
 `;
 interface PrevProps {
   hasPrev: boolean;
 }
 const PrevPage = styled(NextPage)<PrevProps>`
-  color: ${(props) => (props.hasPrev ? props.theme.grey : "")};
+  color: ${(props) => (props.hasPrev ? props.theme.grey : props.theme.black)};
   cursor: ${(props) => (props.hasPrev ? "not-allowed" : "pointer")};
   &:hover {
     background-color: ${(props) =>
@@ -280,6 +284,8 @@ export default function BooksComponent({
   const [histories, setHistories] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState<string>("");
   const [page, setPage] = useState<number>(0);
+  const [hasBooks, setHasBooks] = useState(true);
+  const [maxPageNum, setMaxPageNum] = useState(9999);
 
   const pageRef = useRef<DocumentData>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -296,13 +302,18 @@ export default function BooksComponent({
   }, [firstBook]);
 
   useEffect(() => {
-    if (page + 1 > bookData.length / 16) {
+    if (page + 1 > bookData.length / 16 && hasBooks) {
       loadBooks(page, pageRef.current).then(({ booksData, lastVisible }) => {
-        setBookData([...bookData, ...booksData]);
-        pageRef.current = lastVisible;
+        if (lastVisible) {
+          setBookData([...bookData, ...booksData]);
+          pageRef.current = lastVisible;
+        } else {
+          setHasBooks(false);
+          setMaxPageNum(page - 1);
+        }
       });
     }
-  }, [bookData, page]);
+  }, [bookData, page, hasBooks]);
 
   useEffect(() => {
     const localData = localStorage.getItem("keyWord");
@@ -551,8 +562,9 @@ export default function BooksComponent({
             </PrevPage>
             <PageNumber>{page + 1}</PageNumber>
             <NextPage
+              isMax={maxPageNum >= page}
               onClick={() => {
-                setPage((prev) => prev + 1);
+                maxPageNum >= page && setPage((prev) => prev + 1);
               }}
             >
               ▶︎

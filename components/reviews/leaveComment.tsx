@@ -56,6 +56,9 @@ const SubmitReviewBtn = styled.button`
   border-radius: 5px;
   color: ${(props) => props.theme.black};
   background-color: ${(props) => props.theme.darkYellow};
+  &:hover {
+    background-color: ${(props) => props.theme.starYellow};
+  }
 `;
 
 export default function LeaveCommentComponent({
